@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 00:08 Asia/Riyadh
-- Current milestone: Milestone 2 - Data, OKF, And Validator
-- Current task: Commit data/OKF/workflow foundation and continue MCP/backend integration
+- Last updated: 2026-07-03 00:55 Asia/Riyadh
+- Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
+- Current task: Add Vercel repo-connection notes/config and commit local API/voice/frontend/docs changes
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -163,6 +163,78 @@ This file is the operational handoff point. Update it at the start and completio
   - Scaffolded `.venv` dependency sync is still incomplete, so ADK runtime smoke tests cannot run yet.
 - Next exact action: Commit the implementation slice, then resolve dependency sync or continue with frontend/API components that do not require local ADK imports.
 
+### 2026-07-03 00:24 Asia/Riyadh - Complete Static Frontend Cockpit Slice
+
+- Status: Completed
+- Files touched:
+  - `frontend/index.html`
+  - `frontend/styles.css`
+  - `frontend/app.js`
+  - `frontend/package.json`
+  - `frontend/scripts/build.mjs`
+  - `frontend/scripts/dev-server.mjs`
+  - `frontend/scripts/smoke-check.mjs`
+- Decisions made:
+  - Use a dependency-free static cockpit for the first Vercel-friendly UI slice to avoid package-install risk.
+  - Keep the first viewport as the actual product cockpit, not a landing page.
+  - Use static file mode as a supported local demo path; the script is non-module so it runs from `file://`.
+  - Include English/Arabic RTL mode, upload validation, voice controls, Evidence War Room, OKF graph, A2A audit tile, strategy simulator, and clarification panel in v1 UI.
+- Tests run:
+  - `node --check app.js`
+  - `npm run build`
+  - `npm test`
+  - `python -m unittest discover -s tests/unit -p "test_*.py"` - 11 tests passing.
+- Known blockers:
+  - Playwright screenshot verification was attempted once successfully before script-mode fix and then blocked by the environment usage limit on the second capture. Static smoke checks pass, but updated visual screenshot verification remains pending.
+  - Background localhost dev server was torn down by the shell environment; static `frontend/index.html` works without a server.
+- Next exact action: Commit the frontend slice, then continue with backend API/voice gateway integration or dependency-sync recovery.
+
+### 2026-07-03 00:33 Asia/Riyadh - Complete API And Voice Gateway Skeleton
+
+- Status: Completed locally; commit pending due escalated-command usage limit.
+- Files touched:
+  - `app/api/routes.py`
+  - `app/api/__init__.py`
+  - `app/voice_gateway/routes.py`
+  - `app/voice_gateway/__init__.py`
+  - `app/fast_api_app.py`
+  - `docs/CONCEPT_MAP.md`
+  - `README.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Add FastAPI route adapters for health, tenders, profile, analysis, upload validation, strategy, and OKF validation.
+  - Add a privacy-safe WebSocket voice gateway skeleton that handles transcript messages and returns voice-ready analysis events.
+  - Keep ADK Live audio streaming as the next integration step after dependency/credential recovery.
+- Tests run:
+  - `python -m unittest discover -s tests/unit -p "test_*.py"` - 11 tests passing.
+  - `npm test` - frontend smoke check passing.
+  - `npm run build` - static frontend build passing.
+- Known blockers:
+  - Git status/commit/push currently requires escalation because of repository ownership, and escalation was blocked by the environment usage limit until 1:04 AM.
+  - ADK dependency sync remains incomplete, so runtime smoke tests are pending.
+- Next exact action: When escalated commands are available, run git status, commit the frontend/API/voice/docs slice, and push.
+
+### 2026-07-03 00:47 Asia/Riyadh - Record Vercel Connection
+
+- Status: Completed
+- Files touched:
+  - `vercel.json`
+  - `docs/DEPLOYMENT.md`
+  - `README.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - User connected the GitHub repo to Vercel.
+  - Add a root Vercel config so a repo-root Vercel project can build `frontend/` and publish `frontend/dist`.
+  - Keep docs compatible with either Vercel repo-root configuration or Vercel monorepo-root `frontend` configuration.
+- Tests run:
+  - `python -m unittest discover -s tests/unit -p "test_*.py"` - 11 tests passing.
+  - `npm test` - frontend smoke check passing.
+  - `npm run build` - static frontend build passing.
+  - `python -m compileall app` - app modules compile.
+- Known blockers:
+  - ADK dependency sync remains incomplete, so runtime smoke tests are pending.
+- Next exact action: Commit and push the local changes so Vercel can build the connected repo.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -181,3 +253,6 @@ If another coding agent is asked to continue:
 - 2026-07-02 23:44 Asia/Riyadh: Renamed local project folder and verified corrected GitHub remote.
 - 2026-07-02 23:53 Asia/Riyadh: Started deterministic data/OKF/workflow implementation slice.
 - 2026-07-03 00:08 Asia/Riyadh: Completed sample tender/profile, OKF parser/validator, retrieval, upload validation, sanitization, voice reducer, deterministic workflow, router-agent replacement, and 11 unit tests.
+- 2026-07-03 00:24 Asia/Riyadh: Completed dependency-free static cockpit frontend with build and smoke tests.
+- 2026-07-03 00:33 Asia/Riyadh: Completed local API route and voice gateway skeleton; commit pending due escalation usage limit.
+- 2026-07-03 00:55 Asia/Riyadh: User reported GitHub repo is connected to Vercel; root Vercel config added locally and verified with unit/frontend/build/compile checks.

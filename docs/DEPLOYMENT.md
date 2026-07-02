@@ -42,6 +42,13 @@ Fallback requiring explicit approval:
 
 Target: Vercel.
 
+Current status:
+
+- The GitHub repository has been connected to Vercel by the user.
+- Root `vercel.json` builds the static cockpit from `frontend/` and publishes `frontend/dist`.
+- If Vercel project settings already set the monorepo root to `frontend`, keep install command `npm install`, build command `npm run build`, and output directory `dist`.
+- If Vercel project settings use the repository root, the checked-in `vercel.json` should be used.
+
 Connection steps:
 
 1. Open Vercel dashboard.

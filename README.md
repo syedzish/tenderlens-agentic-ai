@@ -6,9 +6,11 @@ TenderLens Agentic AI helps a supplier decide whether they can and should bid fo
 
 ## Current Status
 
-Milestone 0 is in progress: foundation documentation and project skeleton.
+Foundation, public repo, ADK scaffold, deterministic OKF/RAG services, sample data, unit tests, API route skeleton, voice gateway skeleton, and the first static cockpit UI slice are in place.
 
 Public repository: https://github.com/syedzish/tenderlens-agentic-ai
+
+Vercel: GitHub repo connected by the user. Root `vercel.json` builds `frontend/` and publishes `frontend/dist`.
 
 Implementation code will follow the approved milestone order:
 
@@ -62,6 +64,17 @@ VOICE_SESSION_MAX_SECONDS=300
 ```
 
 Use `.env.example` as the non-secret template.
+
+## Current Verification
+
+```bash
+python -m unittest discover -s tests/unit -p "test_*.py"
+cd frontend
+npm test
+npm run build
+```
+
+Current local limitation: the scaffolded `.venv` dependency sync did not finish in this environment, so ADK runtime smoke tests are pending.
 
 ## Privacy Claims
 

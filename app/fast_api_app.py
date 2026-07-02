@@ -34,6 +34,8 @@ from app.app_utils.telemetry import (
     setup_telemetry,
 )
 from app.app_utils.typing import Feedback
+from app.api.routes import attach_tenderlens_api_routes
+from app.voice_gateway.routes import attach_voice_gateway_routes
 
 load_dotenv()
 setup_telemetry()
@@ -92,6 +94,8 @@ app.description = "API for interacting with the Agent tenderlens-agentic-ai"
 # Proxy routes so the Vertex AI Console Playground (reasoning_engine SDK) can
 # talk to this agent alongside the native adk_api routes.
 attach_reasoning_engine_routes(app)
+attach_tenderlens_api_routes(app)
+attach_voice_gateway_routes(app)
 
 
 @app.post("/feedback")
