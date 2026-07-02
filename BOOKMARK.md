@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-02 23:35 Asia/Riyadh
+- Last updated: 2026-07-02 23:44 Asia/Riyadh
 - Current milestone: Milestone 1 - Agents CLI Scaffold
-- Current task: Correct TenderLens naming and resume ADK scaffold work
+- Current task: Resume ADK scaffold verification after TenderLens rename
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -99,8 +99,24 @@ This file is the operational handoff point. Update it at the start and completio
   - Text search for old spelling across project files excluding `.git` and `.venv`
   - GitHub repo rename to `syedzish/tenderlens-agentic-ai`
 - Known blockers:
-  - Local directory still needs filesystem rename from `tenderlense-agentic-ai` to `tenderlens-agentic-ai`.
-- Next exact action: Rename the local directory, then continue scaffold verification from `D:\Projects\kaggle\tenderlens-agentic-ai`.
+  - None for naming.
+- Next exact action: Continue scaffold verification from `D:\Projects\kaggle\tenderlens-agentic-ai`.
+
+### 2026-07-02 23:44 Asia/Riyadh - Complete Local Directory Rename
+
+- Status: Completed
+- Files touched:
+  - Local project folder renamed to `D:\Projects\kaggle\tenderlens-agentic-ai`
+  - Git remote verified as `https://github.com/syedzish/tenderlens-agentic-ai.git`
+- Decisions made:
+  - Continue all future work from the corrected local path.
+- Tests run:
+  - `git status --short`
+  - `git remote -v`
+  - Text search confirmed no `TenderLense` or `tenderlense` remains outside `.git`/`.venv`.
+- Known blockers:
+  - Dependency sync remains incomplete and should be revisited after naming correction.
+- Next exact action: Re-check `agents-cli info` and Python dependency state from the corrected folder.
 
 ## Handoff Notes
 
@@ -117,3 +133,4 @@ If another coding agent is asked to continue:
 - 2026-07-02 23:09 Asia/Riyadh: Completed Milestone 0 foundation documentation files and project skeleton.
 - 2026-07-02 23:15 Asia/Riyadh: Created public GitHub repo and pushed foundation commit.
 - 2026-07-02 23:35 Asia/Riyadh: Corrected project/product/repo naming to TenderLens/tenderlens-agentic-ai.
+- 2026-07-02 23:44 Asia/Riyadh: Renamed local project folder and verified corrected GitHub remote.
