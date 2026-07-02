@@ -10,7 +10,7 @@ Foundation, public repo, ADK scaffold, deterministic OKF/RAG services, sample da
 
 Public repository: https://github.com/syedzish/tenderlens-agentic-ai
 
-Vercel: GitHub repo connected by the user. Root `vercel.json` builds `frontend/` and publishes `frontend/dist`.
+Vercel: GitHub repo connected by the user. Root `package.json` and `vercel.json` build `frontend/` and publish `frontend/dist`; `frontend/vercel.json` also supports a Vercel project root set directly to `frontend`.
 
 Implementation code will follow the approved milestone order:
 
@@ -68,13 +68,13 @@ Use `.env.example` as the non-secret template.
 ## Current Verification
 
 ```bash
-python -m unittest discover -s tests/unit -p "test_*.py"
-cd frontend
 npm test
 npm run build
+.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"
+.venv\Scripts\python.exe -c "from app.fast_api_app import app; print(app.title)"
 ```
 
-Current local limitation: the scaffolded `.venv` dependency sync did not finish in this environment, so ADK runtime smoke tests are pending.
+Current local limitation: `agents-cli run` LLM smoke requires configured Gemini/Vertex credentials. Deterministic services, ADK root-agent import, FastAPI import, FastAPI API route smoke, unit tests, and static frontend build currently pass locally.
 
 ## Privacy Claims
 

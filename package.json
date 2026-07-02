@@ -1,0 +1,12 @@
+{
+  "name": "tenderlens-agentic-ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

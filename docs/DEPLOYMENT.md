@@ -45,9 +45,10 @@ Target: Vercel.
 Current status:
 
 - The GitHub repository has been connected to Vercel by the user.
-- Root `vercel.json` builds the static cockpit from `frontend/` and publishes `frontend/dist`.
-- If Vercel project settings already set the monorepo root to `frontend`, keep install command `npm install`, build command `npm run build`, and output directory `dist`.
-- If Vercel project settings use the repository root, the checked-in `vercel.json` should be used.
+- A failed Vercel deployment was reported by GitHub status for commit `9a96809`.
+- The repo now includes a root `package.json`, root `vercel.json`, and `frontend/vercel.json` so both supported project-root choices are explicit.
+- If Vercel project settings use the repository root, use install command `npm --prefix frontend install`, build command `npm --prefix frontend run build`, and output directory `frontend/dist`.
+- If Vercel project settings set the monorepo root to `frontend`, use install command `npm install`, build command `npm run build`, and output directory `dist`.
 
 Connection steps:
 

@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 01:34 Asia/Riyadh
+- Last updated: 2026-07-03 01:38 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit local-friendly API startup fix after runtime/API verification
+- Current task: Fix Vercel deployment configuration after failed GitHub/Vercel status
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -280,6 +280,32 @@ This file is the operational handoff point. Update it at the start and completio
   - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
 - Next exact action: Commit and push the local-friendly startup fix so Vercel receives the latest verified build inputs.
 
+### 2026-07-03 01:38 Asia/Riyadh - Harden Vercel Build Configuration
+
+- Status: In progress
+- Files touched:
+  - `package.json`
+  - `vercel.json`
+  - `frontend/vercel.json`
+  - `README.md`
+  - `docs/DEPLOYMENT.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - GitHub commit status reported a failed Vercel production deployment for commit `9a96809`.
+  - Vercel CLI log inspection is blocked locally by Windows group policy, so fix from repository-side evidence.
+  - Add a root `package.json` with `build` and `test` scripts that delegate to `frontend/`.
+  - Update root `vercel.json` to use npm `--prefix frontend` commands and publish `frontend/dist`.
+  - Add `frontend/vercel.json` so deployment also works if Vercel project root is configured as `frontend`.
+- Tests run:
+  - `npm run build` from repository root - passed.
+  - `npm test` from repository root - passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 11 tests passing.
+- Known blockers:
+  - Need to push the Vercel config hardening and then re-check GitHub/Vercel status.
+  - Updated Playwright visual screenshot verification remains pending.
+  - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
+- Next exact action: Run final verification, commit Vercel config hardening, push, and check the new Vercel status.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -303,3 +329,4 @@ If another coding agent is asked to continue:
 - 2026-07-03 00:55 Asia/Riyadh: User reported GitHub repo is connected to Vercel; root Vercel config added locally and verified with unit/frontend/build/compile checks.
 - 2026-07-03 01:01 Asia/Riyadh: Pushed commit `2f041b4` with frontend cockpit, API/voice gateway skeleton, and Vercel config.
 - 2026-07-03 01:34 Asia/Riyadh: Completed ADK/runtime/API startup verification and patched local telemetry/logging fallbacks.
+- 2026-07-03 01:38 Asia/Riyadh: Added root/frontend Vercel build configs after GitHub reported a failed Vercel deployment.
