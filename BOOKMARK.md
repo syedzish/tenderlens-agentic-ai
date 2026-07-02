@@ -4,10 +4,10 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 01:44 Asia/Riyadh
+- Last updated: 2026-07-03 01:51 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Continue from verified Vercel deployment into next implementation slice
-- Status: Ready for next task
+- Current task: Commit A2A audit agent and bounded quality loop foundation
+- Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
 
@@ -327,6 +327,31 @@ This file is the operational handoff point. Update it at the start and completio
   - Backend Agent Runtime deployment still requires explicit user approval.
 - Next exact action: Commit the public demo URL documentation update, then continue with deeper agent/MCP/eval implementation.
 
+### 2026-07-03 01:51 Asia/Riyadh - Add A2A Audit Agent And Bounded Loop Foundation
+
+- Status: In progress
+- Files touched:
+  - `app/agents/a2a_audit/__init__.py`
+  - `app/agents/a2a_audit/audit.py`
+  - `app/agents/a2a_audit/agent.py`
+  - `app/workflows/tender_workflow.py`
+  - `tests/unit/test_a2a_audit_loop.py`
+  - `docs/CONCEPT_MAP.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Move evidence audit logic out of `tender_workflow.py` into a named A2A audit-agent package.
+  - Add an ADK `tenderlens_a2a_evidence_audit_agent` wrapper with an `audit_draft_report` tool for the future remote A2A surface.
+  - Add deterministic `run_bounded_evidence_quality_loop` with max 2 revision rounds, missing-citation checks, unknown-evidence checks, and voice-length checks.
+  - Keep this slice deterministic and unit-testable because full live A2A/LLM streaming still requires credentials.
+- Tests run:
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 14 tests passing.
+  - `.venv\Scripts\python.exe -m compileall app tests\unit` - passed.
+  - `.venv\Scripts\python.exe -c "from app.agents.a2a_audit.agent import evidence_audit_agent; print(evidence_audit_agent.name)"` - passed.
+- Known blockers:
+  - Full `agents-cli run` LLM smoke still requires Gemini/Vertex credentials.
+  - Remote A2A deployment still requires Agent Runtime/serving approval and configuration.
+- Next exact action: Run final verification, commit/push the A2A audit foundation, then continue with MCP server/conformance tests.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -352,3 +377,4 @@ If another coding agent is asked to continue:
 - 2026-07-03 01:34 Asia/Riyadh: Completed ADK/runtime/API startup verification and patched local telemetry/logging fallbacks.
 - 2026-07-03 01:38 Asia/Riyadh: Added root/frontend Vercel build configs after GitHub reported a failed Vercel deployment.
 - 2026-07-03 01:44 Asia/Riyadh: Verified successful public Vercel deployment at `https://tenderlens-agentic-ai.vercel.app`.
+- 2026-07-03 01:51 Asia/Riyadh: Added named A2A Evidence Audit Agent wrapper, deterministic bounded loop, and audit-loop unit tests.

@@ -7,9 +7,8 @@ specialists are implemented.
 
 from __future__ import annotations
 
+from app.agents.a2a_audit.audit import run_bounded_evidence_quality_loop
 from app.services.contracts import (
-    AuditIssue,
-    AuditResult,
     DecisionReport,
     LanguageMode,
     SpecialistFinding,
@@ -37,38 +36,6 @@ def _finding(
         confidence=confidence,
         evidence_ids=evidence_ids,
         actions=actions or [],
-    )
-
-
-def audit_report(findings: list[SpecialistFinding], evidence_ids: set[str]) -> AuditResult:
-    issues: list[AuditIssue] = []
-    for finding in findings:
-        if not finding.evidence_ids:
-            issues.append(
-                AuditIssue(
-                    code="missing_citation",
-                    severity="high",
-                    message=f"{finding.agent} has no evidence citations.",
-                    revision_target=finding.agent,
-                )
-            )
-        missing = [evidence_id for evidence_id in finding.evidence_ids if evidence_id not in evidence_ids]
-        if missing:
-            issues.append(
-                AuditIssue(
-                    code="unknown_evidence",
-                    severity="medium",
-                    message=f"{finding.agent} cited unknown evidence ids: {', '.join(missing)}.",
-                    revision_target="retrieval-agent",
-                )
-            )
-    return AuditResult(
-        status="pass" if not issues else "fail",
-        round_count=1,
-        issues=issues,
-        audited_claims=len(findings),
-        missing_citation_count=sum(1 for issue in issues if issue.code == "missing_citation"),
-        unsupported_claim_count=sum(1 for issue in issues if issue.code == "unknown_evidence"),
     )
 
 
@@ -158,7 +125,12 @@ def run_tender_analysis(
         ),
     ]
 
-    audit = audit_report(findings, set(evidence_by_id))
+    audit = run_bounded_evidence_quality_loop(
+        findings,
+        set(evidence_by_id),
+        language=language,
+        voice=voice,
+    )
     executive_summary = (
         "Bid recommended: the sample bidder profile appears to meet the core eligibility requirements, "
         "the opportunity is inside budget range, and the main risks are manageable with partner confirmation."
