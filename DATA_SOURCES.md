@@ -1,6 +1,6 @@
 # Data Sources
 
-This file records every public, generated, synthetic, uploaded, and external data source used by TenderLense Agentic AI.
+This file records every public, generated, synthetic, uploaded, and external data source used by TenderLens Agentic AI.
 
 ## Source Policy
 

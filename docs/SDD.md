@@ -4,7 +4,7 @@ This SDD defines expected behavior before implementation. In this project, SDD m
 
 ## Product Objective
 
-TenderLense Agentic AI helps a supplier decide whether to bid for a tender by combining structured tender evidence, bidder profile fit, ADK multi-agent analysis, mandatory A2A audit, and typed/voice interaction.
+TenderLens Agentic AI helps a supplier decide whether to bid for a tender by combining structured tender evidence, bidder profile fit, ADK multi-agent analysis, mandatory A2A audit, and typed/voice interaction.
 
 ## Primary User Stories
 

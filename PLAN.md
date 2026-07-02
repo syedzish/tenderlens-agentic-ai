@@ -1,8 +1,8 @@
-# TenderLense Agentic AI Capstone Plan
+# TenderLens Agentic AI Capstone Plan
 
 ## Summary
 
-TenderLense Agentic AI is a production-grade Kaggle Agents for Business capstone project for bidder-side tender decisioning.
+TenderLens Agentic AI is a production-grade Kaggle Agents for Business capstone project for bidder-side tender decisioning.
 
 The application helps a supplier decide whether they can and should bid for a tender by analyzing tender requirements against a bidder profile, extracting structured tender knowledge into Google Open Knowledge Format (OKF), retrieving cited evidence with RAG, coordinating specialist agents through ADK 2.0 multi-agent workflows, using a mandatory A2A Remote Evidence Audit Agent as an independent reviewer, and producing a clear bid/no-bid recommendation, compliance gaps, risks, clarification questions, and action plan.
 
@@ -11,9 +11,9 @@ The app supports both typing mode and voice mode as v1 interaction paths. Voice 
 The hero of the project is the agentic system: ADK agents, router behavior, mandatory A2A collaboration, MCP tools, graph workflow, parallel specialists, bounded evidence quality loop, voice streaming, evals, security, deployability, and observability. OKF + RAG is the evidence foundation that makes the agents grounded, inspectable, and useful.
 
 - Track: Agents for Business
-- Project name: TenderLense Agentic AI
-- Workspace root: `D:\Projects\kaggle\tenderlense-agentic-ai`
-- Repository: new public GitHub repo named `tenderlense-agentic-ai`
+- Project name: TenderLens Agentic AI
+- Workspace root: `D:\Projects\kaggle\tenderlens-agentic-ai`
+- Repository: new public GitHub repo named `tenderlens-agentic-ai`
 - Frontend: Vercel
 - Backend: ADK 2.0 / Agents CLI / Agent Runtime
 - Voice: ADK Gemini Live API Toolkit through a thin WebSocket voice gateway
@@ -98,7 +98,7 @@ Typing mode remains available even if voice is unavailable. Users can run analys
 
 ### Voice Mode
 
-Voice mode is opt-in. The user clicks Voice Mode, grants microphone permission, speaks naturally, receives streamed spoken responses, sees live transcripts, can interrupt, mute, end the session, and continues using the same TenderLense agent workflow.
+Voice mode is opt-in. The user clicks Voice Mode, grants microphone permission, speaks naturally, receives streamed spoken responses, sees live transcripts, can interrupt, mute, end the session, and continues using the same TenderLens agent workflow.
 
 Voice can:
 
@@ -153,7 +153,7 @@ Use a monorepo with microservice-style/component boundaries. The project may dep
 Planned structure:
 
 ```text
-tenderlense-agentic-ai/
+tenderlens-agentic-ai/
   .agents-cli-spec.md
   PLAN.md
   BOOKMARK.md
@@ -296,7 +296,7 @@ The Voice Gateway is a thin adapter, not a second product brain. It should enfor
 
 ## MCP Server
 
-Create an app-local MCP server named `tenderlense-mcp`.
+Create an app-local MCP server named `tenderlens-mcp`.
 
 Planned tools:
 
@@ -392,7 +392,7 @@ Acceptance: docs define product, architecture, specs, privacy, A2A audit, qualit
 
 ### Milestone 0.5: GitHub Repository
 
-Initialize git, add `.gitignore`, commit foundation docs, create public GitHub repo `tenderlense-agentic-ai`, add remote, push initial commit, confirm URL, and add repo URL to README/BOOKMARK.
+Initialize git, add `.gitignore`, commit foundation docs, create public GitHub repo `tenderlens-agentic-ai`, add remote, push initial commit, confirm URL, and add repo URL to README/BOOKMARK.
 
 ### Milestone 1: Agents CLI Scaffold
 
@@ -404,7 +404,7 @@ Add curated sample tender metadata/text, generate OKF bundle, implement upload-t
 
 ### Milestone 3: MCP Server
 
-Implement `tenderlense-mcp`, tool schemas/tools, tests, and strict ADK tool filtering.
+Implement `tenderlens-mcp`, tool schemas/tools, tests, and strict ADK tool filtering.
 
 ### Milestone 4: Agent Workflow, A2A Audit, And Loop
 

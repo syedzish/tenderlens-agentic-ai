@@ -46,7 +46,7 @@ Connection steps:
 
 1. Open Vercel dashboard.
 2. Choose Add New Project.
-3. Import GitHub repo `tenderlense-agentic-ai`.
+3. Import GitHub repo `tenderlens-agentic-ai`.
 4. Set monorepo root to `frontend` if the frontend lives there.
 5. Set install command, likely `npm install`.
 6. Set build command, likely `npm run build`.

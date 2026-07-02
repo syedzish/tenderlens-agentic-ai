@@ -1,6 +1,6 @@
 # Architecture Guide
 
-TenderLense Agentic AI is a bidder-side tender decisioning system. It uses agents as the product brain and OKF + RAG as the evidence foundation.
+TenderLens Agentic AI is a bidder-side tender decisioning system. It uses agents as the product brain and OKF + RAG as the evidence foundation.
 
 ## High-Level Flow
 
@@ -11,7 +11,7 @@ flowchart LR
   FE --> VG["Voice Gateway WebSocket"]
   API --> Router["ADK Router Agent"]
   VG --> Router
-  Router --> MCP["tenderlense-mcp"]
+  Router --> MCP["tenderlens-mcp"]
   MCP --> OKF["OKF Bundles"]
   MCP --> Profile["Bidder Profile"]
   MCP --> Scenario["Scenario Service"]

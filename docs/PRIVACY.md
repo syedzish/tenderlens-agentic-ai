@@ -1,6 +1,6 @@
 # Privacy
 
-TenderLense Agentic AI uses precise privacy claims. These claims must be implemented in code and reflected in UI copy.
+TenderLens Agentic AI uses precise privacy claims. These claims must be implemented in code and reflected in UI copy.
 
 ## Upload Claim
 

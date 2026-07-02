@@ -1,12 +1,14 @@
-# TenderLense Agentic AI
+# TenderLens Agentic AI
 
 Production-grade bidder-side tender decisioning for Kaggle's AI Agents capstone.
 
-TenderLense Agentic AI helps a supplier decide whether they can and should bid for a tender. It combines ADK 2.0 multi-agent workflows, a mandatory A2A Remote Evidence Audit Agent, MCP tools, OKF + RAG evidence grounding, a Bounded Evidence Quality Loop, typed and voice interaction, and a premium bilingual procurement cockpit.
+TenderLens Agentic AI helps a supplier decide whether they can and should bid for a tender. It combines ADK 2.0 multi-agent workflows, a mandatory A2A Remote Evidence Audit Agent, MCP tools, OKF + RAG evidence grounding, a Bounded Evidence Quality Loop, typed and voice interaction, and a premium bilingual procurement cockpit.
 
 ## Current Status
 
 Milestone 0 is in progress: foundation documentation and project skeleton.
+
+Public repository: https://github.com/syedzish/tenderlens-agentic-ai
 
 Implementation code will follow the approved milestone order:
 
