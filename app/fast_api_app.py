@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import contextlib
+import logging
 import os
 from collections.abc import AsyncIterator
 
-import google.auth
 from a2a.server.tasks import InMemoryTaskStore
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -41,9 +41,24 @@ load_dotenv()
 setup_telemetry()
 # Must run before get_fast_api_app to set the tracer provider resource.
 setup_agent_engine_telemetry()
-_, project_id = google.auth.default()
-logging_client = google_cloud_logging.Client()
-logger = logging_client.logger(__name__)
+
+
+def _create_feedback_logger():
+    if not (
+        os.getenv("ENABLE_CLOUD_LOGGING", "").lower() in {"1", "true"}
+        or os.getenv("GOOGLE_CLOUD_AGENT_ENGINE_ID")
+    ):
+        return logging.getLogger(__name__)
+
+    try:
+        logging_client = google_cloud_logging.Client()
+        return logging_client.logger(__name__)
+    except Exception as exc:  # pragma: no cover - depends on deployed credentials.
+        logging.warning("Cloud Logging disabled for feedback route: %s", exc)
+        return logging.getLogger(__name__)
+
+
+logger = _create_feedback_logger()
 allow_origins = (
     os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else None
 )
@@ -108,7 +123,10 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
     Returns:
         Success message
     """
-    logger.log_struct(feedback.model_dump(), severity="INFO")
+    if hasattr(logger, "log_struct"):
+        logger.log_struct(feedback.model_dump(), severity="INFO")
+    else:
+        logger.info("feedback=%s", feedback.model_dump())
     return {"status": "success"}
 
 

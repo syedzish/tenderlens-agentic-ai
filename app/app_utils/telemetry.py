@@ -20,7 +20,10 @@ def setup_telemetry() -> str | None:
     """Configure GenAI prompt/response logging via OpenTelemetry."""
     # Keep full prompts/responses out of trace span attributes (use GenAI logging instead).
     os.environ.setdefault("ADK_CAPTURE_MESSAGE_CONTENT_IN_SPANS", "false")
-    os.environ.setdefault("GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", "true")
+    if os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID"):
+        os.environ.setdefault("GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", "true")
+    else:
+        os.environ.setdefault("GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", "false")
 
     bucket = os.environ.get("LOGS_BUCKET_NAME")
     capture_content = os.environ.get(
@@ -67,8 +70,11 @@ def setup_agent_engine_telemetry() -> None:
     ):
         return
 
-    import google.auth
-    from vertexai.agent_engines.templates.adk import _default_instrumentor_builder
+    try:
+        import google.auth
+        from vertexai.agent_engines.templates.adk import _default_instrumentor_builder
 
-    _, project_id = google.auth.default()
-    _default_instrumentor_builder(project_id, enable_tracing=True, enable_logging=True)
+        _, project_id = google.auth.default()
+        _default_instrumentor_builder(project_id, enable_tracing=True, enable_logging=True)
+    except Exception as exc:  # pragma: no cover - depends on local ADC/Agent Runtime.
+        logging.warning("Agent Engine telemetry disabled: %s", exc)
