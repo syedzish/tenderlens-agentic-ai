@@ -1,0 +1,18 @@
+flowchart LR
+  User["User: typing or voice"] --> Frontend["Vercel Frontend"]
+  Frontend --> Api["Server-side API Routes"]
+  Frontend --> Voice["Voice Gateway WebSocket"]
+  Api --> Router["ADK Router Agent"]
+  Voice --> Router
+  Router --> Mcp["tenderlense-mcp"]
+  Mcp --> Okf["OKF Bundles"]
+  Mcp --> Profile["Bidder Profile"]
+  Mcp --> Scenario["Scenario Service"]
+  Router --> Parallel["Parallel Specialist Agents"]
+  Parallel --> Synthesis["Synthesis Agent"]
+  Synthesis --> Audit["A2A Remote Evidence Audit Agent"]
+  Audit --> Gate{"Audit passed?"}
+  Gate -- yes --> Report["Final Structured Report"]
+  Gate -- no --> Fix["Targeted Specialist or Retrieval"]
+  Fix --> Synthesis
+  Report --> Frontend

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+.vite/
+coverage/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.json.key
+
+# Local/runtime files
+uploads/
+tmp/
+temp/
+*.log
+.DS_Store
+Thumbs.db
+
+# Agent/runtime generated artifacts
+.agents-cache/
+.adk/
+
+# Vercel
+.vercel/
