@@ -94,7 +94,7 @@ This file is the operational handoff point. Update it at the start and completio
 - Decisions made:
   - Correct product/display name is `TenderLens Agentic AI`.
   - Correct repo/package slug is `tenderlens-agentic-ai`.
-  - Old spellings `TenderLense` and `tenderlense-agentic-ai` must not remain in project text.
+  - The prior misspelled product and repo names must not remain in project text.
 - Tests run:
   - Text search for old spelling across project files excluding `.git` and `.venv`
   - GitHub repo rename to `syedzish/tenderlens-agentic-ai`
@@ -113,7 +113,7 @@ This file is the operational handoff point. Update it at the start and completio
 - Tests run:
   - `git status --short`
   - `git remote -v`
-  - Text search confirmed no `TenderLense` or `tenderlense` remains outside `.git`/`.venv`.
+  - Text search confirmed no prior misspelled product or repo names remain outside `.git`/`.venv`.
 - Known blockers:
   - Dependency sync remains incomplete and should be revisited after naming correction.
 - Next exact action: Re-check `agents-cli info` and Python dependency state from the corrected folder.
