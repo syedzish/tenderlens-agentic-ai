@@ -46,6 +46,17 @@ def run_tender_analysis(
     assumptions: StrategyAssumptions = DEFAULT_ASSUMPTIONS,
     voice: bool = False,
 ) -> DecisionReport:
+    workflow_trace = [
+        "router.accept_input",
+        "intake.validate_tender",
+        "profile.validate_profile",
+        "okf.select_bundle",
+        "mcp.validate_okf_contract",
+        "retrieval.plan_queries",
+    ]
+    if voice:
+        workflow_trace.insert(0, "voice_session_adapter.transcript_turn")
+
     tender = get_tender(tender_id)
     profile = get_company_profile(profile_id)
     bundle_dir = OKF_DIR / tender.okf_bundle
@@ -61,8 +72,10 @@ def run_tender_analysis(
     ]:
         evidence.extend(search_okf_evidence(bundle_dir, tender.id, query, limit=2))
     evidence.extend(profile_fact_evidence(profile, tender.id))
+    workflow_trace.append("retrieval.search_evidence")
 
     evidence_by_id = {item.id: item for item in evidence}
+    workflow_trace.append("parallel.start_specialists")
     profile_scores = score_profile_against_requirements(
         tender.mandatory_requirements, profile
     )
@@ -124,6 +137,19 @@ def run_tender_analysis(
             actions=["Send clarification questions as a tracked pre-bid action."],
         ),
     ]
+    workflow_trace.extend(
+        [
+            "parallel.compliance",
+            "parallel.eligibility_profile_fit",
+            "parallel.commercial_fit",
+            "parallel.risk",
+            "parallel.timeline",
+            "parallel.bid_strategy",
+            "parallel.clarification_questions",
+            "synthesis.create_draft",
+            "a2a.evidence_audit",
+        ]
+    )
 
     audit = run_bounded_evidence_quality_loop(
         findings,
@@ -131,6 +157,12 @@ def run_tender_analysis(
         language=language,
         voice=voice,
     )
+    workflow_trace.append(
+        "bounded_quality_loop.pass"
+        if audit.status == "pass"
+        else "bounded_quality_loop.unresolved"
+    )
+    workflow_trace.append("final.structured_report")
     executive_summary = (
         "Bid recommended: the sample bidder profile appears to meet the core eligibility requirements, "
         "the opportunity is inside budget range, and the main risks are manageable with partner confirmation."
@@ -218,4 +250,5 @@ def run_tender_analysis(
         audit=audit,
         voice_summary=voice_summary,
         unresolved_evidence_gaps=[] if audit.status == "pass" else [issue.message for issue in audit.issues],
+        workflow_trace=workflow_trace,
     )

@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 02:00 Asia/Riyadh
+- Last updated: 2026-07-03 02:08 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit app-local MCP server and ADK toolset foundation
+- Current task: Commit workflow trace and conformance tests
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -354,7 +354,7 @@ This file is the operational handoff point. Update it at the start and completio
 
 ### 2026-07-03 02:00 Asia/Riyadh - Add App-Local MCP Server Foundation
 
-- Status: In progress
+- Status: Completed
 - Files touched:
   - `pyproject.toml`
   - `uv.lock`
@@ -375,10 +375,46 @@ This file is the operational handoff point. Update it at the start and completio
   - FastAPI `TestClient` health smoke - passed.
   - `npm test` from repository root - frontend smoke passing.
   - `uv lock` - passed and added MCP transitive dependencies.
+  - GitHub/Vercel commit status for `9f8b266` - success.
 - Known blockers:
   - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
   - Full MCP toolset invocation through live ADK agent still needs model credentials/runtime smoke.
-- Next exact action: Run final verification, commit/push the MCP server foundation, then continue with trajectory/conformance tests.
+- Next exact action: Continue with trajectory/conformance tests for router -> MCP/retrieval -> synthesis -> A2A audit paths.
+
+### 2026-07-03 02:03 Asia/Riyadh - Start Trajectory Conformance Tests
+
+- Status: Started
+- Files touched:
+  - `BOOKMARK.md`
+- Decisions made:
+  - Add an explicit `workflow_trace` field to deterministic reports so conformance tests can verify the planned agent path.
+  - Keep trajectory tests deterministic because live ADK `agents-cli run` still requires model credentials.
+- Tests run: None yet.
+- Known blockers:
+  - Live LLM tool trajectory still depends on Gemini/Vertex credentials.
+- Next exact action: Update report contract/workflow trace, add conformance tests, then run unit/conformance/frontend checks.
+
+### 2026-07-03 02:08 Asia/Riyadh - Complete Trajectory Conformance Tests
+
+- Status: Completed
+- Files touched:
+  - `app/services/contracts.py`
+  - `app/workflows/tender_workflow.py`
+  - `tests/conformance/test_tool_trajectory.py`
+  - `docs/CONCEPT_MAP.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Add `workflow_trace` to `DecisionReport` so deterministic reports expose the planned agent path.
+  - Trace voice transcript routing, router/intake/profile/OKF/MCP contract, retrieval, parallel specialists, synthesis, A2A audit, bounded loop, and final structured report.
+  - Add conformance tests for A2A-before-final, all parallel specialists, and voice path reuse of the same evidence gate.
+- Tests run:
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 17 tests passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+  - `.venv\Scripts\python.exe -m compileall app tests\unit tests\conformance` - passed.
+  - `npm test` from repository root - frontend smoke passing.
+- Known blockers:
+  - Live LLM tool trajectory still depends on Gemini/Vertex credentials.
+- Next exact action: Commit/push conformance trace work, then continue with Agents CLI eval dataset/rubrics or deeper frontend/API wiring.
 
 ## Handoff Notes
 

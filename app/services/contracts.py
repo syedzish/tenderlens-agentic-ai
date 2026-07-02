@@ -165,6 +165,7 @@ class DecisionReport:
     audit: AuditResult
     voice_summary: str | None = None
     unresolved_evidence_gaps: list[str] = field(default_factory=list)
+    workflow_trace: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
