@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 01:51 Asia/Riyadh
+- Last updated: 2026-07-03 02:00 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit A2A audit agent and bounded quality loop foundation
+- Current task: Commit app-local MCP server and ADK toolset foundation
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -352,6 +352,34 @@ This file is the operational handoff point. Update it at the start and completio
   - Remote A2A deployment still requires Agent Runtime/serving approval and configuration.
 - Next exact action: Run final verification, commit/push the A2A audit foundation, then continue with MCP server/conformance tests.
 
+### 2026-07-03 02:00 Asia/Riyadh - Add App-Local MCP Server Foundation
+
+- Status: In progress
+- Files touched:
+  - `pyproject.toml`
+  - `uv.lock`
+  - `app/mcp/server.py`
+  - `app/mcp/toolset.py`
+  - `tests/unit/test_mcp_server.py`
+  - `docs/CONCEPT_MAP.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Add `mcp>=1.0.0,<2.0.0`; `uv lock` resolved `mcp==1.28.1`.
+  - Create a real FastMCP stdio server named `tenderlens-mcp`.
+  - Expose OKF, evidence, profile, scoring, strategy, upload, voice context, and validation tools through MCP.
+  - Add an ADK `McpToolset` factory with strict `tool_filter` and stdio server params.
+  - Keep the root agent on deterministic function tools for now; switch to MCP toolset after further ADK runtime validation.
+- Tests run:
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 17 tests passing.
+  - `.venv\Scripts\python.exe -m compileall app tests\unit` - passed.
+  - FastAPI `TestClient` health smoke - passed.
+  - `npm test` from repository root - frontend smoke passing.
+  - `uv lock` - passed and added MCP transitive dependencies.
+- Known blockers:
+  - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
+  - Full MCP toolset invocation through live ADK agent still needs model credentials/runtime smoke.
+- Next exact action: Run final verification, commit/push the MCP server foundation, then continue with trajectory/conformance tests.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -378,3 +406,4 @@ If another coding agent is asked to continue:
 - 2026-07-03 01:38 Asia/Riyadh: Added root/frontend Vercel build configs after GitHub reported a failed Vercel deployment.
 - 2026-07-03 01:44 Asia/Riyadh: Verified successful public Vercel deployment at `https://tenderlens-agentic-ai.vercel.app`.
 - 2026-07-03 01:51 Asia/Riyadh: Added named A2A Evidence Audit Agent wrapper, deterministic bounded loop, and audit-loop unit tests.
+- 2026-07-03 02:00 Asia/Riyadh: Added real `tenderlens-mcp` FastMCP server, ADK strict-filter toolset factory, and MCP unit tests.
