@@ -6,7 +6,7 @@ This directory contains evaluation datasets for testing agent behavior.
 
 ### Default Dataset
 ```bash
-# Generate traces using the default dataset
+# Generate traces using the TenderLens capstone dataset
 agents-cli eval generate
 agents-cli eval grade
 ```
@@ -68,7 +68,7 @@ user message; `eval generate` appends the next agent response.
 
 ## Key Fields
 
-- `eval_cases`: Array of evaluation cases.
+- `eval_cases`: Array of TenderLens capstone evaluation cases.
 - `eval_case_id`: Unique identifier for the evaluation case (optional).
 - `prompt`: A single user message — Shape A.
 - `agent_data.turns`: Prior conversation turns ending with a user message — Shape B.
@@ -77,7 +77,7 @@ user message; `eval generate` appends the next agent response.
 
 You can create custom datasets in two ways:
 
-1. **By Hand**: Copy `basic-dataset.json` as a template and manually add evaluation cases.
+1. **By Hand**: Copy `basic-dataset.json` as a template and manually add TenderLens cases.
 2. **Synthesize**: Use the synthetic dataset generation command to generate conversation scenarios:
    ```bash
    agents-cli eval dataset synthesize --count 10

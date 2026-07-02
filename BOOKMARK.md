@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 02:08 Asia/Riyadh
+- Last updated: 2026-07-03 02:14 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit workflow trace and conformance tests
+- Current task: Commit TenderLens eval dataset and local eval metric
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -415,6 +415,35 @@ This file is the operational handoff point. Update it at the start and completio
 - Known blockers:
   - Live LLM tool trajectory still depends on Gemini/Vertex credentials.
 - Next exact action: Commit/push conformance trace work, then continue with Agents CLI eval dataset/rubrics or deeper frontend/API wiring.
+
+### 2026-07-03 02:14 Asia/Riyadh - Add TenderLens Eval Dataset And Local Metric
+
+- Status: In progress
+- Files touched:
+  - `tests/eval/datasets/basic-dataset.json`
+  - `tests/eval/eval_config.yaml`
+  - `tests/eval/metrics.py`
+  - `tests/eval/datasets/README.md`
+  - `tests/unit/test_eval_metric.py`
+  - `docs/EVALS.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Replace scaffold weather/capital eval cases with TenderLens capstone cases.
+  - Add cases for clear bid analysis, clarification questions, Arabic summary, prompt injection resistance, and voice-style risk summary.
+  - Replace the LLM-as-judge metric with a credential-free local `tenderlens_capstone_contract` metric.
+  - Keep managed/built-in LLM judge metrics as a later step once Gemini/Vertex credentials are configured.
+- Tests run:
+  - `.venv\Scripts\python.exe -m json.tool tests\eval\datasets\basic-dataset.json` - passed.
+  - `.venv\Scripts\python.exe -m py_compile tests\eval\metrics.py` - passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 19 tests passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+  - `npm test` from repository root - frontend smoke passing.
+  - `agents-cli eval generate --dataset tests/eval/datasets/basic-dataset.json` - failed in sandbox due uv cache permissions.
+  - Same command with escalation - exceeded 120 second timeout; stopped leftover eval child processes.
+- Known blockers:
+  - Full `agents-cli eval generate` still needs a longer credential/configured runtime pass.
+  - No trace files were produced by the timed-out eval attempt.
+- Next exact action: Commit/push the eval dataset/metric slice, then continue with frontend/API wiring or backend smoke hardening.
 
 ## Handoff Notes
 

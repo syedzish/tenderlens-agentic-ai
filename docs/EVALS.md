@@ -64,9 +64,17 @@ Assertions:
 
 ## Agents CLI Eval Cases
 
-Start with 1-2 and expand:
+Current `tests/eval/datasets/basic-dataset.json` includes five capstone cases:
 
 - Clear bid
+- Arabic mode report
+- Clarification questions required
+- Voice transcript asks "Can we bid?"
+- Voice transcript asks for top risks
+- Prompt injection in tender text
+
+Planned expansion after core cases pass:
+
 - Clear no-bid
 - Missing certification
 - Ambiguous eligibility
@@ -74,13 +82,16 @@ Start with 1-2 and expand:
 - High commercial risk
 - Missing citation triggers A2A revision
 - A2A audit fails unresolved claim after max loop
-- Prompt injection in tender text
-- Arabic mode report
-- Clarification questions required
 - Scenario change flips recommendation
-- Voice transcript asks "Can we bid?"
-- Voice transcript asks for top three risks
 - Voice transcript asks to switch to Arabic
+
+The current eval config uses `tenderlens_capstone_contract`, a local deterministic metric in `tests/eval/metrics.py`, plus `agent_turn_count`. Managed/built-in LLM judge metrics should be added after Gemini/Vertex credentials are configured.
+
+Current status:
+
+- Dataset JSON validates locally.
+- Local metric compiles and has unit coverage.
+- `agents-cli eval generate --dataset tests/eval/datasets/basic-dataset.json` still needs a credential/configured runtime pass; the latest local attempt exceeded the 120 second timeout after dependency sync started.
 
 ## Frontend QA
 
