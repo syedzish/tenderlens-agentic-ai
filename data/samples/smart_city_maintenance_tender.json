@@ -1,0 +1,29 @@
+{
+  "id": "smart-city-maintenance-2026",
+  "title": "Smart City Facilities Maintenance Tender 2026",
+  "buyer": "Riyadh Smart District Authority",
+  "source_type": "synthetic_public_demo_fixture",
+  "language": "en",
+  "region": "Saudi Arabia",
+  "published_date": "2026-06-20",
+  "submission_deadline": "2026-07-18T14:00:00+03:00",
+  "description": "Synthetic tender fixture for demonstrating bidder-side tender analysis, OKF, RAG, A2A audit, and voice workflows.",
+  "okf_bundle": "smart-city-maintenance-2026",
+  "estimated_value_sar": 1800000,
+  "required_services": [
+    "IoT facility monitoring",
+    "Preventive maintenance",
+    "24x7 helpdesk",
+    "Arabic and English reporting",
+    "Cybersecurity controls"
+  ],
+  "mandatory_requirements": [
+    "ISO 9001 certification",
+    "ISO 27001 certification",
+    "Riyadh operating permit",
+    "Two similar smart facilities projects completed in the last three years",
+    "24x7 bilingual support desk",
+    "Bid bond equal to 2 percent of estimated contract value",
+    "Professional liability insurance"
+  ]
+}

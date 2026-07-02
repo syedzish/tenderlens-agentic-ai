@@ -13,12 +13,29 @@ This file records every public, generated, synthetic, uploaded, and external dat
 
 ## Current Sources
 
-No curated tender source files have been added yet.
+### Synthetic Curated Tender Fixture
 
-Planned v1 source strategy:
+- File: `data/samples/smart_city_maintenance_tender.json`
+- OKF bundle: `data/okf/smart-city-maintenance-2026/`
+- Title: Smart City Facilities Maintenance Tender 2026
+- Buyer: Riyadh Smart District Authority
+- Source type: synthetic public-demo fixture
+- Created: 2026-07-02
+- License/usage basis: project-authored synthetic content for the public demo
+- Purpose: reliable Kaggle demo path for OKF, RAG, specialist analysis, A2A audit, upload-independent judging, and voice follow-up.
 
-- Start with one synthetic public-demo tender fixture written specifically for this capstone.
-- Add provenance fields that clearly mark the fixture as synthetic.
+### Synthetic Sample Bidder Profile
+
+- File: `data/bidder_profiles/default_profile.json`
+- Company: Nexa Facilities Solutions
+- Source type: synthetic public-demo fixture
+- Created: 2026-07-02
+- License/usage basis: project-authored synthetic content for the public demo
+- Purpose: bidder capability data for eligibility/profile-fit decisioning.
+
+## Planned Source Strategy
+
+- Add only public, synthetic, or clearly licensed tender examples.
 - If a real public tender is added, record URL, retrieval date, license/usage basis, and any extracted sections.
 
 ## External Documentation And Standards

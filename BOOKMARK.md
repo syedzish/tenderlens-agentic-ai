@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-02 23:44 Asia/Riyadh
-- Current milestone: Milestone 1 - Agents CLI Scaffold
-- Current task: Resume ADK scaffold verification after TenderLens rename
+- Last updated: 2026-07-03 00:08 Asia/Riyadh
+- Current milestone: Milestone 2 - Data, OKF, And Validator
+- Current task: Commit data/OKF/workflow foundation and continue MCP/backend integration
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -118,6 +118,51 @@ This file is the operational handoff point. Update it at the start and completio
   - Dependency sync remains incomplete and should be revisited after naming correction.
 - Next exact action: Re-check `agents-cli info` and Python dependency state from the corrected folder.
 
+### 2026-07-02 23:53 Asia/Riyadh - Start Data/OKF/Workflow Foundation
+
+- Status: Started
+- Files touched:
+  - `data/samples/`
+  - `data/bidder_profiles/`
+  - `data/okf/`
+  - `app/services/`
+  - `app/workflows/`
+  - `tests/unit/`
+- Decisions made:
+  - Keep the ADK scaffold intact.
+  - Add deterministic, testable services first so the project has a reliable backend spine even before live model credentials/dependency sync are resolved.
+  - Use a synthetic curated tender fixture for the first public demo path and document it in `DATA_SOURCES.md`.
+- Tests run: Pending.
+- Known blockers:
+  - Scaffolded `.venv` dependency sync is incomplete; ADK imports are not available locally yet.
+- Next exact action: Create sample data, OKF parser/validator, retrieval, upload validation, workflow synthesis/audit simulation, and unit tests.
+
+### 2026-07-03 00:08 Asia/Riyadh - Complete Data/OKF/Workflow Foundation
+
+- Status: Completed
+- Files touched:
+  - `data/samples/smart_city_maintenance_tender.json`
+  - `data/bidder_profiles/default_profile.json`
+  - `data/okf/smart-city-maintenance-2026/`
+  - `app/services/`
+  - `app/workflows/tender_workflow.py`
+  - `app/mcp/tools.py`
+  - `app/agent.py`
+  - `app/__init__.py`
+  - `tests/unit/`
+  - `DATA_SOURCES.md`
+- Decisions made:
+  - Use a synthetic curated tender as the first reliable public demo path.
+  - Keep user upload path bounded by metadata validation first: PDF/TXT/MD/DOCX and 5 MB max.
+  - Add deterministic OKF/RAG/profile/scenario/voice/sanitization services before deeper LLM wiring.
+  - Replace the scaffold weather/time agent with a TenderLens Router Agent that wraps the deterministic tools.
+  - Keep a guarded `app.__init__` fallback so deterministic unit tests run even while ADK dependencies are not locally synced.
+- Tests run:
+  - `python -m unittest discover -s tests/unit -p "test_*.py"` - 11 tests passing.
+- Known blockers:
+  - Scaffolded `.venv` dependency sync is still incomplete, so ADK runtime smoke tests cannot run yet.
+- Next exact action: Commit the implementation slice, then resolve dependency sync or continue with frontend/API components that do not require local ADK imports.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -134,3 +179,5 @@ If another coding agent is asked to continue:
 - 2026-07-02 23:15 Asia/Riyadh: Created public GitHub repo and pushed foundation commit.
 - 2026-07-02 23:35 Asia/Riyadh: Corrected project/product/repo naming to TenderLens/tenderlens-agentic-ai.
 - 2026-07-02 23:44 Asia/Riyadh: Renamed local project folder and verified corrected GitHub remote.
+- 2026-07-02 23:53 Asia/Riyadh: Started deterministic data/OKF/workflow implementation slice.
+- 2026-07-03 00:08 Asia/Riyadh: Completed sample tender/profile, OKF parser/validator, retrieval, upload validation, sanitization, voice reducer, deterministic workflow, router-agent replacement, and 11 unit tests.

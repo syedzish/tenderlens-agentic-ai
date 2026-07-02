@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .agent import app
+try:
+    from .agent import app
+except ModuleNotFoundError as exc:  # pragma: no cover - local deterministic tests
+    if not exc.name or not exc.name.startswith("google"):
+        raise
+    app = None
 
 __all__ = ["app"]
