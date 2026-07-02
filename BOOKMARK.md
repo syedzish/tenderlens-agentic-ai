@@ -4,10 +4,10 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 01:38 Asia/Riyadh
+- Last updated: 2026-07-03 01:44 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Fix Vercel deployment configuration after failed GitHub/Vercel status
-- Status: In progress
+- Current task: Continue from verified Vercel deployment into next implementation slice
+- Status: Ready for next task
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
 
@@ -306,6 +306,27 @@ This file is the operational handoff point. Update it at the start and completio
   - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
 - Next exact action: Run final verification, commit Vercel config hardening, push, and check the new Vercel status.
 
+### 2026-07-03 01:44 Asia/Riyadh - Verify Public Vercel Deployment
+
+- Status: Completed
+- Files touched:
+  - `README.md`
+  - `docs/DEPLOYMENT.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Commit `54f748e` fixed the Vercel build failure; GitHub/Vercel status now reports success.
+  - Use the public production alias `https://tenderlens-agentic-ai.vercel.app` for README and Kaggle.
+  - Do not use the deployment-specific `zish10-...` URL for Kaggle because it returns Vercel's login page.
+- Tests run:
+  - GitHub commit status for `54f748e` - success.
+  - Python HTTP check against `https://tenderlens-agentic-ai.vercel.app` - HTTP 200 and contains TenderLens app markers.
+  - Playwright desktop screenshot saved to `C:\tmp\tenderlens-vercel-desktop.png` - rendered cockpit.
+  - Playwright mobile screenshot saved to `C:\tmp\tenderlens-vercel-mobile.png` - rendered responsive first screen.
+- Known blockers:
+  - `agents-cli run` LLM smoke still requires configured Gemini/Vertex credentials.
+  - Backend Agent Runtime deployment still requires explicit user approval.
+- Next exact action: Commit the public demo URL documentation update, then continue with deeper agent/MCP/eval implementation.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -330,3 +351,4 @@ If another coding agent is asked to continue:
 - 2026-07-03 01:01 Asia/Riyadh: Pushed commit `2f041b4` with frontend cockpit, API/voice gateway skeleton, and Vercel config.
 - 2026-07-03 01:34 Asia/Riyadh: Completed ADK/runtime/API startup verification and patched local telemetry/logging fallbacks.
 - 2026-07-03 01:38 Asia/Riyadh: Added root/frontend Vercel build configs after GitHub reported a failed Vercel deployment.
+- 2026-07-03 01:44 Asia/Riyadh: Verified successful public Vercel deployment at `https://tenderlens-agentic-ai.vercel.app`.

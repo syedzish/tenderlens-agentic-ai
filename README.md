@@ -10,6 +10,8 @@ Foundation, public repo, ADK scaffold, deterministic OKF/RAG services, sample da
 
 Public repository: https://github.com/syedzish/tenderlens-agentic-ai
 
+Public demo: https://tenderlens-agentic-ai.vercel.app
+
 Vercel: GitHub repo connected by the user. Root `package.json` and `vercel.json` build `frontend/` and publish `frontend/dist`; `frontend/vercel.json` also supports a Vercel project root set directly to `frontend`.
 
 Implementation code will follow the approved milestone order:

@@ -47,6 +47,9 @@ Current status:
 - The GitHub repository has been connected to Vercel by the user.
 - A failed Vercel deployment was reported by GitHub status for commit `9a96809`.
 - The repo now includes a root `package.json`, root `vercel.json`, and `frontend/vercel.json` so both supported project-root choices are explicit.
+- Commit `54f748e` deployed successfully according to GitHub/Vercel commit status.
+- Public production URL: https://tenderlens-agentic-ai.vercel.app.
+- The deployment-specific `zish10-...` URL is Vercel-protected, so use the public production alias for Kaggle.
 - If Vercel project settings use the repository root, use install command `npm --prefix frontend install`, build command `npm --prefix frontend run build`, and output directory `frontend/dist`.
 - If Vercel project settings set the monorepo root to `frontend`, use install command `npm install`, build command `npm run build`, and output directory `dist`.
 
