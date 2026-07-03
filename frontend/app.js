@@ -14,7 +14,7 @@ const state = {
 
 const t = {
   en: {
-    track: "Agents for Business",
+    track: "Agentic AI for Procurement",
     navHowTo: "How to Use",
     navAnalysis: "Analysis",
     navDiscuss: "Discuss with TenderLens",
@@ -118,7 +118,7 @@ const t = {
     stageAudit: "Evidence checked",
   },
   ar: {
-    track: "وكلاء للأعمال",
+    track: "ذكاء وكيل للمشتريات",
     navHowTo: "طريقة الاستخدام",
     navAnalysis: "التحليل",
     navDiscuss: "ناقش مع TenderLens",
@@ -481,10 +481,20 @@ function renderDeck() {
   const body = state.language === "ar" ? slide.bodyAr : slide.body;
   $("#slidePreview").innerHTML = `
     <article class="deck-slide">
+      <div class="slide-number">${String(state.activeSlide + 1).padStart(2, "0")}</div>
       <p class="eyebrow">${escapeText(localized("briefingDeck"))}</p>
       <h3>${escapeText(title)}</h3>
       <p>${escapeText(body)}</p>
-      <span>${escapeText(localized("preparedBadge"))}</span>
+      <div class="slide-proof">
+        <span>Strong requirement alignment</span>
+        <span>Evidence checked</span>
+        <span>Actionable next step</span>
+      </div>
+      <div class="slide-sources">
+        <span>01_Main_Tender.md</span>
+        <span>03_Technical_Spec.docx</span>
+        <span>+3 sources</span>
+      </div>
     </article>`;
   $("#slideCount").textContent = `${state.activeSlide + 1} / ${deckSlides.length}`;
   $("#slideRail").innerHTML = deckSlides
@@ -935,6 +945,12 @@ $("#slideRail").addEventListener("click", (event) => {
   if (!button) return;
   state.activeSlide = Number(button.dataset.slide);
   renderDeck();
+});
+
+$$(".feature-nav a").forEach((link) => {
+  link.addEventListener("click", () => {
+    $$(".feature-nav a").forEach((item) => item.classList.toggle("active", item === link));
+  });
 });
 $("#welcomeSample").addEventListener("click", () => {
   usePreloadedExample();
