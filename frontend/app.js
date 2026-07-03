@@ -60,6 +60,12 @@ const t = {
     analysisReady: "Analysis complete. Bid recommendation is ready with evidence audit.",
     analysisFallback: "Using reliable sample analysis while backend is unavailable.",
     analysisRunning: "Running agent workflow...",
+    stageIntake: "Intake",
+    stageOkf: "OKF",
+    stageRetrieval: "Retrieval",
+    stageParallel: "Parallel agents",
+    stageSynthesis: "Synthesis",
+    stageAudit: "A2A audit",
   },
   ar: {
     track: "وكلاء للأعمال",
@@ -110,8 +116,35 @@ const t = {
     analysisReady: "اكتمل التحليل. توصية التقديم جاهزة مع تدقيق الأدلة.",
     analysisFallback: "يتم استخدام التحليل التجريبي الموثوق لأن الخلفية غير متاحة.",
     analysisRunning: "جار تشغيل سير العمل الوكيلي...",
+    stageIntake: "الاستقبال",
+    stageOkf: "OKF",
+    stageRetrieval: "استرجاع الأدلة",
+    stageParallel: "الوكلاء المتوازيون",
+    stageSynthesis: "الدمج",
+    stageAudit: "تدقيق A2A",
   },
 };
+
+const workflowStages = [
+  { selector: "#stageIntake", match: ["intake.", "router.", "voice_session_adapter."] },
+  { selector: "#stageOkf", match: ["okf.", "mcp.validate_okf_contract"] },
+  { selector: "#stageRetrieval", match: ["retrieval."] },
+  { selector: "#stageParallel", match: ["parallel."] },
+  { selector: "#stageSynthesis", match: ["synthesis."] },
+  { selector: "#stageAudit", match: ["a2a.", "bounded_quality_loop."] },
+];
+
+const fallbackWorkflowTrace = [
+  "router.accept_input",
+  "intake.validate_tender",
+  "okf.select_bundle",
+  "retrieval.search_evidence",
+  "parallel.start_specialists",
+  "synthesis.create_draft",
+  "a2a.evidence_audit",
+  "bounded_quality_loop.pass",
+  "final.structured_report",
+];
 
 let evidence = [
   {
@@ -206,6 +239,7 @@ function applyLanguage(language) {
   });
   renderEvidence();
   renderLists();
+  renderWorkflowTrace(state.report?.workflow_trace || fallbackWorkflowTrace);
   updateScenario();
 }
 
@@ -239,6 +273,16 @@ function renderLists() {
   $("#questions").innerHTML = questions
     .map((question) => `<li><strong>Q:</strong> ${escapeText(question)}</li>`)
     .join("");
+}
+
+function renderWorkflowTrace(trace = [], currentIndex = -1) {
+  const traceText = trace.join(" ");
+  workflowStages.forEach((stage, index) => {
+    const node = $(stage.selector);
+    const done = stage.match.some((needle) => traceText.includes(needle));
+    node.classList.toggle("done", done);
+    node.classList.toggle("current", index === currentIndex);
+  });
 }
 
 function formatRecommendation(recommendation) {
@@ -307,6 +351,7 @@ function applyReport(report, source = "api") {
       questions.push(item.question);
     });
   }
+  renderWorkflowTrace(report.workflow_trace || fallbackWorkflowTrace);
   renderEvidence();
   renderLists();
 }
@@ -332,6 +377,7 @@ function fallbackReport() {
       mitigation,
     })),
     clarification_questions: questions.map((question) => ({ question })),
+    workflow_trace: fallbackWorkflowTrace,
   };
 }
 
@@ -356,6 +402,7 @@ async function postJson(path, payload, timeoutMs = 7000) {
 
 async function runAnalysis() {
   addChatMessage(localized("analysisRunning"));
+  renderWorkflowTrace(["router.accept_input"], 0);
   try {
     const result = await postJson("/api/analyze", {
       tender_id: $("#tenderSelect").value,

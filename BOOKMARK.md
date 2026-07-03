@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 08:37 Asia/Riyadh
+- Last updated: 2026-07-03 08:41 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Frontend/API wiring and backend smoke hardening
+- Current task: Commit trace-driven workflow strip and voice smoke tests
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -493,6 +493,29 @@ This file is the operational handoff point. Update it at the start and completio
   - Full ADK Live API audio streaming remains pending credentials and deployment path validation.
 - Next exact action: Commit/push the voice gateway smoke test slice and verify Vercel status.
 
+### 2026-07-03 08:41 Asia/Riyadh - Add Trace-Driven Workflow Strip
+
+- Status: Completed
+- Files touched:
+  - `frontend/index.html`
+  - `frontend/app.js`
+  - `frontend/styles.css`
+  - `frontend/scripts/smoke-check.mjs`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Use backend `workflow_trace` to mark cockpit workflow stages when `/api/analyze` is available.
+  - Preserve curated static fallback trace for the public Vercel demo before Agent Runtime backend deployment.
+  - Add Arabic labels for Intake, OKF, Retrieval, Parallel agents, Synthesis, and A2A audit.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` from repository root - frontend smoke passing.
+  - `npm run build` from repository root - static frontend build passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 26 tests passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+- Known blockers:
+  - Playwright interaction coverage for API fallback path remains pending.
+- Next exact action: Commit/push trace-driven workflow strip and voice smoke tests, then verify Vercel status.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -522,3 +545,4 @@ If another coding agent is asked to continue:
 - 2026-07-03 02:00 Asia/Riyadh: Added real `tenderlens-mcp` FastMCP server, ADK strict-filter toolset factory, and MCP unit tests.
 - 2026-07-03 08:32 Asia/Riyadh: Wired frontend analysis/upload actions to backend APIs with static fallback and added FastAPI route tests.
 - 2026-07-03 08:37 Asia/Riyadh: Added voice gateway WebSocket smoke tests and JSON-safe audit payload serialization.
+- 2026-07-03 08:41 Asia/Riyadh: Made cockpit workflow strip data-driven from `workflow_trace` with Arabic labels and static fallback.

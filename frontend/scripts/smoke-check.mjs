@@ -18,6 +18,7 @@ const requiredHtml = [
   "fileInput",
   "langAr",
   "auditStatus",
+  "stageAudit",
 ];
 
 const requiredJs = [
@@ -28,6 +29,8 @@ const requiredJs = [
   "validateUploadWithBackend",
   "postJson",
   "runAnalysis",
+  "renderWorkflowTrace",
+  "workflow_trace",
   "/api/analyze",
   "/api/upload/validate",
   "renderEvidence",
