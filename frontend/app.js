@@ -6,6 +6,8 @@ const state = {
   voiceStream: null,
   voiceMuted: false,
   activeFilter: "all",
+  analysisSource: "static",
+  report: null,
 };
 
 const t = {
@@ -55,6 +57,9 @@ const t = {
     endVoice: "End",
     profilePlaceholder: "Confirm HVAC subcontractor capacity before final bid gate.",
     chatPlaceholder: "Ask about risks, evidence, or strategy...",
+    analysisReady: "Analysis complete. Bid recommendation is ready with evidence audit.",
+    analysisFallback: "Using reliable sample analysis while backend is unavailable.",
+    analysisRunning: "Running agent workflow...",
   },
   ar: {
     track: "وكلاء للأعمال",
@@ -102,10 +107,13 @@ const t = {
     endVoice: "إنهاء",
     profilePlaceholder: "أكد قدرة مقاول التغطية الفنية قبل قرار التقديم النهائي.",
     chatPlaceholder: "اسأل عن المخاطر أو الأدلة أو الاستراتيجية...",
+    analysisReady: "اكتمل التحليل. توصية التقديم جاهزة مع تدقيق الأدلة.",
+    analysisFallback: "يتم استخدام التحليل التجريبي الموثوق لأن الخلفية غير متاحة.",
+    analysisRunning: "جار تشغيل سير العمل الوكيلي...",
   },
 };
 
-const evidence = [
+let evidence = [
   {
     id: "eligibility-1",
     type: "eligibility",
@@ -171,6 +179,10 @@ const questions = [
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
+function localized(key) {
+  return t[state.language][key] || t.en[key] || key;
+}
+
 function escapeText(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -229,6 +241,136 @@ function renderLists() {
     .join("");
 }
 
+function formatRecommendation(recommendation) {
+  const value = String(recommendation || "bid").replaceAll("_", " ");
+  return state.language === "ar"
+    ? value.toUpperCase()
+    : value.toUpperCase();
+}
+
+function evidenceType(item) {
+  const tags = Array.isArray(item.tags) ? item.tags.join(" ").toLowerCase() : "";
+  const text = `${item.id || ""} ${item.concept_id || ""} ${item.title || ""} ${tags}`.toLowerCase();
+  if (text.includes("deadline")) return "deadline";
+  if (text.includes("risk")) return "risk";
+  if (text.includes("eligib") || text.includes("compliance")) return "eligibility";
+  return "strategy";
+}
+
+function applyReport(report, source = "api") {
+  state.report = report;
+  state.analysisSource = source;
+  $("#recommendation").textContent = formatRecommendation(report.recommendation);
+  $("#confidence").textContent = `${Math.round(Number(report.confidence || 0) * 100)}%`;
+  $("#summaryTitle").textContent =
+    state.language === "ar" ? "نتيجة تحليل الوكلاء" : "Agent workflow result";
+  $("#summaryText").textContent = report.executive_summary || t[state.language].summaryText;
+  const audit = report.audit || {};
+  $("#auditStatus").textContent = audit.status === "pass"
+    ? t[state.language].auditPass
+    : state.language === "ar" ? "بحاجة لمراجعة" : "Needs review";
+  const audited = Number(audit.audited_claims || 0);
+  const unsupported = Number(audit.unsupported_claim_count || 0);
+  const auditText = state.language === "ar"
+    ? `تم فحص ${audited} ادعاءات، ${unsupported} غير مدعومة`
+    : `${audited} claims checked, ${unsupported} unsupported`;
+  const auditSpan = document.querySelector(".audit-tile span");
+  if (auditSpan) auditSpan.textContent = auditText;
+
+  if (Array.isArray(report.evidence) && report.evidence.length) {
+    evidence = report.evidence.slice(0, 8).map((item) => ({
+      id: item.id,
+      type: evidenceType(item),
+      title: item.title,
+      titleAr: item.title,
+      agent: "Evidence Tool",
+      excerpt: item.excerpt,
+      excerptAr: item.excerpt,
+      citation: item.citation,
+    }));
+  }
+  if (Array.isArray(report.findings) && report.findings.length) {
+    checklist.length = 0;
+    report.findings.slice(0, 7).forEach((finding) => {
+      checklist.push([finding.summary, finding.status === "pass" ? "pass" : "watch"]);
+    });
+  }
+  if (Array.isArray(report.risks) && report.risks.length) {
+    risks.length = 0;
+    report.risks.forEach((risk) => {
+      risks.push([risk.title, risk.severity, risk.mitigation]);
+    });
+  }
+  if (Array.isArray(report.clarification_questions) && report.clarification_questions.length) {
+    questions.length = 0;
+    report.clarification_questions.forEach((item) => {
+      questions.push(item.question);
+    });
+  }
+  renderEvidence();
+  renderLists();
+}
+
+function fallbackReport() {
+  return {
+    recommendation: "bid",
+    confidence: Number($("#confidence").textContent.replace("%", "")) / 100 || 0.95,
+    executive_summary: t[state.language].summaryText,
+    audit: {
+      status: "pass",
+      audited_claims: 7,
+      unsupported_claim_count: 0,
+    },
+    evidence,
+    findings: checklist.map(([summary, status]) => ({
+      summary,
+      status,
+    })),
+    risks: risks.map(([title, severity, mitigation]) => ({
+      title,
+      severity,
+      mitigation,
+    })),
+    clarification_questions: questions.map((question) => ({ question })),
+  };
+}
+
+async function postJson(path, payload, timeoutMs = 7000) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+async function runAnalysis() {
+  addChatMessage(localized("analysisRunning"));
+  try {
+    const result = await postJson("/api/analyze", {
+      tender_id: $("#tenderSelect").value,
+      profile_id: "default-bidder-profile",
+      language: state.language,
+      voice: false,
+    });
+    applyReport(result.report, "api");
+    addChatMessage(localized("analysisReady"));
+  } catch (error) {
+    applyReport(fallbackReport(), "static");
+    addChatMessage(localized("analysisFallback"));
+  }
+}
+
 function updateScenario() {
   const capacity = Number($("#capacitySlider").value);
   const margin = Number($("#marginSlider").value);
@@ -274,6 +416,31 @@ function validateUpload(file) {
   status.textContent = state.language === "ar" ? "تم قبول بيانات الملف. لن نحفظ الملف." : "File metadata accepted. We do not save your file.";
 }
 
+async function validateUploadWithBackend(file) {
+  if (!file) return;
+  validateUpload(file);
+  const status = $("#uploadStatus");
+  if (status.classList.contains("error")) return;
+  try {
+    const result = await postJson("/api/upload/validate", {
+      filename: file.name,
+      size_bytes: file.size,
+    }, 4000);
+    if (!result.accepted) {
+      status.textContent = result.reason || result.message || status.textContent;
+      status.classList.add("error");
+      return;
+    }
+    status.textContent = state.language === "ar"
+      ? "تم قبول بيانات الملف من الخلفية. لن نحفظ الملف."
+      : "File metadata accepted by backend. We do not save your file.";
+  } catch (error) {
+    status.textContent = state.language === "ar"
+      ? "تم قبول بيانات الملف محليا. الخلفية غير متاحة الآن."
+      : "File metadata accepted locally. Backend validation is unavailable.";
+  }
+}
+
 async function startVoice() {
   $("#voiceOverlay").classList.remove("hidden");
   const card = $(".voice-card");
@@ -311,9 +478,7 @@ function highlightEvidence(id) {
 
 $("#langEn").addEventListener("click", () => applyLanguage("en"));
 $("#langAr").addEventListener("click", () => applyLanguage("ar"));
-$("#analyzeButton").addEventListener("click", () => {
-  addChatMessage(state.language === "ar" ? "تم تشغيل التحليل. توصية التقديم جاهزة مع تدقيق الأدلة." : "Analysis complete. Bid recommendation is ready with evidence audit.");
-});
+$("#analyzeButton").addEventListener("click", runAnalysis);
 $("#sendChat").addEventListener("click", () => {
   const value = $("#chatInput").value.trim();
   if (!value) return;
@@ -322,7 +487,7 @@ $("#sendChat").addEventListener("click", () => {
   addChatMessage(state.language === "ar" ? "أقوى دليل هو توافق الأهلية، وأهم مخاطرة هي تغطية HVAC." : "The strongest evidence is eligibility fit; the main watch item is HVAC coverage.");
   highlightEvidence("risks-1");
 });
-$("#fileInput").addEventListener("change", (event) => validateUpload(event.target.files[0]));
+$("#fileInput").addEventListener("change", (event) => validateUploadWithBackend(event.target.files[0]));
 $("#voiceButton").addEventListener("click", startVoice);
 $("#endVoice").addEventListener("click", stopVoice);
 $("#muteVoice").addEventListener("click", () => {

@@ -25,6 +25,11 @@ const requiredJs = [
   "applyLanguage",
   "startVoice",
   "validateUpload",
+  "validateUploadWithBackend",
+  "postJson",
+  "runAnalysis",
+  "/api/analyze",
+  "/api/upload/validate",
   "renderEvidence",
   "ar: {",
 ];

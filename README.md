@@ -6,7 +6,7 @@ TenderLens Agentic AI helps a supplier decide whether they can and should bid fo
 
 ## Current Status
 
-Foundation, public repo, ADK scaffold, deterministic OKF/RAG services, sample data, unit tests, API route skeleton, voice gateway skeleton, and the first static cockpit UI slice are in place.
+Foundation, public repo, ADK scaffold, deterministic OKF/RAG services, sample data, A2A audit foundation, app-local MCP server, conformance tests, TenderLens eval dataset, API routes, voice gateway skeleton, and a Vercel-deployed cockpit UI are in place.
 
 Public repository: https://github.com/syedzish/tenderlens-agentic-ai
 
@@ -73,10 +73,11 @@ Use `.env.example` as the non-secret template.
 npm test
 npm run build
 .venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"
+.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"
 .venv\Scripts\python.exe -c "from app.fast_api_app import app; print(app.title)"
 ```
 
-Current local limitation: `agents-cli run` LLM smoke requires configured Gemini/Vertex credentials. Deterministic services, ADK root-agent import, FastAPI import, FastAPI API route smoke, unit tests, and static frontend build currently pass locally.
+Current local limitation: `agents-cli run` and full `agents-cli eval generate` need a longer configured Gemini/Vertex runtime pass. Deterministic services, ADK root-agent import, FastAPI import, FastAPI API route smoke, unit tests, conformance tests, and static frontend build currently pass locally.
 
 ## Privacy Claims
 

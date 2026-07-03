@@ -4,9 +4,9 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 02:14 Asia/Riyadh
+- Last updated: 2026-07-03 08:32 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit TenderLens eval dataset and local eval metric
+- Current task: Frontend/API wiring and backend smoke hardening
 - Status: In progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
@@ -418,7 +418,7 @@ This file is the operational handoff point. Update it at the start and completio
 
 ### 2026-07-03 02:14 Asia/Riyadh - Add TenderLens Eval Dataset And Local Metric
 
-- Status: In progress
+- Status: Completed
 - Files touched:
   - `tests/eval/datasets/basic-dataset.json`
   - `tests/eval/eval_config.yaml`
@@ -440,10 +440,38 @@ This file is the operational handoff point. Update it at the start and completio
   - `npm test` from repository root - frontend smoke passing.
   - `agents-cli eval generate --dataset tests/eval/datasets/basic-dataset.json` - failed in sandbox due uv cache permissions.
   - Same command with escalation - exceeded 120 second timeout; stopped leftover eval child processes.
+  - GitHub/Vercel commit status for `02bf0e2` - success.
 - Known blockers:
   - Full `agents-cli eval generate` still needs a longer credential/configured runtime pass.
   - No trace files were produced by the timed-out eval attempt.
-- Next exact action: Commit/push the eval dataset/metric slice, then continue with frontend/API wiring or backend smoke hardening.
+- Next exact action: Continue with frontend/API wiring or backend smoke hardening.
+
+### 2026-07-03 08:32 Asia/Riyadh - Start Frontend/API Wiring And Backend Smoke Hardening
+
+- Status: In progress
+- Files touched:
+  - `frontend/app.js`
+  - `frontend/scripts/smoke-check.mjs`
+  - `tests/unit/test_api_routes.py`
+  - `README.md`
+  - `docs/EVALS.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Make the cockpit call `/api/analyze` when a backend is available.
+  - Keep curated static analysis fallback for the public Vercel demo before Agent Runtime is deployed.
+  - Make upload validation try `/api/upload/validate` after local 5 MB/type checks, with local fallback if backend is unavailable.
+  - Add deterministic FastAPI route tests instead of relying only on live ADK/LLM integration tests.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` from repository root - frontend smoke passing.
+  - `npm run build` from repository root - static frontend build passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 24 tests passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+  - `.venv\Scripts\python.exe -m py_compile tests\eval\metrics.py` - passed.
+- Known blockers:
+  - Live backend deployment remains pending explicit Agent Runtime approval.
+  - Playwright interaction coverage for the API fallback path is still pending.
+- Next exact action: Run final verification, commit/push this wiring slice, then verify Vercel status.
 
 ## Handoff Notes
 

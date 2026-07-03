@@ -8,6 +8,7 @@ Evals should prove the agent is grounded, useful, safe, and clearly agentic.
 
 Unit tests:
 
+- FastAPI route smoke for health, analysis, Arabic analysis, upload validation, and strategy.
 - OKF parser
 - OKF validator
 - Citation extraction
@@ -27,6 +28,7 @@ Unit tests:
 
 Integration tests:
 
+- Frontend API-first analysis fallback is covered by smoke checks and should get Playwright interaction coverage next.
 - MCP tools return expected structures.
 - Retrieval works over sample OKF.
 - Bidder profile matching works against requirements.
