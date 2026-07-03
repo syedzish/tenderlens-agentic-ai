@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix frontend run build",
-    "test": "npm --prefix frontend test"
+    "test": "npm --prefix frontend test",
+    "test:browser": "playwright test"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
   }
 }

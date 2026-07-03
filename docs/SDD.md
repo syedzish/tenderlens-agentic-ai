@@ -20,17 +20,24 @@ Acceptance:
 - Material claims include citations.
 - A2A audit status is visible before the final report is shown.
 
-### Secure Upload
+### Tender Files Upload
 
-As a bidding manager, I want to upload a small tender document so that I can test my own opportunity without the app storing my file.
+As a bidding manager, I want to upload my Main Tender File and optional Supporting Files so that I can test my own opportunity without the app storing my files.
 
 Acceptance:
 
 - Upload accepts only supported extensions where parser support exists.
-- Files over 5 MB are rejected before parsing.
+- Exactly one Main Tender File is required for uploaded analysis.
+- Supporting Files are optional and add evidence/context.
+- More than 5 files total are rejected before parsing.
+- Files over 5 MB each are rejected before parsing.
+- Tender Files over 12 MB total are rejected before parsing.
 - Unsupported files show a clear error.
+- TXT, MD, and DOCX can be analyzed transiently in v1 with current parser support.
+- PDF files are validated but text analysis must clearly state when PDF parsing is not enabled; the app must not pretend to analyze unread PDF content.
 - Uploaded file bytes and transient OKF are deleted after analysis.
 - Raw uploaded text is not logged or persisted.
+- Uploaded analysis returns source-document metadata and citations by Main Tender File or Supporting File.
 - Voice can discuss uploaded results only after upload processing completes.
 
 ### Evidence War Room
@@ -84,6 +91,7 @@ Acceptance:
 - interaction mode: `typing` or `voice`
 - optional user question
 - optional scenario assumptions
+- uploaded Tender Files metadata when using Main Tender File and Supporting Files
 
 ### Bidder Profile
 
@@ -144,9 +152,10 @@ Required fields:
 
 ## Non-Functional Requirements
 
-- Public demo opens without login or paywall.
-- Curated sample path is reliable.
-- Upload max is 5 MB.
+- Public link opens without login or paywall.
+- Preloaded Example Files path is reliable and transparent.
+- Pre-generated Example Results conserve API calls for the preloaded files.
+- Uploaded Tender Files require one Main Tender File, allow optional Supporting Files, and are limited to 5 files total, 5 MB per file, and 12 MB total.
 - Typed mode works even if voice fails.
 - Voice session duration default is 300 seconds.
 - No secrets in repo.

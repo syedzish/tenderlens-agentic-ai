@@ -4,14 +4,252 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 08:41 Asia/Riyadh
-- Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
-- Current task: Commit trace-driven workflow strip and voice smoke tests
-- Status: In progress
+- Last updated: 2026-07-03 19:29 Asia/Riyadh
+- Current milestone: Final verification, handoff, and push
+- Current task: Added `STEPS_TO_FINISH.md` and completed local verification; ready to commit and push approved worktree.
+- Status: Verified locally; commit/push in progress
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
 
 ## Active Task
+
+### 2026-07-03 19:22 Asia/Riyadh - Start Final Finish Guide And Approved Push
+
+- Status: Started
+- Files touched:
+  - `BOOKMARK.md`
+  - `STEPS_TO_FINISH.md`
+- Decisions made:
+  - User approved committing and pushing the broader project setup changes.
+  - Add a simple finish guide that separates what is already implemented from what the user still needs to do for Kaggle submission and optional live cloud services.
+  - Keep limitations transparent: Preloaded Example Files use pre-generated example results; uploaded TXT/MD/DOCX Tender Files can be analyzed; PDF text analysis and live Agent Runtime/Gemini Live deployment require follow-up setup.
+- Tests run: Not yet in this final task; verification will run after the guide is added.
+- Known blockers:
+  - None for local verification and push.
+  - Optional live Agent Runtime/Gemini Live deployment still needs cloud credentials and explicit deployment approval.
+- Next exact action: Add `STEPS_TO_FINISH.md`, run full verification, commit, and push to GitHub.
+
+### 2026-07-03 19:29 Asia/Riyadh - Complete Final Finish Guide And Local Verification
+
+- Status: Completed
+- Files touched:
+  - `BOOKMARK.md`
+  - `README.md`
+  - `STEPS_TO_FINISH.md`
+- Decisions made:
+  - Added `STEPS_TO_FINISH.md` as the simple user-facing checklist for Vercel, Kaggle video/writeup/assets, and optional live cloud agent setup.
+  - Added a README pointer to `STEPS_TO_FINISH.md`.
+  - Kept remaining user actions explicit: verify latest Vercel deployment, record YouTube video, create Kaggle writeup, attach links/assets, and optionally configure live Agent Runtime/Gemini Live credentials.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 40 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - `npx playwright test` - 12 tests passed.
+  - `git diff --check` - passed with only normal LF-to-CRLF warnings.
+  - Secret-pattern scan - only false positives from `risk-` ids and tokenizer constant; no credentials found.
+- Known blockers:
+  - None for committing and pushing.
+  - Optional live Agent Runtime/Gemini Live setup still needs cloud credentials and Vercel environment variables.
+- Next exact action: Commit all approved project changes and push to `origin/main`.
+
+### 2026-07-03 15:18 Asia/Riyadh - Start Preloaded Results And Friendly Navigation Update
+
+- Status: Started
+- Files touched:
+  - `BOOKMARK.md`
+- Decisions made:
+  - Use the user-approved wording `Tender Questions` for the main navigation label.
+  - Use transparent product copy: `Preloaded Example Files`, `Pre-generated example result`, and `Preloaded example files use pre-generated example results so you can explore TenderLens quickly and conserve API calls. Your uploaded Tender Files are analyzed when you run them.`
+  - Avoid user-facing `demo`, `production`, and fake-sounding terminology in the main UI.
+  - Move voice from the global header into Discuss with TenderLens.
+- Tests run: Not yet; this is the start marker before edits.
+- Known blockers: None.
+- Next exact action: Patch `PLAN.md`, then update `frontend/index.html`, `frontend/app.js`, `frontend/styles.css`, and smoke checks.
+
+### 2026-07-03 15:36 Asia/Riyadh - Complete Preloaded Results And Friendly Navigation Update
+
+- Status: Completed
+- Files touched:
+  - `PLAN.md`
+  - `BOOKMARK.md`
+  - `frontend/index.html`
+  - `frontend/app.js`
+  - `frontend/styles.css`
+  - `frontend/scripts/smoke-check.mjs`
+  - `frontend/dist/index.html`
+  - `frontend/dist/app.js`
+  - `frontend/dist/styles.css`
+  - `artifacts/frontend-desktop-friendly-ui.png`
+  - `artifacts/frontend-mobile-friendly-ui.png`
+- Decisions made:
+  - Expanded the plan with detailed How to Use requirements, Tender Map explanation, Tender Questions explanation, Briefing Deck carousel explanation, example output preview, sample files section, privacy note, and example Discuss with TenderLens questions.
+  - Added the approved preloaded-file copy: Preloaded Example Files, Pre-generated example result, API-call conservation wording, and uploaded Tender Files analyzed when run.
+  - Renamed the main user-facing Questions feature to Tender Questions while keeping Ask the Issuer and Prepare to Answer as page sections.
+  - Updated the current static frontend to use the approved nav order: How to Use, Analysis, Discuss with TenderLens, Tender Map, Briefing Deck, Tender Questions.
+  - Moved the voice button into Discuss with TenderLens and verified no header voice button remains.
+  - Replaced dominant technical labels in the visible UI with friendly labels: Proof Behind This Recommendation, Tender Map, Evidence Checked, and Discuss with TenderLens.
+  - Added a prominent How to Use section, pre-generated example result banner, Tender Files upload copy with Main Tender File and Supporting Files, Briefing Deck carousel, Tender Questions sections, and first-time help popup.
+  - Added smoke checks that fail if old visible labels return in `frontend/index.html`.
+  - Updated the old UI approval-gate wording so implementation can proceed after the user explicitly approves or instructs Codex to start working.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed and regenerated `frontend/dist/`.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 26 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - Headless Playwright smoke against `frontend/index.html` - passed; verified nav order, voice button inside Discuss, no header voice button, and pre-generated example banner.
+  - Follow-up `npm test` after the final plan wording tweak - passed.
+  - Follow-up `node --check frontend\app.js` after the final plan wording tweak - passed.
+  - `rg -n "UI implementation must pause|TenderLense|tenderlense" PLAN.md BOOKMARK.md README.md frontend/index.html frontend/app.js` - no matches.
+- Known blockers:
+  - Git status/diff check could not complete from the sandbox because the repository has Windows dubious-ownership protection and the sandbox denied the Git executable when using a one-off safe-directory flag. No global Git config was changed.
+- Next exact action: Continue deeper implementation from the now-updated frontend: wire richer multi-file upload behavior into backend/API, or proceed to deployment/push once Git access is available.
+
+### 2026-07-03 16:00 Asia/Riyadh - Complete Tender Files Validation Contract
+
+- Status: Completed
+- Files touched:
+  - `app/services/upload/validation.py`
+  - `app/mcp/tools.py`
+  - `app/mcp/toolset.py`
+  - `app/mcp/server.py`
+  - `app/api/routes.py`
+  - `frontend/app.js`
+  - `frontend/scripts/smoke-check.mjs`
+  - `frontend/dist/index.html`
+  - `frontend/dist/app.js`
+  - `frontend/dist/styles.css`
+  - `tests/unit/test_upload_validation.py`
+  - `tests/unit/test_api_routes.py`
+  - `tests/unit/test_mcp_server.py`
+  - `tests/frontend/cockpit-interactions.spec.mjs`
+  - `docs/PRIVACY.md`
+  - `docs/SDD.md`
+  - `docs/SOFTWARE_DESIGN.md`
+  - `README.md`
+  - `artifacts/frontend-desktop-friendly-ui.png`
+  - `artifacts/frontend-mobile-friendly-ui.png`
+- Decisions made:
+  - Added structured Tender Files metadata validation with exactly one Main Tender File, optional Supporting Files, 5 files total, 5 MB per file, and 12 MB total.
+  - Kept the existing single-file `/api/upload/validate` endpoint for compatibility.
+  - Added `/api/upload/tender-files/validate` for set-level validation matching the UI.
+  - Added `validate_tender_files` to MCP tools and strict ADK tool filter.
+  - Updated frontend validation to call the set-level endpoint when backend is available and retain local validation when it is unavailable.
+  - Updated Playwright specs to match the approved user-facing wording and first-time welcome popup.
+  - Aligned privacy, SDD, software design, and README docs with Tender Files and pre-generated example result wording.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed and regenerated `frontend/dist/`.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 34 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - `npx playwright test` - 12 tests passed across desktop and mobile projects.
+  - Headless screenshot refresh generated `artifacts/frontend-desktop-friendly-ui.png` and `artifacts/frontend-mobile-friendly-ui.png`.
+  - Final `git diff --check` with one-off safe-directory flag - passed; only normal Windows LF-to-CRLF warnings were reported.
+- Known blockers:
+  - None for local development and verification.
+  - Read-only Git status/diff works with a one-off `safe.directory` flag under escalation. No global Git config was changed.
+  - No commit/push was made because the worktree contains broader uncommitted project setup changes as well as this turn's edits.
+- Next exact action: Continue with richer backend analysis behavior for uploaded Tender Files, or commit/push the verified local work once the user confirms that the broader worktree should be included.
+
+### 2026-07-03 18:43 Asia/Riyadh - Start Uploaded Tender Files Content Analysis
+
+- Status: Started
+- Files touched:
+  - `BOOKMARK.md`
+- Decisions made:
+  - Continue from the previous next action by adding a transient uploaded Tender Files analysis path.
+  - Implement live uploaded content analysis for TXT, MD, and DOCX with standard-library parsing.
+  - Keep PDF metadata validation but do not claim reliable PDF text analysis until a parser dependency is intentionally added.
+  - Add source-document metadata to decision reports so uploaded evidence can cite Main Tender File or Supporting File safely.
+- Tests run:
+  - Not yet; start marker before edits.
+- Known blockers:
+  - None.
+- Next exact action: Add extraction service, source document contracts, upload analysis workflow/API route, tests, and docs alignment.
+
+### 2026-07-03 19:04 Asia/Riyadh - Complete Uploaded Tender Files Content Analysis
+
+- Status: Completed
+- Files touched:
+  - `BOOKMARK.md`
+  - `README.md`
+  - `app/api/routes.py`
+  - `app/services/contracts.py`
+  - `app/services/upload/extraction.py`
+  - `app/workflows/tender_workflow.py`
+  - `app/workflows/uploaded_tender_workflow.py`
+  - `docs/PRIVACY.md`
+  - `docs/SDD.md`
+  - `docs/SOFTWARE_DESIGN.md`
+  - `frontend/app.js`
+  - `frontend/index.html`
+  - `frontend/scripts/smoke-check.mjs`
+  - `frontend/dist/index.html`
+  - `frontend/dist/app.js`
+  - `frontend/dist/styles.css`
+  - `tests/unit/test_api_routes.py`
+  - `tests/unit/test_upload_extraction_and_analysis.py`
+  - `artifacts/frontend-desktop-friendly-ui.png`
+  - `artifacts/frontend-mobile-friendly-ui.png`
+- Decisions made:
+  - Added `SourceDocument` to `DecisionReport` so curated and uploaded analysis can report safe source metadata.
+  - Added in-memory extraction for TXT/MD and DOCX using the standard library.
+  - Kept PDF bounded and honest: PDF metadata can validate, but PDF text analysis returns a clear 422 until a reliable parser dependency is intentionally added.
+  - Added `/api/upload/analyze` multipart route for one Main Tender File plus optional Supporting Files.
+  - Added `run_uploaded_tender_files_analysis` with source-file citations, specialist findings, A2A quality gate, workflow trace, and uploaded-file source documents.
+  - Updated frontend Run Analysis: preloaded files load Pre-generated Example Results; uploaded files call `/api/upload/analyze` and update the banner to Uploaded Tender Files when successful.
+  - Updated user-facing upload copy to say TXT, MD, and DOCX can be analyzed now, while PDF text reading will be added after parser support is stable.
+  - Aligned README, SDD, Software Design, and Privacy docs with the current uploaded-file analysis capability.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed and regenerated `frontend/dist/`.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 40 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - `npx playwright test` - 12 tests passed across desktop and mobile projects.
+  - Refreshed screenshots: `artifacts/frontend-desktop-friendly-ui.png` and `artifacts/frontend-mobile-friendly-ui.png`.
+  - `git diff --check` with one-off safe-directory flag - passed; only normal Windows LF-to-CRLF warnings were reported.
+- Known blockers:
+  - No local development blocker.
+  - No commit/push was made because the worktree contains broader uncommitted project setup changes and the user has not explicitly approved committing all of them.
+- Next exact action: Either commit/push the verified worktree if user approves, or continue with the next implementation slice: richer uploaded Tender Files frontend progress states and source-document display in Proof Behind This Recommendation / Tender Map.
+
+### 2026-07-03 19:12 Asia/Riyadh - Complete Source Files Frontend Display
+
+- Status: Completed
+- Files touched:
+  - `BOOKMARK.md`
+  - `frontend/index.html`
+  - `frontend/app.js`
+  - `frontend/styles.css`
+  - `frontend/scripts/smoke-check.mjs`
+  - `frontend/dist/index.html`
+  - `frontend/dist/app.js`
+  - `frontend/dist/styles.css`
+  - `tests/frontend/cockpit-interactions.spec.mjs`
+  - `artifacts/frontend-desktop-friendly-ui.png`
+  - `artifacts/frontend-mobile-friendly-ui.png`
+- Decisions made:
+  - Added a compact Source Files section inside Tender Map so source-document metadata is visible to users.
+  - Prepared reports show Preloaded Example Files as the source.
+  - Uploaded analysis results can show Main Tender File and Supporting File source metadata when returned by `/api/upload/analyze`.
+  - Source Files display is intentionally compact so it supports evidence traceability without cluttering the cockpit.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed and regenerated `frontend/dist/`.
+  - `npx playwright test` - 12 tests passed across desktop and mobile projects.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 40 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - Screenshot refresh generated `artifacts/frontend-desktop-friendly-ui.png` and `artifacts/frontend-mobile-friendly-ui.png`.
+  - `git diff --check` with one-off safe-directory flag - passed; only normal Windows LF-to-CRLF warnings were reported.
+- Known blockers:
+  - No local development blocker.
+  - No commit/push was made because the worktree contains broader uncommitted project setup changes and explicit approval is still needed before including all of them in a push.
+- Next exact action: Commit/push verified worktree if approved, or continue with uploaded-analysis UX polish: progress states, error-state copy for PDF parser unavailability, and source-file citations in individual evidence cards.
 
 ### 2026-07-02 23:05 Asia/Riyadh - Start Foundation Docs
 
@@ -512,9 +750,89 @@ This file is the operational handoff point. Update it at the start and completio
   - `npm run build` from repository root - static frontend build passing.
   - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 26 tests passing.
   - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+  - GitHub/Vercel commit status for `5ef05e2` - success.
+  - Playwright desktop screenshot of public Vercel app - `C:\tmp\tenderlens-latest-desktop.png`.
+  - Playwright mobile screenshot of public Vercel app - `C:\tmp\tenderlens-latest-mobile.png`.
 - Known blockers:
   - Playwright interaction coverage for API fallback path remains pending.
-- Next exact action: Commit/push trace-driven workflow strip and voice smoke tests, then verify Vercel status.
+- Next exact action: Continue with Playwright interaction coverage for API fallback path or prepare Agent Runtime deployment inputs, without deploying until explicit approval.
+
+### 2026-07-03 08:48 Asia/Riyadh - Start Playwright Interaction Coverage And Repo Hygiene
+
+- Status: In progress
+- Files touched:
+  - `.gitignore`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Keep generated local `.agents/skills` material out of the public project repository.
+  - Continue with Playwright interaction coverage before Agent Runtime deployment prep.
+- Tests run:
+  - `Get-ChildItem -Force .agents`
+  - `rg --files .agents`
+- Known blockers:
+  - None.
+- Next exact action: Add Playwright/browser coverage for the public cockpit interaction path, including upload validation and language/RTL behavior.
+
+### 2026-07-03 13:46 Asia/Riyadh - Start Plan Refinement For Tender Files And Premium UI
+
+- Status: Started
+- Files touched:
+  - `PLAN.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Update the plan additively; do not shorten or replace the existing ADK/A2A/MCP/OKF/RAG architecture details.
+  - Use user-friendly upload wording in the app: `Tender Files`, `Main Tender File`, and `Supporting Files`, not the technical name "Tender Package".
+  - Align upload planning with the previous TenderLens AI app's bounded multi-file model while adapting it for bidder-side tender decisioning.
+  - Add premium UI direction: final navigation order, prominent Briefing Deck slide carousel, dedicated icon colors, logo direction, and richer procurement-cockpit styling.
+  - After plan update, generate visual screen/logo concepts and wait for user approval before further UI coding.
+- Tests run: None; planning/documentation update only.
+- Known blockers:
+  - UI implementation remains paused until generated screens/logo direction are approved.
+- Next exact action: Patch `PLAN.md` with the approved refinements, then generate final app design and logo concept images.
+
+### 2026-07-03 13:58 Asia/Riyadh - Complete Plan Refinement For Tender Files And Premium UI
+
+- Status: Completed
+- Files touched:
+  - `PLAN.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Replaced single-upload planning with user-facing Tender Files planning: Main Tender File plus optional Supporting Files.
+  - Set upload limits to 5 files total, 5 MB per file, and 12 MB total.
+  - Added source precedence: Main Tender File is authoritative, Supporting Files add evidence, addenda can override only when clearly labeled/versioned.
+  - Added file-level citations, `source_documents` OKF/RAG metadata, no evidence mixing across uploaded file sets, and transient cleanup/privacy rules.
+  - Locked primary navigation order: How to Use, Analysis, Discuss with TenderLens, Tender Map, Briefing Deck, Questions.
+  - Added prominent Briefing Deck carousel requirements and recommended 8-slide sequence.
+  - Added dedicated premium icons/colors, premium logo direction, and richer procurement-cockpit visual direction.
+  - Added testing expectations for Tender Files validation, source citations, cleanup, Briefing Deck carousel, icon colors, and premium visual language.
+- Tests run:
+  - `rg -n "Tender Package|Ask TenderLens|Secure Upload|single uploaded" PLAN.md` - no matches.
+- Known blockers:
+  - UI implementation remains paused until generated screens/logo direction are approved.
+- Next exact action: Generate final app design and logo concept images for review.
+
+### 2026-07-03 14:20 Asia/Riyadh - Complete Visual Concept Generation For Approval
+
+- Status: Completed; waiting for user approval
+- Files touched:
+  - `BOOKMARK.md`
+- Decisions made:
+  - Generated a cohesive concept set using the approved navigation order, Tender Files model, premium icon colors, Briefing Deck carousel, and richer procurement-cockpit palette.
+  - Kept generated images as preview artifacts under Codex generated image storage; do not implement UI until user approves or requests revisions.
+  - Discarded the first Discuss with TenderLens concept because it showed a file over the 5 MB per-file limit; use the revised Discuss concept instead.
+- Selected generated images:
+  - Brand/logo board: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a4795f3dcb8819bab293aac99dd441f.png`
+  - How to Use screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a47964b0fdc819bbfe0a6b5dd38a815.png`
+  - Analysis screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a4796cd95cc819b80d9c3011e1fb59c.png`
+  - Discuss with TenderLens screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a4797e3d1d0819b9b72242452e75452.png`
+  - Tender Map screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a47986f668c819b814371bdffd7038c.png`
+  - Briefing Deck screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a4798b8dd28819b982c3c20a7688c56.png`
+  - Questions screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_0c411222a0616793016a479a54347c8191bbf4b61ddc07750a.png`
+- Tests run:
+  - Generated image file listing to confirm selected artifacts exist.
+- Known blockers:
+  - UI implementation remains paused until user approves the visual direction.
+- Next exact action: Wait for user feedback/approval, then either revise concepts or implement the approved UI direction.
 
 ## Handoff Notes
 

@@ -10,7 +10,11 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand-lockup" aria-label="TenderLens Agentic AI">
-          <div class="brand-mark">TL</div>
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-lens"></span>
+            <span class="brand-page"></span>
+            <span class="brand-path"></span>
+          </div>
           <div>
             <p class="eyebrow" data-i18n="track">Agents for Business</p>
             <h1>TenderLens Agentic AI</h1>
@@ -21,29 +25,93 @@
             <button class="segment active" id="langEn" type="button">EN</button>
             <button class="segment" id="langAr" type="button">AR</button>
           </div>
-          <button class="voice-button" id="voiceButton" type="button">
-            <span class="button-icon" aria-hidden="true"></span>
-            <span data-i18n="voiceMode">Voice Mode</span>
-          </button>
         </div>
       </header>
 
-      <section class="workspace">
+      <nav class="feature-nav" aria-label="TenderLens sections">
+        <a class="nav-item nav-guide" href="#how-to-use"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navHowTo">How to Use</span></a>
+        <a class="nav-item nav-analysis" href="#analysis"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navAnalysis">Analysis</span></a>
+        <a class="nav-item nav-discuss" href="#discuss"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navDiscuss">Discuss with TenderLens</span></a>
+        <a class="nav-item nav-map" href="#tender-map"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navMap">Tender Map</span></a>
+        <a class="nav-item nav-deck" href="#briefing-deck"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navDeck">Briefing Deck</span></a>
+        <a class="nav-item nav-questions" href="#tender-questions"><span class="nav-icon" aria-hidden="true"></span><span data-i18n="navQuestions">Tender Questions</span></a>
+      </nav>
+
+      <section class="how-to-use-section panel" id="how-to-use">
+        <div class="panel-heading horizontal">
+          <div>
+            <p class="eyebrow" data-i18n="howToEyebrow">How to Use</p>
+            <h2 data-i18n="howToTitle">Start with files, then follow the evidence</h2>
+          </div>
+          <span class="result-badge" data-i18n="preparedBadge">Pre-generated example result</span>
+        </div>
+        <div class="guide-grid">
+          <article class="guide-card">
+            <span class="guide-step">1</span>
+            <h3 data-i18n="guideFilesTitle">Use preloaded files or upload yours</h3>
+            <p data-i18n="guideFilesText">Preloaded example files use pre-generated example results so you can explore TenderLens quickly and conserve API calls. Your uploaded Tender Files are analyzed when you run them.</p>
+          </article>
+          <article class="guide-card">
+            <span class="guide-step">2</span>
+            <h3 data-i18n="guideAnalysisTitle">Review Analysis</h3>
+            <p data-i18n="guideAnalysisText">See the bid/no-bid recommendation, confidence, gaps, risks, and next actions in one decision view.</p>
+          </article>
+          <article class="guide-card">
+            <span class="guide-step">3</span>
+            <h3 data-i18n="guideDiscussTitle">Discuss with TenderLens</h3>
+            <p data-i18n="guideDiscussText">Ask by typing or talking. Try: Can we bid? What are the top risks? What should we ask the issuer?</p>
+          </article>
+          <article class="guide-card">
+            <span class="guide-step">4</span>
+            <h3 data-i18n="guideMapTitle">Explore Tender Map</h3>
+            <p data-i18n="guideMapText">Tender Map connects requirements, evidence, deadlines, risks, gaps, and actions so the recommendation is easy to inspect.</p>
+          </article>
+          <article class="guide-card">
+            <span class="guide-step">5</span>
+            <h3 data-i18n="guideQuestionsTitle">Use Tender Questions</h3>
+            <p data-i18n="guideQuestionsText">Ask the Issuer lists clarification questions. Prepare to Answer shows what evaluators may ask you after reading your bid.</p>
+          </article>
+          <article class="guide-card">
+            <span class="guide-step">6</span>
+            <h3 data-i18n="guideDeckTitle">Create the Briefing Deck</h3>
+            <p data-i18n="guideDeckText">Use the slide carousel for an internal bid decision meeting: decision, fit, gaps, risks, proof, questions, and action plan.</p>
+          </article>
+        </div>
+        <div class="example-output">
+          <div>
+            <p class="eyebrow" data-i18n="whatYouGet">What you will get</p>
+            <h3 data-i18n="exampleDecision">Decision: Bid with one watch item</h3>
+            <p data-i18n="exampleText">Confidence 90%. Top gap: confirm HVAC subcontractor capacity. Evidence: source section 2.1 requires ISO certifications and two similar smart facilities projects.</p>
+          </div>
+          <div class="mini-preview">
+            <span data-i18n="miniMap">Tender Map: Eligibility -> Proof -> Gaps</span>
+            <span data-i18n="miniQuestions">Tender Questions: Ask the Issuer + Prepare to Answer</span>
+            <span data-i18n="miniDeck">Briefing Deck: 8 boardroom-ready slides</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace" id="analysis">
         <aside class="control-rail">
           <section class="panel tender-panel">
             <div class="panel-heading">
-              <p class="eyebrow" data-i18n="tenderIntake">Tender Intake</p>
-              <h2 data-i18n="sampleTender">Sample tender</h2>
+              <p class="eyebrow" data-i18n="tenderIntake">Tender Files</p>
+              <h2 data-i18n="sampleTender">Preloaded Example Files</h2>
             </div>
-            <label class="field-label" for="tenderSelect" data-i18n="chooseTender">Choose tender</label>
+            <label class="field-label" for="tenderSelect" data-i18n="chooseTender">Choose preloaded files</label>
             <select id="tenderSelect">
               <option value="smart-city-maintenance-2026">Smart City Facilities Maintenance 2026</option>
             </select>
-            <button class="primary-action" id="analyzeButton" type="button" data-i18n="runAnalysis">Run analysis</button>
+            <button class="primary-action" id="useSampleButton" type="button" data-i18n="usePreloaded">Use Preloaded Example Files</button>
+            <p class="sample-note" data-i18n="preloadedNote">Preloaded example files use pre-generated example results so you can explore TenderLens quickly and conserve API calls. Your uploaded Tender Files are analyzed when you run them.</p>
+            <button class="secondary-action" id="analyzeButton" type="button" data-i18n="runAnalysis">Run analysis</button>
             <div class="upload-box" id="uploadBox">
-              <p class="upload-title" data-i18n="secureUpload">Secure upload</p>
-              <p class="muted" data-i18n="uploadRule">PDF, TXT, MD, DOCX. Max 5 MB.</p>
+              <p class="upload-title" data-i18n="secureUpload">Upload Tender Files</p>
+              <p class="muted" data-i18n="uploadRule">Main Tender File is required. Add optional Supporting Files. TXT, MD, and DOCX can be analyzed now. PDF text reading will be added after parser support is stable. Max 5 files, 5 MB each, 12 MB total.</p>
+              <label class="field-label" for="fileInput" data-i18n="mainTenderFile">Main Tender File</label>
               <input id="fileInput" type="file" accept=".pdf,.txt,.md,.docx" />
+              <label class="field-label supporting-label" for="supportingFileInput" data-i18n="supportingFiles">Supporting Files</label>
+              <input id="supportingFileInput" type="file" accept=".pdf,.txt,.md,.docx" multiple />
               <p class="upload-status" id="uploadStatus" aria-live="polite"></p>
             </div>
           </section>
@@ -64,20 +132,28 @@
             <textarea id="profileNotes" rows="5" data-i18n-placeholder="profilePlaceholder">Confirm HVAC subcontractor capacity before final bid gate.</textarea>
           </section>
 
-          <section class="panel chat-panel">
+          <section class="panel chat-panel" id="discuss">
             <div class="panel-heading">
-              <p class="eyebrow" data-i18n="typingMode">Typing Mode</p>
-              <h2 data-i18n="askAgent">Ask the agent</h2>
+              <p class="eyebrow" data-i18n="typingMode">Discuss</p>
+              <h2 data-i18n="askAgent">Discuss with TenderLens</h2>
             </div>
             <div class="chat-log" id="chatLog" aria-live="polite"></div>
             <div class="chat-row">
               <input id="chatInput" type="text" data-i18n-placeholder="chatPlaceholder" placeholder="Ask about risks, evidence, or strategy..." />
               <button id="sendChat" type="button" aria-label="Send">Send</button>
             </div>
+            <button class="voice-button in-discuss" id="voiceButton" type="button">
+              <span class="button-icon" aria-hidden="true"></span>
+              <span data-i18n="voiceMode">Talk to TenderLens</span>
+            </button>
           </section>
         </aside>
 
         <section class="main-cockpit">
+          <div class="transparency-banner">
+            <span class="result-badge" data-i18n="preparedBadge">Pre-generated example result</span>
+            <p data-i18n="analysisBanner">You are viewing pre-generated example results for the preloaded files. Upload your own Tender Files to run a new analysis.</p>
+          </div>
           <section class="decision-band">
             <div class="score-tile">
               <p class="eyebrow" data-i18n="recommendation">Recommendation</p>
@@ -85,32 +161,32 @@
               <span id="confidence">90%</span>
             </div>
             <div class="summary-tile">
-              <p class="eyebrow" data-i18n="agentSystem">Agentic System</p>
+              <p class="eyebrow" data-i18n="agentSystem">Analysis</p>
               <h2 id="summaryTitle" data-i18n="summaryTitle">Bid-ready, with one delivery watch item</h2>
               <p id="summaryText" data-i18n="summaryText">The bidder profile meets the core eligibility requirements. Confirm specialized HVAC partner capacity before final approval.</p>
             </div>
             <div class="audit-tile pass">
-              <p class="eyebrow" data-i18n="a2aAudit">A2A Evidence Audit</p>
+              <p class="eyebrow" data-i18n="a2aAudit">Evidence Checked</p>
               <strong id="auditStatus" data-i18n="auditPass">Passed</strong>
               <span data-i18n="auditText">7 claims checked, 0 unsupported</span>
             </div>
           </section>
 
           <section class="progress-strip" aria-label="Agent workflow">
-            <span class="done" id="stageIntake" data-i18n="stageIntake">Intake</span>
-            <span class="done" id="stageOkf" data-i18n="stageOkf">OKF</span>
-            <span class="done" id="stageRetrieval" data-i18n="stageRetrieval">Retrieval</span>
-            <span class="done" id="stageParallel" data-i18n="stageParallel">Parallel agents</span>
-            <span class="done" id="stageSynthesis" data-i18n="stageSynthesis">Synthesis</span>
-            <span class="done" id="stageAudit" data-i18n="stageAudit">A2A audit</span>
+            <span class="done" id="stageIntake" data-i18n="stageIntake">Files ready</span>
+            <span class="done" id="stageOkf" data-i18n="stageOkf">Tender mapped</span>
+            <span class="done" id="stageRetrieval" data-i18n="stageRetrieval">Proof found</span>
+            <span class="done" id="stageParallel" data-i18n="stageParallel">Specialists checked</span>
+            <span class="done" id="stageSynthesis" data-i18n="stageSynthesis">Decision drafted</span>
+            <span class="done" id="stageAudit" data-i18n="stageAudit">Evidence checked</span>
           </section>
 
           <section class="dashboard-grid">
             <article class="panel evidence-war-room">
               <div class="panel-heading horizontal">
                 <div>
-                  <p class="eyebrow" data-i18n="evidenceWarRoom">Evidence War Room</p>
-                  <h2 data-i18n="inspectClaims">Inspect grounded claims</h2>
+                  <p class="eyebrow" data-i18n="evidenceWarRoom">Proof Behind This Recommendation</p>
+                  <h2 data-i18n="inspectClaims">Inspect the evidence</h2>
                 </div>
                 <div class="filter-row" id="filters">
                   <button class="chip active" data-filter="all" type="button" data-i18n="all">All</button>
@@ -122,12 +198,12 @@
               <div class="evidence-list" id="evidenceList"></div>
             </article>
 
-            <article class="panel graph-panel">
+            <article class="panel graph-panel" id="tender-map">
               <div class="panel-heading">
-                <p class="eyebrow" data-i18n="okfGraph">OKF Concept Graph</p>
-                <h2 data-i18n="linkedTenderKnowledge">Linked tender knowledge</h2>
+                <p class="eyebrow" data-i18n="okfGraph">Tender Map</p>
+                <h2 data-i18n="linkedTenderKnowledge">How the tender fits together</h2>
               </div>
-              <div class="concept-graph" aria-label="OKF concept graph">
+              <div class="concept-graph" aria-label="Tender Map">
                 <span class="node primary">Tender</span>
                 <span class="node">Eligibility</span>
                 <span class="node">Submission</span>
@@ -135,6 +211,10 @@
                 <span class="node">Deadlines</span>
                 <span class="node">Security</span>
                 <span class="node">Risk</span>
+              </div>
+              <div class="source-documents">
+                <h3 data-i18n="sourceFiles">Source Files</h3>
+                <div id="sourceDocuments"></div>
               </div>
             </article>
 
@@ -174,24 +254,61 @@
               <div class="scenario-result" id="scenarioResult"></div>
             </article>
 
-            <article class="panel questions-panel">
+            <article class="panel deck-panel" id="briefing-deck">
+              <div class="panel-heading horizontal">
+                <div>
+                  <p class="eyebrow" data-i18n="briefingDeck">Briefing Deck</p>
+                  <h2 data-i18n="deckTitle">Boardroom-ready slides</h2>
+                </div>
+                <div class="deck-actions">
+                  <button type="button" id="prevSlide" aria-label="Previous slide">Prev</button>
+                  <span id="slideCount">1 / 8</span>
+                  <button type="button" id="nextSlide" aria-label="Next slide">Next</button>
+                </div>
+              </div>
+              <div class="deck-carousel">
+                <div class="slide-preview" id="slidePreview"></div>
+                <div class="slide-rail" id="slideRail" aria-label="Briefing Deck slides"></div>
+              </div>
+            </article>
+
+            <article class="panel questions-panel" id="tender-questions">
               <div class="panel-heading">
-                <p class="eyebrow" data-i18n="clarifications">Clarifications</p>
-                <h2 data-i18n="askIssuer">Questions for issuer</h2>
+                <p class="eyebrow" data-i18n="clarifications">Tender Questions</p>
+                <h2 data-i18n="askIssuer">Ask the Issuer</h2>
               </div>
               <ol class="questions" id="questions"></ol>
+              <div class="question-divider"></div>
+              <div class="panel-heading compact">
+                <h2 data-i18n="prepareToAnswer">Prepare to Answer</h2>
+              </div>
+              <ol class="questions" id="prepareQuestions"></ol>
             </article>
           </section>
         </section>
       </section>
     </main>
 
+    <section class="welcome-modal hidden" id="welcomeModal" aria-modal="true" role="dialog" aria-labelledby="welcomeTitle">
+      <div class="welcome-card">
+        <p class="eyebrow" data-i18n="welcomeEyebrow">Welcome to TenderLens</p>
+        <h2 id="welcomeTitle" data-i18n="welcomeTitle">Make the bid decision with proof</h2>
+        <p data-i18n="welcomeText">Start with preloaded example files, upload your Tender Files, or open How to Use for a quick walkthrough. Voice starts only when you choose Talk to TenderLens.</p>
+        <div class="welcome-actions">
+          <button class="primary-action" id="welcomeSample" type="button" data-i18n="usePreloaded">Use Preloaded Example Files</button>
+          <button class="secondary-action" id="welcomeUpload" type="button" data-i18n="uploadMine">Upload my Tender Files</button>
+          <button class="secondary-action" id="welcomeHowTo" type="button" data-i18n="openHowTo">Open How to Use</button>
+          <button class="plain-action" id="welcomeDismiss" type="button" data-i18n="dontShow">Don't show again</button>
+        </div>
+      </div>
+    </section>
+
     <section class="voice-overlay hidden" id="voiceOverlay" aria-live="polite">
       <div class="voice-card">
         <div class="voice-orb" id="voiceOrb"></div>
         <p class="eyebrow" data-i18n="voiceSession">Voice Session</p>
         <h2 id="voiceStateLabel" data-i18n="voiceIdle">Idle</h2>
-        <p id="voiceHelp" data-i18n="voiceHelp">Voice starts only after you choose Voice Mode.</p>
+        <p id="voiceHelp" data-i18n="voiceHelp">Voice starts only after you choose Talk to TenderLens.</p>
         <div class="transcript" id="transcript"></div>
         <div class="voice-controls">
           <button id="muteVoice" type="button" data-i18n="mute">Mute</button>

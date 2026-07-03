@@ -9,7 +9,9 @@ TenderLens Agentic AI uses precise privacy claims. These claims must be implemen
 Meaning:
 
 - Uploaded file bytes are processed transiently.
-- Upload processing is bounded by the 5 MB max-size limit.
+- Upload processing is bounded by Tender Files limits: exactly one Main Tender File for uploaded analysis, optional Supporting Files, up to 5 files total, 5 MB per file, and 12 MB total.
+- TXT, MD, and DOCX files can be parsed transiently for uploaded-file analysis.
+- PDF text analysis is not claimed until a reliable parser is added; PDF files remain bounded by validation and clear user-facing errors.
 - Uploaded files are not committed, stored in the repo, or stored in durable object storage for v1.
 - Generated upload OKF bundles are not retained.
 - Raw extracted text from uploads is not retained.
@@ -17,7 +19,7 @@ Meaning:
 - Prompt-response content logging for upload sessions should be disabled or avoided.
 - ADK session/event state must not persist raw uploaded document text.
 - Curated sample tenders are public or synthetic fixtures and can be retained.
-- Public demo should clearly separate curated sample data from uploaded user data.
+- The public sample experience should clearly separate Preloaded Example Files and Pre-generated Example Results from uploaded user data.
 
 ## Voice Claim
 
@@ -25,7 +27,7 @@ Meaning:
 
 Meaning:
 
-- Microphone starts only after explicit Voice Mode button click.
+- Microphone starts only after the user explicitly chooses Talk to TenderLens.
 - Microphone remains visibly active only during voice mode.
 - Mute and end controls remain visible.
 - Microphone stops when the user ends voice mode.
@@ -69,8 +71,9 @@ ADK session/event handling must be designed carefully:
 
 The demo should communicate:
 
-- Curated samples are public/synthetic fixtures.
-- Uploaded files are transient.
+- Preloaded Example Files are public/synthetic fixtures.
+- Pre-generated Example Results are prepared so users can explore TenderLens quickly and conserve API calls.
+- Uploaded Tender Files are transient.
 - Voice starts only after user action.
 - Typed mode remains available if voice fails.
 - Larger tenders should use curated/preprocessed OKF bundles in v1.

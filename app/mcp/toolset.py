@@ -23,6 +23,7 @@ TENDERLENS_MCP_TOOL_FILTER = [
     "generate_clarification_question_candidates",
     "validate_okf_bundle",
     "validate_upload",
+    "validate_tender_files",
     "get_upload_analysis_status",
     "get_voice_session_context",
 ]

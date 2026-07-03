@@ -19,6 +19,16 @@ const requiredHtml = [
   "langAr",
   "auditStatus",
   "stageAudit",
+  "How to Use",
+  "Discuss with TenderLens",
+  "Tender Map",
+  "Briefing Deck",
+  "Tender Questions",
+  "Use Preloaded Example Files",
+  "Pre-generated example result",
+  "supportingFileInput",
+  "briefing-deck",
+  "sourceDocuments",
 ];
 
 const requiredJs = [
@@ -31,9 +41,14 @@ const requiredJs = [
   "runAnalysis",
   "renderWorkflowTrace",
   "workflow_trace",
-  "/api/analyze",
-  "/api/upload/validate",
+  "/api/upload/tender-files/validate",
+  "/api/upload/analyze",
   "renderEvidence",
+  "preparedExampleReport",
+  "validateTenderFiles",
+  "postFormData",
+  "renderSourceDocuments",
+  "renderDeck",
   "ar: {",
 ];
 
@@ -56,6 +71,25 @@ requiredCss.forEach((needle) => assertIncludes("styles.css", files.css, needle))
 
 if (files.html.includes('type="module"')) {
   throw new Error("index.html should use a normal script so file:// static mode works.");
+}
+
+const oldVisibleLabels = [
+  "A2A Evidence Audit",
+  "OKF Concept Graph",
+  "Evidence War Room",
+  "Ask the agent",
+  "Questions for issuer",
+  "Secure upload",
+  "Sample tender",
+  "Voice Mode",
+  "Typing Mode",
+  "Clarifications",
+];
+
+for (const label of oldVisibleLabels) {
+  if (files.html.includes(label)) {
+    throw new Error(`index.html still contains old visible label: ${label}`);
+  }
 }
 
 console.log("Frontend smoke check passed.");

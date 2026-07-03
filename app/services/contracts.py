@@ -20,6 +20,7 @@ VoiceState = Literal[
     "error",
     "ended",
 ]
+SourceRole = Literal["sample", "main", "supporting"]
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,17 @@ class EvidenceItem:
 
 
 @dataclass(frozen=True)
+class SourceDocument:
+    id: str
+    role: SourceRole
+    filename: str
+    file_type: str
+    size_bytes: int
+    parser_status: str
+    text_char_count: int = 0
+
+
+@dataclass(frozen=True)
 class SpecialistFinding:
     agent: str
     summary: str
@@ -163,6 +175,7 @@ class DecisionReport:
     clarification_questions: list[dict]
     next_actions: list[str]
     audit: AuditResult
+    source_documents: list[SourceDocument] = field(default_factory=list)
     voice_summary: str | None = None
     unresolved_evidence_gaps: list[str] = field(default_factory=list)
     workflow_trace: list[str] = field(default_factory=list)

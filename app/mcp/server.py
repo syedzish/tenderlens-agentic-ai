@@ -21,6 +21,7 @@ from app.mcp.tools import (
     score_profile_against_requirement,
     search_evidence,
     simulate_strategy_overlay_tool,
+    validate_tender_files_tool,
     validate_okf_bundle_tool,
     validate_upload_tool,
 )
@@ -144,6 +145,12 @@ def validate_okf_bundle(tender_id: str) -> dict:
 def validate_upload(filename: str, size_bytes: int) -> dict:
     """Validate upload metadata before parsing."""
     return validate_upload_tool(filename, size_bytes)
+
+
+@mcp_server.tool(name="validate_tender_files")
+def validate_tender_files(files: list[dict]) -> dict:
+    """Validate Main Tender File and Supporting Files metadata together."""
+    return validate_tender_files_tool(files)
 
 
 @mcp_server.tool(name="get_upload_analysis_status")

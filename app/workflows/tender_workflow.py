@@ -11,6 +11,7 @@ from app.agents.a2a_audit.audit import run_bounded_evidence_quality_loop
 from app.services.contracts import (
     DecisionReport,
     LanguageMode,
+    SourceDocument,
     SpecialistFinding,
     StrategyAssumptions,
 )
@@ -248,6 +249,17 @@ def run_tender_analysis(
             "Build technical proposal around SLA operations, ISO governance, and Arabic reporting.",
         ],
         audit=audit,
+        source_documents=[
+            SourceDocument(
+                id="sample-main-tender",
+                role="sample",
+                filename="smart_city_maintenance_tender.json",
+                file_type=".json",
+                size_bytes=0,
+                parser_status="preloaded_example",
+                text_char_count=0,
+            )
+        ],
         voice_summary=voice_summary,
         unresolved_evidence_gaps=[] if audit.status == "pass" else [issue.message for issue in audit.issues],
         workflow_trace=workflow_trace,

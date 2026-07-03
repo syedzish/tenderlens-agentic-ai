@@ -8,18 +8,21 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.mcp.tools import (
     get_company_profile_tool,
     list_tenders_tool,
+    validate_tender_files_tool,
     validate_okf_bundle_tool,
     validate_upload_tool,
 )
 from app.services.contracts import StrategyAssumptions
 from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS
+from app.services.upload.extraction import UploadExtractionError, extract_uploaded_document
 from app.workflows.tender_workflow import run_tender_analysis
+from app.workflows.uploaded_tender_workflow import run_uploaded_tender_files_analysis
 
 
 class AnalyzeRequest(BaseModel):
@@ -32,6 +35,16 @@ class AnalyzeRequest(BaseModel):
 class UploadMetadataRequest(BaseModel):
     filename: str
     size_bytes: int
+
+
+class TenderFileMetadataRequest(BaseModel):
+    filename: str
+    size_bytes: int
+    role: Literal["main", "supporting"]
+
+
+class TenderFilesMetadataRequest(BaseModel):
+    files: list[TenderFileMetadataRequest] = Field(default_factory=list)
 
 
 class StrategyRequest(BaseModel):
@@ -96,6 +109,55 @@ def attach_tenderlens_api_routes(app: FastAPI) -> None:
     @app.post("/api/upload/validate")
     def validate_upload(request: UploadMetadataRequest) -> dict:
         return validate_upload_tool(request.filename, request.size_bytes)
+
+    @app.post("/api/upload/tender-files/validate")
+    def validate_tender_files(request: TenderFilesMetadataRequest) -> dict:
+        return validate_tender_files_tool([file.model_dump() for file in request.files])
+
+    @app.post("/api/upload/analyze")
+    async def analyze_uploaded_tender_files(
+        main_file: UploadFile = File(...),
+        supporting_files: list[UploadFile] = File(default=[]),
+        profile_id: str = Form(default="default-bidder-profile"),
+        language: Literal["en", "ar"] = Form(default="en"),
+        voice: bool = Form(default=False),
+    ) -> dict:
+        files = [main_file, *supporting_files]
+        file_bytes = [await file.read() for file in files]
+        metadata = [
+            {
+                "filename": file.filename or "unnamed",
+                "size_bytes": len(content),
+                "role": "main" if index == 0 else "supporting",
+            }
+            for index, (file, content) in enumerate(zip(files, file_bytes, strict=True))
+        ]
+        validation = validate_tender_files_tool(metadata)
+        if not validation["accepted"]:
+            raise HTTPException(status_code=400, detail=validation["reason"])
+
+        try:
+            extracted = [
+                extract_uploaded_document(
+                    filename=item["filename"],
+                    content=content,
+                    role=item["role"],  # type: ignore[arg-type]
+                    document_index=index + 1,
+                )
+                for index, (item, content) in enumerate(
+                    zip(metadata, file_bytes, strict=True)
+                )
+            ]
+        except UploadExtractionError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        report = run_uploaded_tender_files_analysis(
+            extracted,
+            profile_id=profile_id,
+            language=language,
+            voice=voice,
+        )
+        return {"report": report.to_dict()}
 
     @app.post("/api/strategy")
     def strategy(request: StrategyRequest) -> dict:

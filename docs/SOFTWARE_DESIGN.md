@@ -147,12 +147,22 @@ Exact schema should use typed models before implementation.
 
 ## Upload Validation Contract
 
-- Reject files larger than 5 MB before parsing.
+- Validate Tender Files metadata as a set, not only as isolated files.
+- Require exactly one Main Tender File for uploaded analysis.
+- Allow optional Supporting Files.
+- Reject more than 5 files total before parsing.
+- Reject files larger than 5 MB each before parsing.
+- Reject Tender Files larger than 12 MB total before parsing.
 - Reject unsupported extension/MIME combinations.
 - Do not expose temp paths to frontend.
 - Delete temp file in `finally` block or equivalent cleanup path.
 - Mark generated uploaded OKF as transient.
 - Do not place raw extracted text in durable session state.
+- Preserve source role and safe filename metadata so citations can show Main Tender File or Supporting File source.
+- The API exposes `/api/upload/tender-files/validate` for metadata validation and `/api/upload/analyze` for transient uploaded-file analysis.
+- Uploaded live text analysis currently parses TXT, MD, and DOCX with in-memory standard-library extraction.
+- PDF files remain metadata-validated, but PDF text analysis is not claimed until a reliable parser dependency is intentionally added.
+- Uploaded analysis returns a normal `DecisionReport` with `source_documents`, source-file citations, A2A audit status, and workflow trace.
 
 ## Bounded Evidence Quality Loop Contract
 

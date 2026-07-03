@@ -14,6 +14,7 @@ class TenderLensMCPServerTest(unittest.TestCase):
         self.assertTrue(set(TENDERLENS_MCP_TOOL_FILTER).issubset(names))
         self.assertIn("search_evidence", names)
         self.assertIn("validate_upload", names)
+        self.assertIn("validate_tender_files", names)
 
     def test_server_tool_call_returns_structured_data(self) -> None:
         result = asyncio.run(
@@ -27,6 +28,32 @@ class TenderLensMCPServerTest(unittest.TestCase):
 
         self.assertFalse(payload["accepted"])
         self.assertIn("5 MB", payload["reason"])
+
+    def test_tender_files_tool_call_returns_structured_data(self) -> None:
+        result = asyncio.run(
+            mcp_server.call_tool(
+                "validate_tender_files",
+                {
+                    "files": [
+                        {
+                            "filename": "main.pdf",
+                            "size_bytes": 1024,
+                            "role": "main",
+                        },
+                        {
+                            "filename": "appendix.docx",
+                            "size_bytes": 2048,
+                            "role": "supporting",
+                        },
+                    ]
+                },
+            )
+        )
+
+        payload = json.loads(result[0].text)
+
+        self.assertTrue(payload["accepted"])
+        self.assertEqual(payload["file_count"], 2)
 
     def test_adk_toolset_uses_strict_filter(self) -> None:
         toolset = create_tenderlens_mcp_toolset(timeout=1.0)

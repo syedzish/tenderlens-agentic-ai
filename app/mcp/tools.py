@@ -11,7 +11,11 @@ from app.services.paths import OKF_DIR
 from app.services.profile.matcher import score_requirement
 from app.services.retrieval.retriever import search_okf_evidence
 from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS, simulate_strategy_overlay
-from app.services.upload.validation import validate_upload_metadata
+from app.services.upload.validation import (
+    UploadFileMetadata,
+    validate_tender_files_metadata,
+    validate_upload_metadata,
+)
 from app.services.okf.validator import validate_okf_bundle
 
 
@@ -53,3 +57,15 @@ def validate_okf_bundle_tool(tender_id: str) -> dict:
 
 def validate_upload_tool(filename: str, size_bytes: int) -> dict:
     return validate_upload_metadata(filename, size_bytes).__dict__
+
+
+def validate_tender_files_tool(files: list[dict]) -> dict:
+    metadata = [
+        UploadFileMetadata(
+            filename=str(item["filename"]),
+            size_bytes=int(item["size_bytes"]),
+            role=str(item["role"]),
+        )
+        for item in files
+    ]
+    return validate_tender_files_metadata(metadata).__dict__

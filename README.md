@@ -14,6 +14,8 @@ Public demo: https://tenderlens-agentic-ai.vercel.app
 
 Vercel: GitHub repo connected by the user. Root `package.json` and `vercel.json` build `frontend/` and publish `frontend/dist`; `frontend/vercel.json` also supports a Vercel project root set directly to `frontend`.
 
+Final submission checklist: see `STEPS_TO_FINISH.md`.
+
 Implementation code will follow the approved milestone order:
 
 1. Foundation documentation
@@ -36,8 +38,10 @@ Implementation code will follow the approved milestone order:
 - Parallel specialist agents
 - ADK Gemini Live API Toolkit voice mode
 - English default plus full Arabic RTL mode
-- 5 MB secure upload workflow
-- Evidence War Room and bid strategy simulator
+- Tender Files workflow: Main Tender File, optional Supporting Files, 5 files total, 5 MB per file, 12 MB total
+- Transient uploaded-file analysis for TXT, MD, and DOCX with source-document citations
+- Proof Behind This Recommendation and bid strategy simulator
+- Preloaded Example Files with Pre-generated Example Results to conserve API calls
 - Agents CLI evals and deployment readiness
 
 ## Repository Layout
@@ -84,7 +88,7 @@ Current local limitation: `agents-cli run` and full `agents-cli eval generate` n
 - We do not save your uploaded files.
 - We only listen when you start voice mode, and we do not save your voice.
 
-These claims are implemented through 5 MB upload limits, transient upload processing, no raw upload text in durable state/logs, explicit microphone start, visible voice controls, no raw audio retention, and session-scoped transcripts.
+These claims are implemented through Tender Files limits, transient TXT/MD/DOCX upload analysis, no raw upload text in durable state/logs, explicit microphone start, visible voice controls, no raw audio retention, and session-scoped transcripts. PDF text analysis is not claimed until a reliable parser is added.
 
 ## License
 
