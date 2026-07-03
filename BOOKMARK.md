@@ -4,7 +4,7 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-03 08:32 Asia/Riyadh
+- Last updated: 2026-07-03 08:37 Asia/Riyadh
 - Current milestone: Milestone 5/6 - Backend API, Voice Gateway, And Frontend Cockpit
 - Current task: Frontend/API wiring and backend smoke hardening
 - Status: In progress
@@ -473,6 +473,26 @@ This file is the operational handoff point. Update it at the start and completio
   - Playwright interaction coverage for the API fallback path is still pending.
 - Next exact action: Run final verification, commit/push this wiring slice, then verify Vercel status.
 
+### 2026-07-03 08:37 Asia/Riyadh - Add Voice Gateway Smoke Tests
+
+- Status: Completed
+- Files touched:
+  - `app/voice_gateway/routes.py`
+  - `tests/unit/test_voice_gateway.py`
+  - `docs/EVALS.md`
+  - `BOOKMARK.md`
+- Decisions made:
+  - Serialize voice audit status with `dataclasses.asdict` so audit issues remain JSON-safe if failures are present.
+  - Add deterministic WebSocket smoke tests for session readiness, Arabic transcript turn, voice summary, evidence ids, audit status events, dashboard patch, session end, and unknown-event error handling.
+- Tests run:
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/unit -p "test_*.py"` - 26 tests passing.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests/conformance -p "test_*.py"` - 3 tests passing.
+  - `.venv\Scripts\python.exe -m compileall app tests\unit tests\conformance` - passed.
+  - `npm test` from repository root - frontend smoke passing.
+- Known blockers:
+  - Full ADK Live API audio streaming remains pending credentials and deployment path validation.
+- Next exact action: Commit/push the voice gateway smoke test slice and verify Vercel status.
+
 ## Handoff Notes
 
 If another coding agent is asked to continue:
@@ -500,3 +520,5 @@ If another coding agent is asked to continue:
 - 2026-07-03 01:44 Asia/Riyadh: Verified successful public Vercel deployment at `https://tenderlens-agentic-ai.vercel.app`.
 - 2026-07-03 01:51 Asia/Riyadh: Added named A2A Evidence Audit Agent wrapper, deterministic bounded loop, and audit-loop unit tests.
 - 2026-07-03 02:00 Asia/Riyadh: Added real `tenderlens-mcp` FastMCP server, ADK strict-filter toolset factory, and MCP unit tests.
+- 2026-07-03 08:32 Asia/Riyadh: Wired frontend analysis/upload actions to backend APIs with static fallback and added FastAPI route tests.
+- 2026-07-03 08:37 Asia/Riyadh: Added voice gateway WebSocket smoke tests and JSON-safe audit payload serialization.

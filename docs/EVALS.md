@@ -9,6 +9,7 @@ Evals should prove the agent is grounded, useful, safe, and clearly agentic.
 Unit tests:
 
 - FastAPI route smoke for health, analysis, Arabic analysis, upload validation, and strategy.
+- Voice gateway WebSocket smoke for session readiness, Arabic transcript turn, A2A audit status event, dashboard patch, session end, and unknown-event errors.
 - OKF parser
 - OKF validator
 - Citation extraction

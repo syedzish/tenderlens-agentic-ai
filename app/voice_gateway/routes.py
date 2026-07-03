@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import time
+from dataclasses import asdict
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -100,7 +101,7 @@ def attach_voice_gateway_routes(app: FastAPI) -> None:
                     await _send(
                         websocket,
                         "audit.status",
-                        report.audit.__dict__,
+                        asdict(report.audit),
                     )
                     await _send(
                         websocket,
