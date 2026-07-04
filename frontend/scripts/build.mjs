@@ -19,7 +19,7 @@ await writeFile(
   `window.TENDERLENS_CONFIG = ${JSON.stringify({ backendUrl: publicBackendUrl })};\n`,
 );
 
-for (const dir of ["brand", "demo-docs"]) {
+for (const dir of ["brand", "example-files"]) {
   await cp(join(frontendRoot, dir), join(dist, dir), { recursive: true });
 }
 

@@ -20,7 +20,7 @@ Meaning:
 - Prompt-response content logging for upload sessions should be disabled or avoided.
 - ADK session/event state must not persist raw uploaded document text.
 - Curated sample tenders are public or synthetic fixtures and can be retained.
-- The public sample experience should clearly separate Preloaded Example Files and Pre-generated Example Results from uploaded user data.
+- The public example experience should clearly separate Example Files and Prepared Example Results from uploaded user data.
 
 ## Voice Claim
 
@@ -70,10 +70,10 @@ ADK session/event handling must be designed carefully:
 
 ## User-Facing Boundaries
 
-The demo should communicate:
+The public app should communicate:
 
-- Preloaded Example Files are public/synthetic fixtures.
-- Pre-generated Example Results are prepared so users can explore TenderLens quickly and conserve API calls.
+- Example Files are public/synthetic fixtures.
+- Prepared Example Results let users explore TenderLens quickly and conserve API calls.
 - Uploaded Tender Files are transient.
 - Voice starts only after user action.
 - Typed mode remains available if voice fails.

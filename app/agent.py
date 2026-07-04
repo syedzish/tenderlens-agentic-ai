@@ -111,6 +111,11 @@ class DeterministicTenderLensAgent(BaseAgent):
 
 
 def _has_live_model_credentials() -> bool:
+    if os.getenv("INTEGRATION_TEST", "").lower() == "true" and os.getenv(
+        "TENDERLENS_ALLOW_LIVE_MODEL_IN_TESTS", ""
+    ).lower() not in {"1", "true", "yes"}:
+        return False
+
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if api_key and "your-" not in api_key.lower():
         return True

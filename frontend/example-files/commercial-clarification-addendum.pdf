@@ -1,0 +1,51 @@
+%PDF-1.4
+% TenderLens Agentic AI example
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
+4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+5 0 obj << /Length 762 >> stream
+BT
+/F1 10 Tf
+50 770 Td
+14 TL
+(TenderLens Agentic AI example file) Tj
+T*
+(Commercial Clarification Addendum) Tj
+T*
+() Tj
+T*
+(Bid-readiness notes:) Tj
+T*
+(- The hosted production service will meet 99.5% monthly uptime with planned maintenance ) Tj
+T*
+(announced at least 72 hours in advance.) Tj
+T*
+(- Resident personal data, vehicle metadata, logs, and backups remain within the Kingdom ) Tj
+T*
+(of Saudi Arabia.) Tj
+T*
+(- Critical production incidents receive a named support engineer within 30 minutes.) Tj
+T*
+(- Base role-based training covers 40 users; 10 remote seats may be added at no additiona) Tj
+T*
+(l license cost.) Tj
+T*
+(- Quarterly sustainability reporting will cover hosting region energy profile and mainte) Tj
+T*
+(nance-trip reductions.) Tj
+T*
+ET
+endstream endobj
+xref
+0 6
+0000000000 65535 f 
+0000000041 00000 n 
+0000000090 00000 n 
+0000000147 00000 n 
+0000000273 00000 n 
+0000000343 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+1156
+%%EOF

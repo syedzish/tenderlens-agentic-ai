@@ -43,7 +43,7 @@ Implementation code will follow the approved milestone order:
 - Tender Files workflow: Main Tender File, optional Supporting Files, 5 files total, 4 MB per file, 12 MB total
 - Transient uploaded-file analysis for TXT, MD, DOCX, text-based PDF, and credential-backed JPG/PNG/WEBP image files with source-document citations
 - Proof Behind This Recommendation and bid strategy simulator
-- Preloaded Example Files with Pre-generated Example Results to conserve API calls
+- Example Files with Prepared Example Results to conserve API calls
 - Agents CLI evals and deployment readiness
 
 ## Repository Layout

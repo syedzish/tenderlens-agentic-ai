@@ -21,15 +21,15 @@ test("onboarding popup walks through both reference slides", async ({ page }) =>
   await expect(page.locator("#welcomeModal")).toHaveClass(/hidden/);
 });
 
-test("runs preloaded example analysis with deterministic displayed score", async ({ page }) => {
+test("runs example analysis with deterministic displayed score", async ({ page }) => {
   await suppressWelcome(page);
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Run Analysis with preloaded files" }).first().click();
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
 
-  await expect(page.locator("#scoreValue")).toHaveText("75");
+  await expect(page.locator("#scoreValue")).toHaveText("78");
   await expect(page.locator("#preparedBadge")).toHaveText("Prepared example");
-  await expect(page.locator("#resultTitle")).toHaveText("Good foundation with risks to resolve");
+  await expect(page.locator("#resultTitle")).toHaveText("Conditional bid with risks to resolve");
   await expect(page.locator("#checklistRows .checklist-row")).toHaveCount(10);
   await expect(page.locator("#compliantRows")).toContainText("6 compliant rows");
   await expect(page.locator("#riskRows")).toContainText("4 items need attention");
@@ -38,7 +38,7 @@ test("runs preloaded example analysis with deterministic displayed score", async
 test("tabs render map, deck, questions, and chat without navigation jumps", async ({ page }) => {
   await suppressWelcome(page);
   await page.goto("/");
-  await page.getByRole("button", { name: "Run Analysis with preloaded files" }).first().click();
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
 
   await page.getByRole("button", { name: "Tender Map" }).click();
   await expect(page.locator("#mapPanel")).not.toHaveClass(/hidden/);
@@ -54,10 +54,11 @@ test("tabs render map, deck, questions, and chat without navigation jumps", asyn
   await expect(page.locator("#questionsList .question-card").first()).toContainText("Can you clarify");
 
   await page.getByRole("button", { name: "Ask TenderLens" }).click();
+  await expect(page.getByRole("button", { name: "Start voice mode" })).toBeVisible();
   await page.locator("#chatInput").fill("What are the biggest risks?");
   await page.locator("#sendChat").click();
   await expect(page.locator("#chatLog")).toContainText("What are the biggest risks?");
-  await expect(page.locator("#chatLog")).toContainText("Go-live is later");
+  await expect(page.locator("#chatLog")).toContainText("The current go-live plan");
 });
 
 test("rejects oversized uploads before analysis", async ({ page }) => {
@@ -92,7 +93,7 @@ test("uploaded text files get a bounded deterministic analysis when backend is u
   ]);
 
   await expect(page.locator("#preparedBadge")).toHaveText("Uploaded files");
-  await expect(page.locator("#scoreValue")).not.toHaveText("75");
+  await expect(page.locator("#scoreValue")).not.toHaveText("78");
   await expect(page.locator("#checklistRows .checklist-row")).toHaveCount(4);
   await expect(page.locator("#uploadStatus")).toContainText("bounded local text review");
 });
@@ -159,12 +160,12 @@ test("configured backend URL receives production uploaded-file analysis directly
 test("switches to Arabic RTL without losing result state", async ({ page }) => {
   await suppressWelcome(page);
   await page.goto("/");
-  await page.getByRole("button", { name: "Run Analysis with preloaded files" }).first().click();
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
 
   await page.locator("#langAr").click();
 
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.locator("#scoreValue")).toHaveText("75");
+  await expect(page.locator("#scoreValue")).toHaveText("78");
   await expect(page.locator(".workspace-tabs")).toContainText("خريطة المناقصة");
   await expect(page.locator("#compliantRows")).toContainText("بنود ممتثلة");
 });

@@ -20,12 +20,12 @@ test("captures reference-style desktop workspace screens", async ({ page }, test
   await suppressWelcome(page);
   await page.goto("/");
 
-  await expect(page.locator(".app-header")).toContainText("TenderLens AI");
+  await expect(page.locator(".app-header")).toContainText("TenderLens Agentic AI");
   await expect(page.locator(".start-hero")).toContainText("Start your analysis");
   await capture(page, "desktop-01-start");
 
-  await page.getByRole("button", { name: "Run Analysis with preloaded files" }).first().click();
-  await expect(page.locator("#scoreValue")).toHaveText("75");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+  await expect(page.locator("#scoreValue")).toHaveText("78");
   await expect(page.locator("#checklistRows .checklist-row")).toHaveCount(10);
   await capture(page, "desktop-02-analysis");
 

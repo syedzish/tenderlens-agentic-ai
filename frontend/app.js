@@ -36,6 +36,7 @@ const ICONS = Object.freeze({
   "triangle-alert": '<path d="m21.7 18-8.9-15.4a1 1 0 0 0-1.7 0L2.3 18a1 1 0 0 0 .9 1.5h17.6a1 1 0 0 0 .9-1.5Z"/><path d="M12 8v5"/><path d="M12 16h.01"/>',
   "shield-check": '<path d="M20 13c0 5-3.5 7.5-7.4 8.8a2 2 0 0 1-1.2 0C7.5 20.5 4 18 4 13V5l8-3 8 3Z"/><path d="m9 12 2 2 4-5"/>',
   "search-check": '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="m8.5 11 1.7 1.7 3.4-4"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
   send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
 });
 
@@ -57,16 +58,16 @@ const labels = {
     uploadHelp: "PDF, DOCX, TXT, JPG, PNG, WEBP. We do not save your files.",
     uploadRun: "Upload files & Run Analysis",
     or: "OR",
-    runExample: "Run Analysis with preloaded files",
-    viewExample: "View preloaded files",
+    runExample: "Run Analysis with example files",
+    viewExample: "View example files",
     analyzedFiles: "Analyzed files",
     startFresh: "Start fresh",
     addMore: "Add more files",
     noFiles: "No files selected yet.",
-    previewNotice: "Start your analysis by uploading files or running the preloaded example.",
+    previewNotice: "Start your analysis by uploading files or running the example.",
     startTitle: "Start your analysis",
     startBody:
-      'Upload tender files or run the preloaded example. TenderLens will then fill this workspace with a score, checklist, evidence, map, deck, and questions. Using the "Run Analysis with preloaded files" button (or uploading the exact example files) will generate pre-generated stored output. This is done to save Gemini API quota and to display an example use case. You can use the App for live analysis by bringing your own files and uploading them.',
+      'Upload tender files or run the example files. TenderLens Agentic AI will then fill this workspace with a bid score, checklist, evidence, map, deck, and questions. The example files use prepared example results so you can understand the workflow without spending model quota. Upload your own Tender Files to run a new analysis.',
     emptyOverallTitle: "No analysis yet",
     emptyOverallBody: "Your overall score and executive summary will appear here after TenderLens checks the files.",
     overall: "Overall result",
@@ -75,6 +76,7 @@ const labels = {
     verify: "AI-generated review. Verify before making procurement decisions.",
     analysis: "Analysis",
     ask: "Ask TenderLens",
+    voiceMode: "Voice Mode",
     map: "Tender Map",
     deck: "Briefing Deck",
     questions: "Questions to Ask",
@@ -90,7 +92,7 @@ const labels = {
     deckDesc: "A lightweight stakeholder briefing created from the analysis result.",
     questionsDesc: "Practical questions to send to the vendor or project owner before submission.",
     exampleTitle: "Example Files",
-    exampleDescription: "Use these fictional files to test TenderLens AI without uploading your own documents.",
+    exampleDescription: "Use these fictional example files to test TenderLens Agentic AI without uploading your own documents.",
     useExamples: "Use these files",
     skip: "Skip",
     nextSlide: "Next",
@@ -99,11 +101,11 @@ const labels = {
     analyzed: "Analyzed",
     compliantRows: (count) => `${count} compliant rows`,
     riskRows: (count) => `${count} items need attention`,
-    resultTitleNoEvidence: "Response evidence needed",
-    resultTitleStrong: "Strong response with a few checks",
-    resultTitleRisk: "Good foundation with risks to resolve",
+    resultTitleNoEvidence: "Bid evidence needed",
+    resultTitleStrong: "Bid-ready with a few checks",
+    resultTitleRisk: "Conditional bid with risks to resolve",
     uploadLimit: "Upload up to 5 files. 4.0 MB per file.",
-    chatIntro: "Ask me about the biggest risks, why a requirement is partial, or what you should ask the vendor next.",
+    chatIntro: "Ask me about the biggest risks, why a requirement is partial, or what you should ask the issuer next.",
     noMajorRisks: "No major risks listed.",
     uploadAccepted: (count) => `${count} file${count === 1 ? "" : "s"} accepted. Run analysis to review them.`,
     running: "TenderLens is checking the evidence...",
@@ -118,7 +120,7 @@ const labels = {
     ],
     riskLabel: { Low: "Low", Medium: "Medium", High: "High" },
     statusLabel: { Compliant: "Compliant", Partial: "Partial", Gap: "Gap", "Needs Review": "Needs Review" },
-    mapSvgTitle: "TenderLens AI Tender Map",
+    mapSvgTitle: "TenderLens Agentic AI Tender Map",
     mapHeaders: ["Files", "Requirements", "Evidence", "Risks & actions"],
     score: "Score",
     deckSlide: (current, total) => `Slide ${current} of ${total}`,
@@ -126,7 +128,7 @@ const labels = {
       {
         counter: "1 OF 2",
         title: "Understand tender documents faster",
-        body: "TenderLens AI reads tender and proposal files, finds requirements, checks evidence, and highlights risks.",
+        body: "TenderLens Agentic AI reads tender files, checks them against your bid readiness, and highlights risks.",
       },
       {
         counter: "2 OF 2",
@@ -135,7 +137,7 @@ const labels = {
       },
     ],
     onboardingChecks: ["Extract requirements", "Match evidence", "Highlight risks"],
-    onboardingSteps: ["Upload files or use example files", "Wait for results", "Ask questions about your documents", "Download the analysis"],
+    onboardingSteps: ["Upload files or use example files", "Wait for results", "Ask questions by typing or voice", "Download the analysis"],
   },
   ar: {
     howToUse: "طريقة الاستخدام",
@@ -143,16 +145,16 @@ const labels = {
     uploadHelp: "PDF و DOCX و TXT وصور. لا نحفظ ملفاتك.",
     uploadRun: "ارفع الملفات وابدأ التحليل",
     or: "أو",
-    runExample: "حلل الملفات الجاهزة",
-    viewExample: "عرض الملفات الجاهزة",
+    runExample: "حلل ملفات المثال",
+    viewExample: "عرض ملفات المثال",
     analyzedFiles: "الملفات المحللة",
     startFresh: "بدء جديد",
     addMore: "إضافة ملفات",
     noFiles: "لم يتم اختيار ملفات بعد.",
-    previewNotice: "ابدأ التحليل برفع الملفات أو تشغيل المثال الجاهز.",
+    previewNotice: "ابدأ التحليل برفع الملفات أو تشغيل المثال.",
     startTitle: "ابدأ التحليل",
     startBody:
-      "ارفع ملفات المناقصة أو شغل المثال الجاهز. سيملأ TenderLens مساحة العمل بالنتيجة والقائمة والأدلة والخريطة والعرض والأسئلة.",
+      "ارفع ملفات المناقصة أو شغل ملفات المثال. سيملأ TenderLens Agentic AI مساحة العمل بنتيجة قرار التقديم والقائمة والأدلة والخريطة والعرض والأسئلة.",
     emptyOverallTitle: "لا يوجد تحليل بعد",
     emptyOverallBody: "ستظهر النتيجة العامة والملخص التنفيذي هنا بعد فحص الملفات.",
     overall: "النتيجة العامة",
@@ -161,6 +163,7 @@ const labels = {
     verify: "مراجعة مولدة بالذكاء الاصطناعي. تحقق قبل اتخاذ قرارات الشراء.",
     analysis: "التحليل",
     ask: "اسأل TenderLens",
+    voiceMode: "وضع الصوت",
     map: "خريطة المناقصة",
     deck: "ملخص العرض",
     questions: "أسئلة يجب طرحها",
@@ -176,7 +179,7 @@ const labels = {
     deckDesc: "ملخص خفيف لأصحاب المصلحة يتم إنشاؤه من نتيجة التحليل.",
     questionsDesc: "أسئلة عملية لإرسالها إلى المورد أو مالك المشروع قبل التقديم.",
     exampleTitle: "ملفات مثال",
-    exampleDescription: "استخدم هذه الملفات الخيالية لتجربة TenderLens AI بدون رفع ملفاتك.",
+    exampleDescription: "استخدم ملفات المثال الخيالية لتجربة TenderLens Agentic AI بدون رفع ملفاتك.",
     useExamples: "استخدام هذه الملفات",
     skip: "تخطي",
     nextSlide: "التالي",
@@ -185,11 +188,11 @@ const labels = {
     analyzed: "تم التحليل",
     compliantRows: (count) => `${count} بنود ممتثلة`,
     riskRows: (count) => `${count} بنود تحتاج انتباها`,
-    resultTitleNoEvidence: "تحتاج إلى أدلة استجابة",
-    resultTitleStrong: "عرض قوي مع بعض النقاط التي تحتاج مراجعة",
-    resultTitleRisk: "أساس جيد مع مخاطر يجب حلها",
+    resultTitleNoEvidence: "تحتاج إلى أدلة للتقديم",
+    resultTitleStrong: "جاهز للتقديم مع بعض المراجعات",
+    resultTitleRisk: "تقديم مشروط مع مخاطر يجب حلها",
     uploadLimit: "يمكن رفع 5 ملفات كحد أقصى. 4.0 MB لكل ملف.",
-    chatIntro: "اسألني عن أكبر المخاطر أو سبب اعتبار متطلب ما جزئيا أو ما الذي يجب سؤاله للمورد.",
+    chatIntro: "اسألني عن أكبر المخاطر أو سبب اعتبار متطلب ما جزئيا أو ما الذي يجب سؤاله لجهة الطرح.",
     noMajorRisks: "لا توجد مخاطر رئيسية مدرجة.",
     uploadAccepted: (count) => `تم قبول ${count} ملف. شغل التحليل لمراجعتها.`,
     running: "يقوم TenderLens بمراجعة الأدلة...",
@@ -198,7 +201,7 @@ const labels = {
     quickQuestions: ["ما أكبر المخاطر؟", "لماذا هذا البند جزئي؟", "ما الذي يجب أن أسأله للمورد؟", "لخص النتائج بالعربية"],
     riskLabel: { Low: "منخفض", Medium: "متوسط", High: "عال" },
     statusLabel: { Compliant: "ممتثل", Partial: "جزئي", Gap: "فجوة", "Needs Review": "يحتاج مراجعة" },
-    mapSvgTitle: "خريطة مناقصة TenderLens AI",
+    mapSvgTitle: "خريطة TenderLens Agentic AI",
     mapHeaders: ["الملفات", "المتطلبات", "الأدلة", "المخاطر والإجراءات"],
     score: "النتيجة",
     deckSlide: (current, total) => `الشريحة ${current} من ${total}`,
@@ -206,7 +209,7 @@ const labels = {
       {
         counter: "1 من 2",
         title: "افهم مستندات المناقصة بسرعة",
-        body: "يقرأ TenderLens AI ملفات المناقصة والعرض، ويجد المتطلبات، ويفحص الأدلة، ويبرز المخاطر.",
+        body: "يقرأ TenderLens Agentic AI ملفات المناقصة، ويفحص جاهزية تقديمك، ويبرز المخاطر.",
       },
       {
         counter: "2 من 2",
@@ -221,126 +224,126 @@ const labels = {
 
 const exampleFiles = [
   {
-    display: "RFP example",
-    name: "Riyadh Smart Parking RFP.pdf",
-    size: "3 KB",
+    display: "Tender example",
+    name: "Jeddah Fleet Maintenance RFP.pdf",
+    size: "4 KB",
     format: "PDF",
-    path: "./demo-docs/riyadh-smart-parking-rfp.pdf",
+    path: "./example-files/jeddah-fleet-maintenance-rfp.pdf",
   },
   {
-    display: "Proposal example",
-    name: "Najm Urban Mobility Proposal.docx",
-    size: "10 KB",
+    display: "Bid readiness notes",
+    name: "Bid Readiness Notes.docx",
+    size: "9 KB",
     format: "DOCX",
-    path: "./demo-docs/najm-urban-mobility-proposal.docx",
+    path: "./example-files/bid-readiness-notes.docx",
   },
   {
-    display: "Technical addendum",
-    name: "Technical Compliance Addendum.pdf",
-    size: "3 KB",
+    display: "Commercial addendum",
+    name: "Commercial Clarification Addendum.pdf",
+    size: "4 KB",
     format: "PDF",
-    path: "./demo-docs/technical-compliance-addendum.pdf",
+    path: "./example-files/commercial-clarification-addendum.pdf",
   },
 ];
 
-const demoResult = {
-  score: 75,
+const exampleResult = {
+  score: 78,
   executiveBrief:
-    "The proposal is strong on language support, uptime, data residency, support, APIs, and sustainability reporting. It still needs clarification on bid security validity, security evidence, go-live timing, and training seats before submission.",
+    "TenderLens recommends a conditional bid. The tender fits our language support, hosted operations, data residency, support, API, and sustainability capabilities, but the bid team must close security-evidence, bid-bond validity, go-live, and training-capacity gaps before submission.",
   matrix: [
     {
       requirement: "Bid security must equal 2% of contract value and remain valid for at least 120 days.",
       category: "Commercial",
       status: "Partial",
       risk: "Medium",
-      response: "The proposal provides 2% bid security, but the validity period is 90 days unless extended during clarification.",
-      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Bid security: 2% of contract value, valid for 90 days from submission." }],
+      response: "The finance note confirms a 2% bid bond, but the current bank letter template is valid for 90 days unless extended.",
+      citations: [{ file: "bid-readiness-notes.docx", quote: "Bid security: 2% of contract value, valid for 90 days unless the bank issues the extended letter." }],
     },
     {
       requirement: "Portal, resident notifications, and enforcement interface must support Arabic and English.",
       category: "Functional",
       status: "Compliant",
       risk: "Low",
-      response: "The proposal confirms Arabic and English support across operator, resident, and enforcement workflows.",
-      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "The operator portal and resident notifications are available in Arabic and English." }],
+      response: "The implementation team has bilingual product, support, and notification coverage for the required workflows.",
+      citations: [{ file: "bid-readiness-notes.docx", quote: "Arabic and English interfaces are available for operators, residents, enforcement users, and support scripts." }],
     },
     {
       requirement: "Hosted production service must meet 99.5% monthly uptime with 72-hour maintenance notice.",
       category: "SLA",
       status: "Compliant",
       risk: "Low",
-      response: "The proposal and addendum commit to 99.5% uptime and 72-hour scheduled maintenance notice.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm commits to 99.5% monthly uptime for the hosted production service." }],
+      response: "The operations playbook and addendum commit to the required uptime and maintenance notice window.",
+      citations: [{ file: "commercial-clarification-addendum.pdf", quote: "The hosted production service will meet 99.5% monthly uptime with planned maintenance announced at least 72 hours in advance." }],
     },
     {
       requirement: "Supplier must provide ISO 27001, SOC 2 Type II, or equivalent independent security audit evidence.",
       category: "Security",
       status: "Partial",
       risk: "Medium",
-      response: "An independent penetration test is available, but ISO 27001 certification is not yet issued.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "ISO 27001 certification is scheduled for final audit in Q4 2026 and is not yet issued." }],
+      response: "The security pack includes a recent independent penetration test, but ISO 27001 certification is not yet issued.",
+      citations: [{ file: "bid-readiness-notes.docx", quote: "ISO 27001 final audit is scheduled for Q4; current evidence includes an independent penetration test and remediation letter." }],
     },
     {
       requirement: "Production go-live for the five pilot districts must be completed by 30 September 2026.",
       category: "Delivery",
-      status: "Partial",
+      status: "Gap",
       risk: "High",
-      response: "The proposed go-live date is 15 October 2026, which is after the mandatory deadline.",
-      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Go-live is planned for 15 October 2026 after staged district acceptance." }],
+      response: "The bid team's current delivery plan reaches full production on 15 October 2026, after the mandatory deadline.",
+      citations: [{ file: "bid-readiness-notes.docx", quote: "Full production go-live is currently planned for 15 October 2026 after staged depot onboarding." }],
     },
     {
       requirement: "Resident personal data and plate metadata must be stored in Saudi Arabia.",
       category: "Data Residency",
       status: "Compliant",
       risk: "Low",
-      response: "Production data and backups are committed to a Riyadh/KSA hosting location.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Backups will remain within the Kingdom of Saudi Arabia." }],
+      response: "The architecture note keeps primary data and backups inside Saudi Arabia.",
+      citations: [{ file: "commercial-clarification-addendum.pdf", quote: "Resident personal data, vehicle metadata, logs, and backups remain within the Kingdom of Saudi Arabia." }],
     },
     {
       requirement: "Critical incidents need human response within 30 minutes and standard tickets within 4 business hours.",
       category: "Support",
       status: "Compliant",
       risk: "Low",
-      response: "The proposal and addendum meet both incident and standard ticket response targets.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Critical production incidents receive a named support engineer within 30 minutes." }],
+      response: "The support plan meets both incident and standard ticket response targets.",
+      citations: [{ file: "commercial-clarification-addendum.pdf", quote: "Critical production incidents receive a named support engineer within 30 minutes." }],
     },
     {
       requirement: "Platform must integrate with the municipal payment gateway and expose REST APIs.",
       category: "Integration",
       status: "Compliant",
       risk: "Low",
-      response: "The proposal includes payment gateway integration and REST APIs for occupancy, permits, violations, and payments.",
-      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Najm exposes REST APIs for occupancy, permits, violation status, and payment events." }],
+      response: "The product roadmap includes payment gateway integration and REST APIs for occupancy, permits, violations, and payments.",
+      citations: [{ file: "bid-readiness-notes.docx", quote: "The platform exposes REST APIs for occupancy, permits, violation status, and payment events." }],
     },
     {
       requirement: "Supplier must deliver role-based training for at least 50 municipal staff before go-live.",
       category: "Training",
       status: "Partial",
       risk: "Medium",
-      response: "The base proposal includes 40 trainees. Ten additional remote trainees may be added at no license cost.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm can add 10 additional trainees at no license cost if training is delivered remotely." }],
+      response: "The training plan currently covers 40 staff. Ten additional remote seats are possible but need written confirmation.",
+      citations: [{ file: "commercial-clarification-addendum.pdf", quote: "Base role-based training covers 40 users; 10 remote seats may be added at no additional license cost." }],
     },
     {
       requirement: "Supplier must provide quarterly sustainability reporting.",
       category: "Reporting",
       status: "Compliant",
       risk: "Low",
-      response: "The addendum commits to quarterly sustainability reports covering energy profile and maintenance trips.",
-      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm will submit a quarterly sustainability report covering cloud hosting region energy profile." }],
+      response: "The bid can include quarterly sustainability reports covering hosting and maintenance travel impact.",
+      citations: [{ file: "commercial-clarification-addendum.pdf", quote: "Quarterly sustainability reporting will cover hosting region energy profile and maintenance-trip reductions." }],
     },
   ],
-  trace: ["Validated files", "Found mandatory requirements", "Matched evidence", "Calibrated risks"],
+  trace: ["Validated example files", "Found mandatory tender requirements", "Matched bid-readiness evidence", "Ran independent evidence check", "Calibrated bid risk"],
   risks: [
-    "Go-live is later than the mandatory deadline.",
-    "Bid security validity is shorter than requested.",
-    "ISO 27001 certification is not yet issued.",
-    "Training reaches 50 seats only if remote additional trainees are accepted.",
+    "The current go-live plan misses the mandatory deadline.",
+    "The bid bond validity is shorter than required.",
+    "Security certification evidence is not final.",
+    "Training capacity is below the stated minimum unless the extra seats are confirmed.",
   ],
   nextActions: [
-    "Request a revised go-live plan that meets 30 September 2026.",
-    "Ask for written confirmation extending bid security validity to 120 days.",
-    "Confirm whether the March 2026 penetration test is accepted as equivalent security evidence.",
-    "Confirm that 50 training seats are included before go-live.",
+    "Revise the delivery plan to meet 30 September 2026 before deciding to bid.",
+    "Obtain a 120-day bid bond letter from the bank.",
+    "Attach independent security evidence and explain the ISO 27001 timeline.",
+    "Confirm 50 training seats before submission.",
   ],
   files: exampleFiles.map((file) => file.name),
 };
@@ -382,9 +385,9 @@ function fileFormat(name) {
 
 function shortFileName(name) {
   return name
-    .replace(/riyadh-smart-parking-/i, "")
-    .replace(/najm-urban-mobility-/i, "")
-    .replace(/technical-compliance-/i, "")
+    .replace(/jeddah-fleet-maintenance-/i, "")
+    .replace(/bid-readiness-/i, "")
+    .replace(/commercial-clarification-/i, "")
     .replace(/\.(pdf|docx|txt|md|jpg|jpeg|png|webp)$/i, "")
     .replaceAll("-", " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -810,7 +813,7 @@ function buildQuestions(result) {
     }));
   const actionQuestions = result.nextActions.slice(0, 4).map((action, index) => ({
     question: action.endsWith("?") ? action : `${action}?`,
-    why: result.risks[index] || "This action was recommended by TenderLens AI.",
+    why: result.risks[index] || "This action was recommended by TenderLens Agentic AI.",
   }));
   return [...rowQuestions, ...actionQuestions].slice(0, 8);
 }
@@ -863,7 +866,7 @@ function answerQuestion(question) {
     return `${row.requirement}: ${row.response}`;
   }
   if (lower.includes("ask") || lower.includes("vendor") || lower.includes("سأ")) {
-    return buildQuestions(result)[0]?.question || "Ask the vendor to confirm every mandatory requirement with source-backed evidence.";
+    return buildQuestions(result)[0]?.question || "Ask the issuer to confirm every mandatory requirement with source-backed evidence.";
   }
   return result.executiveBrief;
 }
@@ -989,7 +992,7 @@ async function runAnalysis() {
   $("#uploadStatus").classList.remove("error");
   $("#uploadStatus").textContent = text().running;
   if (!state.uploadedFiles.length) {
-    usePreloadedExample();
+    useExampleFiles();
     return;
   }
 
@@ -1021,15 +1024,15 @@ async function runAnalysis() {
   renderResult();
 }
 
-function usePreloadedExample() {
-  state.currentResult = normalizeResult(structuredClone(demoResult));
+function useExampleFiles() {
+  state.currentResult = normalizeResult(structuredClone(exampleResult));
   state.analysisSource = "sample";
   state.uploadedFiles = [];
   state.activeRow = 0;
   state.activeSlide = 0;
   $("#fileInput").value = "";
   $("#uploadStatus").classList.remove("error");
-  $("#uploadStatus").textContent = "Preloaded files use a prepared sample result so you can test the interface without spending Gemini quota.";
+  $("#uploadStatus").textContent = "Example files use a prepared example result so you can test the interface without spending model quota.";
   renderResult();
 }
 
@@ -1129,7 +1132,7 @@ function reportText() {
   const result = state.currentResult;
   if (!result) return "";
   return [
-    "TenderLens AI",
+    "TenderLens Agentic AI",
     `${text().score}: ${result.score}/100`,
     "",
     result.executiveBrief,
@@ -1189,7 +1192,7 @@ function bindEvents() {
   ["useSampleButton", "heroSampleButton", "emptySampleButton", "useExamplesFromModal"].forEach((id) => {
     $(`#${id}`).addEventListener("click", () => {
       $("#examplesModal").classList.add("hidden");
-      usePreloadedExample();
+      useExampleFiles();
     });
   });
 
@@ -1237,6 +1240,8 @@ function bindEvents() {
     addChatMessage(question, "user");
     window.setTimeout(() => addChatMessage(answerQuestion(question), "agent"), 180);
   });
+
+  $("#voiceModeButton").addEventListener("click", startVoice);
 
   $("#prevSlide").addEventListener("click", () => {
     const deck = buildBriefingDeck(state.currentResult);

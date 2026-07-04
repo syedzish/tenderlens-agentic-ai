@@ -1,6 +1,6 @@
 # Deployment
 
-TenderLens is designed for a production setup, not a preloaded-files-only demo.
+TenderLens is designed for a production setup, not an example-files-only app.
 The public frontend can show the prepared example, but uploaded tender files must
 be analyzed by the backend runtime.
 
@@ -89,7 +89,7 @@ https://vercel.com/docs/functions/limitations#request-body-size
    `TENDERLENS_BACKEND_URL`.
 5. Redeploy Vercel.
 6. Open the public Vercel URL.
-7. Run the preloaded example and confirm score `75`.
+7. Run the example files and confirm score `78`.
 8. Upload a new TXT/MD/DOCX/text-based PDF tender file and confirm the result is
    marked as uploaded files, not prepared example.
 9. Upload a JPG/PNG/WEBP tender page and confirm live vision extraction works when credentials are configured.

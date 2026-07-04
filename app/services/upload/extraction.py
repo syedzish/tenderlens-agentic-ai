@@ -268,7 +268,7 @@ def extract_uploaded_document(
         parser_status = "parsed_image"
     else:
         raise UploadExtractionError(
-            "Unsupported file type. Upload PDF, DOCX, TXT, MD, JPG, PNG, WEBP, or use Preloaded Example Files."
+            "Unsupported file type. Upload PDF, DOCX, TXT, MD, JPG, PNG, WEBP, or use Example Files."
         )
 
     normalized = "\n".join(line.rstrip() for line in text.splitlines()).strip()

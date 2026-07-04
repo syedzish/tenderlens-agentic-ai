@@ -16,11 +16,11 @@
 
     <header class="app-header">
       <div class="header-inner">
-        <a class="brand-lockup" href="/" aria-label="TenderLens AI home">
-          <img src="./brand/tenderlens-logo.png" alt="TenderLens AI logo" />
+        <a class="brand-lockup" href="/" aria-label="TenderLens Agentic AI home">
+          <img src="./brand/tenderlens-logo.png" alt="TenderLens Agentic AI logo" />
           <span>
-            <strong>TenderLens AI</strong>
-            <small>AI tender review workspace</small>
+            <strong>TenderLens Agentic AI</strong>
+            <small>Bid decision workspace</small>
           </span>
         </a>
 
@@ -70,11 +70,11 @@
 
           <button class="example-action" id="useSampleButton" type="button">
             <span class="icon" data-icon="files" aria-hidden="true"></span>
-            <span data-i18n="runExample">Run Analysis with preloaded files</span>
+            <span data-i18n="runExample">Run Analysis with example files</span>
           </button>
           <button class="secondary-action" id="viewExamplesButton" type="button">
             <span class="icon" data-icon="eye" aria-hidden="true"></span>
-            <span data-i18n="viewExample">View preloaded files</span>
+            <span data-i18n="viewExample">View example files</span>
           </button>
           <p class="upload-status" id="uploadStatus" aria-live="polite"></p>
         </section>
@@ -106,10 +106,10 @@
       <section class="workspace" id="workspace">
         <section class="start-hero" id="startHero">
           <div class="hero-copy">
-            <span class="soft-badge" data-i18n="previewNotice">Start your analysis by uploading files or running the preloaded example.</span>
+            <span class="soft-badge" data-i18n="previewNotice">Start your analysis by uploading files or running the example.</span>
             <h1 data-i18n="startTitle">Start your analysis</h1>
             <p data-i18n="startBody">
-              Upload tender files or run the preloaded example. TenderLens will then fill this workspace with a score, checklist,
+              Upload tender files or run the example. TenderLens will then fill this workspace with a score, checklist,
               evidence, map, deck, and questions.
             </p>
             <div class="hero-actions">
@@ -119,7 +119,7 @@
               </button>
               <button class="ghost-dark" id="heroSampleButton" type="button">
                 <span class="icon" data-icon="files" aria-hidden="true"></span>
-                <span data-i18n="runExample">Run Analysis with preloaded files</span>
+                <span data-i18n="runExample">Run Analysis with example files</span>
               </button>
             </div>
           </div>
@@ -136,7 +136,7 @@
           </p>
           <div class="empty-actions">
             <button class="primary-action compact" id="emptyUploadButton" type="button" data-i18n="uploadRun">Upload files & Run Analysis</button>
-            <button class="secondary-action compact" id="emptySampleButton" type="button" data-i18n="runExample">Run Analysis with preloaded files</button>
+            <button class="secondary-action compact" id="emptySampleButton" type="button" data-i18n="runExample">Run Analysis with example files</button>
           </div>
         </section>
 
@@ -253,7 +253,13 @@
                 <div class="quick-questions" id="quickQuestions"></div>
                 <form class="chat-form" id="chatForm">
                   <input id="chatInput" type="text" placeholder="Ask anything about these documents..." />
-                  <button id="sendChat" type="submit" aria-label="Send message">➤</button>
+                  <button class="voice-mode-button" id="voiceModeButton" type="button" aria-label="Start voice mode">
+                    <span class="icon" data-icon="mic" aria-hidden="true"></span>
+                    <span data-i18n="voiceMode">Voice Mode</span>
+                  </button>
+                  <button id="sendChat" type="submit" aria-label="Send message">
+                    <span class="icon" data-icon="send" aria-hidden="true"></span>
+                  </button>
                 </form>
               </div>
             </section>
@@ -298,7 +304,7 @@
                   </div>
                   <div class="deck-paper">
                     <div class="deck-paper-header">
-                      <span>TENDERLENS AI</span>
+                      <span>TENDERLENS AGENTIC AI</span>
                       <strong id="deckCounter">1/5</strong>
                     </div>
                     <ul id="deckBullets"></ul>
@@ -338,7 +344,7 @@
           <button class="icon-button" id="closeExamples" type="button" aria-label="Close">×</button>
         </div>
         <p class="modal-copy" data-i18n="exampleDescription">
-          Use these fictional files to test TenderLens AI without uploading your own documents.
+          Use these fictional example files to test TenderLens Agentic AI without uploading your own documents.
         </p>
         <div class="example-file-list" id="exampleFileList"></div>
         <button class="primary-action" id="useExamplesFromModal" type="button" data-i18n="useExamples">Use these files</button>
@@ -350,7 +356,7 @@
         <div class="modal-header">
           <div class="brand-mini">
             <img src="./brand/tenderlens-logo.png" alt="" />
-            <strong>TenderLens AI</strong>
+            <strong>TenderLens Agentic AI</strong>
           </div>
           <button class="icon-button" id="welcomeClose" type="button" aria-label="Close">×</button>
         </div>
@@ -359,11 +365,11 @@
             <span class="step-badge" id="onboardingCounter">1 OF 2</span>
             <h2 id="welcomeTitle">Understand tender documents faster</h2>
             <p id="welcomeBody">
-              TenderLens AI reads tender and proposal files, finds requirements, checks evidence, and highlights risks.
+              TenderLens Agentic AI reads tender files, checks them against your bid readiness, and highlights risks.
             </p>
-            <a class="guide-link" href="./demo-docs/riyadh-smart-parking-rfp.pdf" target="_blank" rel="noreferrer">
+            <a class="guide-link" href="./example-files/jeddah-fleet-maintenance-rfp.pdf" target="_blank" rel="noreferrer">
               <span class="icon" data-icon="book-open" aria-hidden="true"></span>
-              How to use TenderLens AI
+              How to use TenderLens Agentic AI
             </a>
           </div>
           <div class="onboarding-visual" id="onboardingVisual"></div>

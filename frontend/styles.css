@@ -1032,7 +1032,7 @@ img {
 
 .chat-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 56px;
+  grid-template-columns: minmax(0, 1fr) auto 56px;
   gap: 10px;
   padding: 0 18px 18px;
 }
@@ -1051,7 +1051,33 @@ img {
   border-radius: 12px;
   background: #9abdb7;
   color: var(--white);
-  font-size: 1.4rem;
+  font-size: 1rem;
+}
+
+.chat-form .voice-mode-button {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(72, 134, 128, 0.42);
+  background: var(--white);
+  color: var(--teal);
+  padding: 0 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.chat-form .voice-mode-button:hover {
+  background: var(--teal-soft);
+}
+
+#sendChat {
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  background: #9abdb7;
+  color: var(--white);
 }
 
 .map-heading,

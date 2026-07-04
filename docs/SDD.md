@@ -154,8 +154,8 @@ Required fields:
 ## Non-Functional Requirements
 
 - Public link opens without login or paywall.
-- Preloaded Example Files path is reliable and transparent.
-- Pre-generated Example Results conserve API calls for the preloaded files.
+- Example Files path is reliable and transparent.
+- Prepared Example Results conserve API calls for the example files.
 - Uploaded Tender Files require one Main Tender File, allow optional Supporting Files, and are limited to 5 files total, 4 MB per file, and 12 MB total.
 - Typed mode works even if voice fails.
 - Voice session duration default is 300 seconds.
