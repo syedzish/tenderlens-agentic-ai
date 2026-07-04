@@ -30,11 +30,12 @@ Acceptance:
 - Exactly one Main Tender File is required for uploaded analysis.
 - Supporting Files are optional and add evidence/context.
 - More than 5 files total are rejected before parsing.
-- Files over 5 MB each are rejected before parsing.
+- Files over 4 MB each are rejected before parsing.
 - Tender Files over 12 MB total are rejected before parsing.
 - Unsupported files show a clear error.
 - TXT, MD, and DOCX can be analyzed transiently in v1 with current parser support.
-- PDF files are validated but text analysis must clearly state when PDF parsing is not enabled; the app must not pretend to analyze unread PDF content.
+- Text-based PDF files are parsed transiently; scanned or image-only PDFs must clearly fail with an extractable-text error, and the app must not pretend to analyze unread PDF content.
+- JPG, PNG, and WEBP files use live Gemini/Vertex vision text extraction when credentials are configured; without live credentials they must fail clearly.
 - Uploaded file bytes and transient OKF are deleted after analysis.
 - Raw uploaded text is not logged or persisted.
 - Uploaded analysis returns source-document metadata and citations by Main Tender File or Supporting File.
@@ -155,7 +156,7 @@ Required fields:
 - Public link opens without login or paywall.
 - Preloaded Example Files path is reliable and transparent.
 - Pre-generated Example Results conserve API calls for the preloaded files.
-- Uploaded Tender Files require one Main Tender File, allow optional Supporting Files, and are limited to 5 files total, 5 MB per file, and 12 MB total.
+- Uploaded Tender Files require one Main Tender File, allow optional Supporting Files, and are limited to 5 files total, 4 MB per file, and 12 MB total.
 - Typed mode works even if voice fails.
 - Voice session duration default is 300 seconds.
 - No secrets in repo.

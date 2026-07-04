@@ -6,9 +6,12 @@
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncGenerator
 
-from google.adk.agents import Agent
+from google.adk.agents import Agent, BaseAgent
+from google.adk.agents.invocation_context import InvocationContext
 from google.adk.apps import App
+from google.adk.events import Event
 from google.adk.models import Gemini
 from google.genai import types
 
@@ -80,31 +83,79 @@ Required workflow:
 2. Retrieve or validate OKF evidence.
 3. Run analysis through analyze_tender or analyze_voice_turn.
 4. If asked for raw evidence, use search_evidence.
-5. If asked about upload safety, explain the 5 MB limit and validate metadata with validate_upload_tool.
+5. If asked about upload safety, explain the 4 MB limit and validate metadata with validate_upload_tool.
 6. Do not invent tender facts that are not present in tool results.
 """
 
 
-root_agent = Agent(
-    name="tenderlens_router_agent",
-    model=Gemini(
-        model=os.getenv("TENDERLENS_AGENT_MODEL", "gemini-flash-latest"),
-        retry_options=types.HttpRetryOptions(attempts=3),
-    ),
-    instruction=ROOT_INSTRUCTION,
-    description="Routes TenderLens bidder-side tender analysis, evidence retrieval, strategy simulation, upload validation, and voice-ready turns.",
-    tools=[
-        list_tenders_tool,
-        get_tender_okf_index,
-        search_evidence,
-        get_company_profile_tool,
-        validate_okf_bundle_tool,
-        validate_upload_tool,
-        simulate_strategy_overlay_tool,
-        analyze_tender,
-        analyze_voice_turn,
-    ],
-)
+class DeterministicTenderLensAgent(BaseAgent):
+    """Local fallback agent used when live model credentials are unavailable."""
+
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        report = run_tender_analysis()
+        response = (
+            f"TenderLens local analysis is ready. Decision: {report.recommendation}. "
+            f"Score: {report.score}/100. {report.executive_summary} "
+            f"A2A audit: {report.audit.status}."
+        )
+        yield Event(
+            invocation_id=ctx.invocation_id,
+            author=self.name,
+            content=types.Content(
+                role="model",
+                parts=[types.Part.from_text(text=response)],
+            ),
+        )
+
+
+def _has_live_model_credentials() -> bool:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if api_key and "your-" not in api_key.lower():
+        return True
+
+    use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    if use_vertex and project and not project.startswith("your-"):
+        return True
+    return False
+
+
+def _build_root_agent() -> BaseAgent:
+    if not _has_live_model_credentials():
+        return DeterministicTenderLensAgent(
+            name="tenderlens_router_agent",
+            description="Runs deterministic TenderLens local analysis when live Gemini or Vertex credentials are unavailable.",
+        )
+
+    return Agent(
+        name="tenderlens_router_agent",
+        model=Gemini(
+            model=os.getenv("TENDERLENS_AGENT_MODEL", "gemini-flash-latest"),
+            retry_options=types.HttpRetryOptions(attempts=3),
+        ),
+        instruction=ROOT_INSTRUCTION,
+        description="Routes TenderLens bidder-side tender analysis, evidence retrieval, strategy simulation, upload validation, and voice-ready turns.",
+        tools=[
+            list_tenders_tool,
+            get_tender_okf_index,
+            search_evidence,
+            get_company_profile_tool,
+            validate_okf_bundle_tool,
+            validate_upload_tool,
+            simulate_strategy_overlay_tool,
+            analyze_tender,
+            analyze_voice_turn,
+        ],
+    )
+
+
+root_agent = _build_root_agent()
 
 app = App(
     root_agent=root_agent,

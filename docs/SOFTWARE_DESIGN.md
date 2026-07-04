@@ -10,8 +10,9 @@ Responsibility:
 
 - Render the procurement cockpit.
 - Manage language mode, local UI state, upload form state, and voice controls.
-- Call server-side routes for analysis, upload, profile, scenario, and voice WebSocket connections.
-- Never expose Agent Runtime or Live API secrets.
+- Call server-side routes for analysis, profile, scenario, and voice WebSocket connections.
+- Send multipart uploaded-file analysis directly to the configured backend runtime when `TENDERLENS_PUBLIC_BACKEND_URL` is available, avoiding Vercel's function payload cap.
+- Never expose Agent Runtime credentials or Live API secrets.
 - Sanitize all model, tender, and transcript content before rendering.
 
 ### Backend API
@@ -151,7 +152,7 @@ Exact schema should use typed models before implementation.
 - Require exactly one Main Tender File for uploaded analysis.
 - Allow optional Supporting Files.
 - Reject more than 5 files total before parsing.
-- Reject files larger than 5 MB each before parsing.
+- Reject files larger than 4 MB each before parsing.
 - Reject Tender Files larger than 12 MB total before parsing.
 - Reject unsupported extension/MIME combinations.
 - Do not expose temp paths to frontend.
@@ -161,7 +162,8 @@ Exact schema should use typed models before implementation.
 - Preserve source role and safe filename metadata so citations can show Main Tender File or Supporting File source.
 - The API exposes `/api/upload/tender-files/validate` for metadata validation and `/api/upload/analyze` for transient uploaded-file analysis.
 - Uploaded live text analysis currently parses TXT, MD, and DOCX with in-memory standard-library extraction.
-- PDF files remain metadata-validated, but PDF text analysis is not claimed until a reliable parser dependency is intentionally added.
+- Text-based PDF files are parsed transiently with a bounded stdlib extractor. Scanned or image-only PDFs return a clear extractable-text error rather than a fake analysis result.
+- JPG, PNG, and WEBP files are extracted through Gemini/Vertex vision only when live credentials are configured; otherwise the API returns a clear configuration error.
 - Uploaded analysis returns a normal `DecisionReport` with `source_documents`, source-file citations, A2A audit status, and workflow trace.
 
 ## Bounded Evidence Quality Loop Contract

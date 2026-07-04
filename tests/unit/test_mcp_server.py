@@ -27,7 +27,7 @@ class TenderLensMCPServerTest(unittest.TestCase):
         payload = json.loads(result[0].text)
 
         self.assertFalse(payload["accepted"])
-        self.assertIn("5 MB", payload["reason"])
+        self.assertIn("4 MB", payload["reason"])
 
     def test_tender_files_tool_call_returns_structured_data(self) -> None:
         result = asyncio.run(

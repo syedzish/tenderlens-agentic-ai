@@ -9,9 +9,10 @@ TenderLens Agentic AI uses precise privacy claims. These claims must be implemen
 Meaning:
 
 - Uploaded file bytes are processed transiently.
-- Upload processing is bounded by Tender Files limits: exactly one Main Tender File for uploaded analysis, optional Supporting Files, up to 5 files total, 5 MB per file, and 12 MB total.
-- TXT, MD, and DOCX files can be parsed transiently for uploaded-file analysis.
-- PDF text analysis is not claimed until a reliable parser is added; PDF files remain bounded by validation and clear user-facing errors.
+- Upload processing is bounded by Tender Files limits: exactly one Main Tender File for uploaded analysis, optional Supporting Files, up to 5 files total, 4 MB per file, and 12 MB total.
+- TXT, MD, DOCX, and text-based PDF files can be parsed transiently for uploaded-file analysis.
+- JPG, PNG, and WEBP files can be processed through live Gemini/Vertex vision text extraction when credentials are configured.
+- Scanned or image-only PDFs are not treated as analyzed content; the API returns a clear extractable-text error.
 - Uploaded files are not committed, stored in the repo, or stored in durable object storage for v1.
 - Generated upload OKF bundles are not retained.
 - Raw extracted text from uploads is not retained.

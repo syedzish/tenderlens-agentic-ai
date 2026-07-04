@@ -130,6 +130,12 @@ Typing mode:
 - Server route calls local/deployed ADK backend.
 - Response is structured for the dashboard.
 
+Uploaded-file analysis:
+
+- Browser posts multipart files directly to the configured backend runtime when `TENDERLENS_PUBLIC_BACKEND_URL` is present.
+- Direct upload avoids the Vercel Function payload limit and still uses backend CORS plus transient parsing controls.
+- If no backend URL is configured, small local text fallback is available only as a bounded degraded mode.
+
 Voice mode:
 
 - Browser opens a `wss://` route after user action.

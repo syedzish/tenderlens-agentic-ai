@@ -1,8 +1,20 @@
 import unittest
+import zlib
 
 from fastapi.testclient import TestClient
 
 from app.fast_api_app import app
+
+
+def make_pdf(text: str) -> bytes:
+    stream = zlib.compress(f"BT ({text}) Tj ET".encode("utf-8"))
+    return (
+        b"%PDF-1.4\n1 0 obj\n<< /Length "
+        + str(len(stream)).encode("ascii")
+        + b" /Filter /FlateDecode >>\nstream\n"
+        + stream
+        + b"\nendstream\nendobj\n%%EOF"
+    )
 
 
 class TenderLensAPIRoutesTest(unittest.TestCase):
@@ -32,6 +44,7 @@ class TenderLensAPIRoutesTest(unittest.TestCase):
         report = response.json()["report"]
         self.assertEqual(report["recommendation"], "bid")
         self.assertEqual(report["audit"]["status"], "pass")
+        self.assertGreater(report["score"], 0)
         self.assertIn("a2a.evidence_audit", report["workflow_trace"])
 
     def test_arabic_analyze_route(self) -> None:
@@ -49,7 +62,7 @@ class TenderLensAPIRoutesTest(unittest.TestCase):
         self.assertEqual(report["language"], "ar")
         self.assertIn("يوصي", report["executive_summary"])
 
-    def test_upload_validation_rejects_over_5mb(self) -> None:
+    def test_upload_validation_rejects_over_4mb(self) -> None:
         response = self.client.post(
             "/api/upload/validate",
             json={"filename": "large.pdf", "size_bytes": 5 * 1024 * 1024 + 1},
@@ -58,7 +71,7 @@ class TenderLensAPIRoutesTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertFalse(body["accepted"])
-        self.assertIn("5 MB", body["reason"])
+        self.assertIn("4 MB", body["reason"])
 
     def test_tender_files_validation_accepts_main_and_supporting(self) -> None:
         response = self.client.post(
@@ -130,20 +143,41 @@ class TenderLensAPIRoutesTest(unittest.TestCase):
         self.assertEqual(report["audit"]["status"], "pass")
         self.assertIn("upload.extract_transient_text", report["workflow_trace"])
 
-    def test_uploaded_pdf_analysis_is_clear_not_fake(self) -> None:
+    def test_uploaded_pdf_analysis_route_accepts_text_pdf(self) -> None:
         response = self.client.post(
             "/api/upload/analyze",
             data={"profile_id": "default-bidder-profile", "language": "en"},
             files=[
                 (
                     "main_file",
-                    ("main.pdf", b"%PDF-1.4", "application/pdf"),
+                    (
+                        "main.pdf",
+                        make_pdf("Eligibility requires ISO 9001 and bid security. Submission deadline is 30 September."),
+                        "application/pdf",
+                    ),
+                )
+            ],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        report = response.json()["report"]
+        self.assertEqual(report["source_documents"][0]["parser_status"], "parsed_pdf")
+        self.assertGreater(report["score"], 0)
+
+    def test_uploaded_blank_pdf_analysis_is_clear_not_fake(self) -> None:
+        response = self.client.post(
+            "/api/upload/analyze",
+            data={"profile_id": "default-bidder-profile", "language": "en"},
+            files=[
+                (
+                    "main_file",
+                    ("scan.pdf", b"%PDF-1.4", "application/pdf"),
                 )
             ],
         )
 
         self.assertEqual(response.status_code, 422)
-        self.assertIn("PDF text analysis is not enabled", response.json()["detail"])
+        self.assertIn("did not contain extractable text", response.json()["detail"])
 
     def test_strategy_route_returns_score(self) -> None:
         response = self.client.post(

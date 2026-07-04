@@ -33,6 +33,7 @@ class RetrievalAndWorkflowTest(unittest.TestCase):
         self.assertEqual(report.recommendation, "bid")
         self.assertEqual(report.audit.status, "pass", report.audit)
         self.assertGreaterEqual(report.confidence, 0.7)
+        self.assertGreater(report.score, 0)
         self.assertTrue(report.evidence)
         self.assertTrue(report.clarification_questions)
 

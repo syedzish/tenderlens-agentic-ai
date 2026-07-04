@@ -18,7 +18,7 @@ Unit tests:
 - Bidder profile validation
 - Scenario scoring
 - Upload validation
-- Rejecting files over 5 MB
+- Rejecting files over 4 MB
 - Upload cleanup
 - Language utilities
 - Sanitization helpers
@@ -39,7 +39,7 @@ Integration tests:
 - Router calls A2A before final response.
 - Voice gateway accepts session start and cleanup.
 - Voice transcript routes to Router workflow.
-- Upload endpoint rejects >5 MB before parsing.
+- Upload endpoint rejects >4 MB before parsing, parses text-based PDFs without claiming OCR for scanned files, and supports mocked/credential-backed JPG/PNG/WEBP vision extraction.
 - Frontend smoke renders English and Arabic.
 
 ## Trajectory Tests
@@ -109,7 +109,7 @@ Use Playwright or equivalent for:
 - OKF/cockpit sections visible
 - Language switch preserves state
 - Upload validation errors
-- Clear 5 MB upload error
+- Clear 4 MB upload error
 - A2A audit status visible
 - Voice button visible
 - Voice permission/error states

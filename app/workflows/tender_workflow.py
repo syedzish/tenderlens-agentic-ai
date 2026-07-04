@@ -19,6 +19,7 @@ from app.services.data_loader import get_company_profile, get_tender
 from app.services.paths import OKF_DIR
 from app.services.profile.matcher import score_profile_against_requirements
 from app.services.retrieval.retriever import profile_fact_evidence, search_okf_evidence
+from app.services.scenario.compliance_score import calculate_findings_score
 from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS, simulate_strategy_overlay
 
 
@@ -263,4 +264,5 @@ def run_tender_analysis(
         voice_summary=voice_summary,
         unresolved_evidence_gaps=[] if audit.status == "pass" else [issue.message for issue in audit.issues],
         workflow_trace=workflow_trace,
+        score=calculate_findings_score(findings),
     )

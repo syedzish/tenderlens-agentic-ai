@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 MAX_UPLOAD_FILES = 5
 MAX_TOTAL_UPLOAD_BYTES = 12 * 1024 * 1024
-SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md", ".docx"}
+SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md", ".docx", ".jpg", ".jpeg", ".png", ".webp"}
 
 
 @dataclass(frozen=True)
@@ -42,12 +42,12 @@ def validate_upload_metadata(filename: str, size_bytes: int) -> UploadValidation
     if suffix not in SUPPORTED_EXTENSIONS:
         return UploadValidationResult(
             accepted=False,
-            reason="Unsupported file type. Upload PDF, TXT, MD, or DOCX.",
+            reason="Unsupported file type. Upload PDF, DOCX, TXT, MD, JPG, PNG, or WEBP.",
         )
     if size_bytes > MAX_UPLOAD_BYTES:
         return UploadValidationResult(
             accepted=False,
-            reason="File is larger than the 5 MB limit.",
+            reason="File is larger than the 4 MB limit.",
         )
     if size_bytes <= 0:
         return UploadValidationResult(

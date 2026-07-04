@@ -1,392 +1,369 @@
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const supportedExt = [".pdf", ".txt", ".md", ".docx"];
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const MAX_UPLOAD_FILES = 5;
+const supportedExt = [".pdf", ".txt", ".md", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
 
 const state = {
   language: "en",
-  voiceStream: null,
-  voiceMuted: false,
-  activeFilter: "all",
-  analysisSource: "static",
-  hasUploadedTenderFiles: false,
+  activeTab: "analysis",
+  activeRow: 0,
   activeSlide: 0,
-  report: null,
+  onboardingSlide: 0,
+  currentResult: null,
+  uploadedFiles: [],
+  analysisSource: "empty",
+  voiceStream: null,
 };
-
-const t = {
-  en: {
-    track: "Agentic AI for Procurement",
-    navHowTo: "How to Use",
-    navAnalysis: "Analysis",
-    navDiscuss: "Discuss with TenderLens",
-    navMap: "Tender Map",
-    navDeck: "Briefing Deck",
-    navQuestions: "Tender Questions",
-    voiceMode: "Talk to TenderLens",
-    tenderIntake: "Tender Files",
-    sampleTender: "Preloaded Example Files",
-    chooseTender: "Choose preloaded files",
-    usePreloaded: "Use Preloaded Example Files",
-    preloadedNote: "Preloaded example files use pre-generated example results so you can explore TenderLens quickly and conserve API calls. Your uploaded Tender Files are analyzed when you run them.",
-    runAnalysis: "Run analysis",
-    secureUpload: "Upload Tender Files",
-    uploadRule: "Main Tender File is required. Add optional Supporting Files. TXT, MD, and DOCX can be analyzed now. PDF text reading will be added after parser support is stable. Max 5 files, 5 MB each, 12 MB total.",
-    mainTenderFile: "Main Tender File",
-    supportingFiles: "Supporting Files",
-    bidderProfile: "Bidder Profile",
-    typingMode: "Discuss",
-    askAgent: "Discuss with TenderLens",
-    recommendation: "Recommendation",
-    agentSystem: "Analysis",
-    summaryTitle: "Bid-ready, with one delivery watch item",
-    summaryText: "The bidder profile meets the core eligibility requirements. Confirm specialized HVAC partner capacity before final approval.",
-    a2aAudit: "Evidence Checked",
-    auditPass: "Passed",
-    auditText: "7 claims checked, 0 unsupported",
-    evidenceWarRoom: "Proof Behind This Recommendation",
-    inspectClaims: "Inspect the evidence",
-    all: "All",
-    eligibility: "Eligibility",
-    risk: "Risk",
-    deadline: "Deadline",
-    okfGraph: "Tender Map",
-    linkedTenderKnowledge: "How the tender fits together",
-    sourceFiles: "Source Files",
-    sampleSource: "Preloaded Example Files",
-    mainSource: "Main Tender File",
-    supportingSource: "Supporting File",
-    compliance: "Compliance",
-    gapChecklist: "Gap checklist",
-    riskHeatmap: "Risk Heatmap",
-    deliveryRisk: "Delivery risk",
-    strategySimulator: "Strategy Simulator",
-    scenarioTradeoffs: "Scenario tradeoffs",
-    teamCapacity: "Team capacity",
-    margin: "Estimated margin",
-    partnerAvailable: "Partner available",
-    clarifications: "Tender Questions",
-    askIssuer: "Ask the Issuer",
-    prepareToAnswer: "Prepare to Answer",
-    briefingDeck: "Briefing Deck",
-    deckTitle: "Boardroom-ready slides",
-    howToEyebrow: "How to Use",
-    howToTitle: "Start with files, then follow the evidence",
-    preparedBadge: "Pre-generated example result",
-    guideFilesTitle: "Use preloaded files or upload yours",
-    guideFilesText: "Preloaded example files use pre-generated example results so you can explore TenderLens quickly and conserve API calls. Your uploaded Tender Files are analyzed when you run them.",
-    guideAnalysisTitle: "Review Analysis",
-    guideAnalysisText: "See the bid/no-bid recommendation, confidence, gaps, risks, and next actions in one decision view.",
-    guideDiscussTitle: "Discuss with TenderLens",
-    guideDiscussText: "Ask by typing or talking. Try: Can we bid? What are the top risks? What should we ask the issuer?",
-    guideMapTitle: "Explore Tender Map",
-    guideMapText: "Tender Map connects requirements, evidence, deadlines, risks, gaps, and actions so the recommendation is easy to inspect.",
-    guideQuestionsTitle: "Use Tender Questions",
-    guideQuestionsText: "Ask the Issuer lists clarification questions. Prepare to Answer shows what evaluators may ask you after reading your bid.",
-    guideDeckTitle: "Create the Briefing Deck",
-    guideDeckText: "Use the slide carousel for an internal bid decision meeting: decision, fit, gaps, risks, proof, questions, and action plan.",
-    whatYouGet: "What you will get",
-    exampleDecision: "Decision: Bid with one watch item",
-    exampleText: "Confidence 90%. Top gap: confirm HVAC subcontractor capacity. Evidence: source section 2.1 requires ISO certifications and two similar smart facilities projects.",
-    miniMap: "Tender Map: Eligibility -> Proof -> Gaps",
-    miniQuestions: "Tender Questions: Ask the Issuer + Prepare to Answer",
-    miniDeck: "Briefing Deck: 8 boardroom-ready slides",
-    analysisBanner: "You are viewing pre-generated example results for the preloaded files. Upload your own Tender Files to run a new analysis.",
-    uploadedAnalysisBanner: "Your uploaded Tender Files were analyzed for this session. TenderLens does not save your files.",
-    uploadedBadge: "Uploaded Tender Files",
-    welcomeEyebrow: "Welcome to TenderLens",
-    welcomeTitle: "Make the bid decision with proof",
-    welcomeText: "Start with preloaded example files, upload your Tender Files, or open How to Use for a quick walkthrough. Voice starts only when you choose Talk to TenderLens.",
-    uploadMine: "Upload my Tender Files",
-    openHowTo: "Open How to Use",
-    dontShow: "Don't show again",
-    voiceSession: "Voice Session",
-    voiceIdle: "Idle",
-    voiceHelp: "Voice starts only after you choose Talk to TenderLens.",
-    mute: "Mute",
-    interrupt: "Interrupt",
-    endVoice: "End",
-    profilePlaceholder: "Confirm HVAC subcontractor capacity before final bid gate.",
-    chatPlaceholder: "Ask about risks, evidence, or strategy...",
-    analysisReady: "Analysis complete. Bid recommendation is ready with evidence audit.",
-    analysisFallback: "Pre-generated example results are loaded for the preloaded files.",
-    liveUnavailable: "Live analysis is unavailable right now. Your uploaded files were not saved.",
-    analysisRunning: "Preparing the evidence-backed analysis...",
-    stageIntake: "Files ready",
-    stageOkf: "Tender mapped",
-    stageRetrieval: "Proof found",
-    stageParallel: "Specialists checked",
-    stageSynthesis: "Decision drafted",
-    stageAudit: "Evidence checked",
-  },
-  ar: {
-    track: "ذكاء وكيل للمشتريات",
-    navHowTo: "طريقة الاستخدام",
-    navAnalysis: "التحليل",
-    navDiscuss: "ناقش مع TenderLens",
-    navMap: "خريطة المناقصة",
-    navDeck: "ملخص العرض",
-    navQuestions: "أسئلة المناقصة",
-    voiceMode: "تحدث مع TenderLens",
-    tenderIntake: "ملفات المناقصة",
-    sampleTender: "ملفات مثال جاهزة",
-    chooseTender: "اختر ملفات مثال جاهزة",
-    usePreloaded: "استخدم ملفات مثال جاهزة",
-    preloadedNote: "تستخدم ملفات المثال الجاهزة نتائج معدة مسبقا حتى تستكشف TenderLens بسرعة وتحافظ على استهلاك واجهة Gemini. ملفات المناقصة التي ترفعها يتم تحليلها عند تشغيل التحليل.",
-    runAnalysis: "تشغيل التحليل",
-    secureUpload: "رفع ملفات المناقصة",
-    uploadRule: "ملف المناقصة الرئيسي مطلوب. أضف ملفات داعمة اختيارية. يمكن تحليل TXT وMD وDOCX الآن. قراءة نص PDF ستضاف بعد استقرار دعم المحلل. الحد الأقصى 5 ملفات، 5 ميجابايت لكل ملف، و12 ميجابايت إجمالا.",
-    mainTenderFile: "ملف المناقصة الرئيسي",
-    supportingFiles: "ملفات داعمة",
-    bidderProfile: "ملف الشركة",
-    typingMode: "النقاش",
-    askAgent: "ناقش مع TenderLens",
-    recommendation: "التوصية",
-    agentSystem: "التحليل",
-    summaryTitle: "مناسب للتقديم مع نقطة متابعة تشغيلية",
-    summaryText: "ملف الشركة يطابق المتطلبات الأساسية. يجب تأكيد قدرة شريك التغطية الفنية قبل الموافقة النهائية.",
-    a2aAudit: "تم فحص الأدلة",
-    auditPass: "ناجح",
-    auditText: "تم فحص 7 ادعاءات، ولا يوجد ادعاء غير مدعوم",
-    evidenceWarRoom: "الدليل وراء التوصية",
-    inspectClaims: "افحص الأدلة",
-    all: "الكل",
-    eligibility: "الأهلية",
-    risk: "المخاطر",
-    deadline: "المواعيد",
-    okfGraph: "خريطة المناقصة",
-    linkedTenderKnowledge: "كيف ترتبط أجزاء المناقصة",
-    sourceFiles: "ملفات المصدر",
-    sampleSource: "ملفات مثال جاهزة",
-    mainSource: "ملف المناقصة الرئيسي",
-    supportingSource: "ملف داعم",
-    compliance: "الامتثال",
-    gapChecklist: "قائمة الفجوات",
-    riskHeatmap: "خريطة المخاطر",
-    deliveryRisk: "مخاطر التنفيذ",
-    strategySimulator: "محاكي الاستراتيجية",
-    scenarioTradeoffs: "مقارنة السيناريوهات",
-    teamCapacity: "سعة الفريق",
-    margin: "الهامش المتوقع",
-    partnerAvailable: "الشريك متاح",
-    clarifications: "أسئلة المناقصة",
-    askIssuer: "اسأل الجهة الطارحة",
-    prepareToAnswer: "استعد للإجابة",
-    briefingDeck: "ملخص العرض",
-    deckTitle: "شرائح جاهزة للاجتماع",
-    howToEyebrow: "طريقة الاستخدام",
-    howToTitle: "ابدأ بالملفات ثم اتبع الدليل",
-    preparedBadge: "نتيجة مثال معدة مسبقا",
-    guideFilesTitle: "استخدم ملفات جاهزة أو ارفع ملفاتك",
-    guideFilesText: "تستخدم ملفات المثال الجاهزة نتائج معدة مسبقا حتى تستكشف TenderLens بسرعة وتحافظ على استهلاك واجهة Gemini. ملفات المناقصة التي ترفعها يتم تحليلها عند تشغيل التحليل.",
-    guideAnalysisTitle: "راجع التحليل",
-    guideAnalysisText: "شاهد توصية التقديم، درجة الثقة، الفجوات، المخاطر، والخطوات التالية في لوحة واحدة.",
-    guideDiscussTitle: "ناقش مع TenderLens",
-    guideDiscussText: "اسأل بالكتابة أو الصوت. جرب: هل يمكننا التقديم؟ ما أهم المخاطر؟ ماذا نسأل الجهة الطارحة؟",
-    guideMapTitle: "استكشف خريطة المناقصة",
-    guideMapText: "تربط خريطة المناقصة المتطلبات، الأدلة، المواعيد، المخاطر، الفجوات، والخطوات حتى تصبح التوصية واضحة.",
-    guideQuestionsTitle: "استخدم أسئلة المناقصة",
-    guideQuestionsText: "اسأل الجهة الطارحة يعرض أسئلة الاستيضاح. استعد للإجابة يعرض ما قد تسأله لجنة التقييم بعد قراءة عرضك.",
-    guideDeckTitle: "أنشئ ملخص العرض",
-    guideDeckText: "استخدم عرض الشرائح لاجتماع قرار التقديم: القرار، الملاءمة، الفجوات، المخاطر، الدليل، الأسئلة، وخطة العمل.",
-    whatYouGet: "ما الذي ستحصل عليه",
-    exampleDecision: "القرار: تقديم مع نقطة متابعة",
-    exampleText: "درجة الثقة 90%. أهم فجوة: تأكيد قدرة مقاول HVAC. الدليل: القسم 2.1 يطلب شهادات ISO ومشروعين مشابهين للمرافق الذكية.",
-    miniMap: "خريطة المناقصة: الأهلية -> الدليل -> الفجوات",
-    miniQuestions: "أسئلة المناقصة: اسأل الجهة الطارحة + استعد للإجابة",
-    miniDeck: "ملخص العرض: 8 شرائح جاهزة للاجتماع",
-    analysisBanner: "أنت تشاهد نتائج مثال معدة مسبقا للملفات الجاهزة. ارفع ملفات المناقصة الخاصة بك لتشغيل تحليل جديد.",
-    uploadedAnalysisBanner: "تم تحليل ملفات المناقصة المرفوعة لهذه الجلسة. لا يحفظ TenderLens ملفاتك.",
-    uploadedBadge: "ملفات المناقصة المرفوعة",
-    welcomeEyebrow: "مرحبا بك في TenderLens",
-    welcomeTitle: "اتخذ قرار التقديم بالدليل",
-    welcomeText: "ابدأ بملفات مثال جاهزة، ارفع ملفات المناقصة، أو افتح طريقة الاستخدام لجولة سريعة. الصوت يبدأ فقط عندما تختار تحدث مع TenderLens.",
-    uploadMine: "ارفع ملفات المناقصة",
-    openHowTo: "افتح طريقة الاستخدام",
-    dontShow: "لا تظهر مرة أخرى",
-    voiceSession: "جلسة صوتية",
-    voiceIdle: "جاهز",
-    voiceHelp: "الصوت يبدأ فقط بعد اختيار تحدث مع TenderLens.",
-    mute: "كتم",
-    interrupt: "مقاطعة",
-    endVoice: "إنهاء",
-    profilePlaceholder: "أكد قدرة مقاول التغطية الفنية قبل قرار التقديم النهائي.",
-    chatPlaceholder: "اسأل عن المخاطر أو الأدلة أو الاستراتيجية...",
-    analysisReady: "اكتمل التحليل. توصية التقديم جاهزة مع تدقيق الأدلة.",
-    analysisFallback: "تم تحميل نتائج المثال المعدة مسبقا للملفات الجاهزة.",
-    liveUnavailable: "التحليل المباشر غير متاح الآن. لم يتم حفظ ملفاتك المرفوعة.",
-    analysisRunning: "جار إعداد التحليل المدعوم بالأدلة...",
-    stageIntake: "الملفات جاهزة",
-    stageOkf: "تم رسم الخريطة",
-    stageRetrieval: "تم العثور على الدليل",
-    stageParallel: "تم فحص التخصصات",
-    stageSynthesis: "تم إعداد القرار",
-    stageAudit: "تم فحص الأدلة",
-  },
-};
-
-const workflowStages = [
-  { selector: "#stageIntake", match: ["intake.", "router.", "voice_session_adapter."] },
-  { selector: "#stageOkf", match: ["okf.", "mcp.validate_okf_contract"] },
-  { selector: "#stageRetrieval", match: ["retrieval."] },
-  { selector: "#stageParallel", match: ["parallel."] },
-  { selector: "#stageSynthesis", match: ["synthesis."] },
-  { selector: "#stageAudit", match: ["a2a.", "bounded_quality_loop."] },
-];
-
-const fallbackWorkflowTrace = [
-  "router.accept_input",
-  "intake.validate_tender",
-  "okf.select_bundle",
-  "retrieval.search_evidence",
-  "parallel.start_specialists",
-  "synthesis.create_draft",
-  "a2a.evidence_audit",
-  "bounded_quality_loop.pass",
-  "final.structured_report",
-];
-
-let evidence = [
-  {
-    id: "eligibility-1",
-    type: "eligibility",
-    title: "Mandatory eligibility is aligned",
-    titleAr: "الأهلية الإلزامية متوافقة",
-    agent: "Compliance Agent",
-    excerpt: "Bidders must provide ISO 9001, ISO 27001, a Riyadh operating permit, and two similar smart facilities projects.",
-    excerptAr: "يجب تقديم ISO 9001 و ISO 27001 وتصريح تشغيل في الرياض ومشروعين مشابهين في المرافق الذكية.",
-    citation: "Synthetic tender section 2.1 Mandatory bidder eligibility.",
-  },
-  {
-    id: "deadlines-1",
-    type: "deadline",
-    title: "Clarification and final submission windows are tight",
-    titleAr: "نافذة الاستفسارات والتقديم النهائي ضيقة",
-    agent: "Timeline Agent",
-    excerpt: "Clarification questions are due by 2026-07-08 and final proposal is due by 2026-07-18.",
-    excerptAr: "آخر موعد للاستفسارات هو 2026-07-08 وآخر موعد للتقديم النهائي هو 2026-07-18.",
-    citation: "Synthetic tender sections 6.1 and 6.2.",
-  },
-  {
-    id: "risks-1",
-    type: "risk",
-    title: "HVAC partner confirmation is the main watch item",
-    titleAr: "تأكيد شريك HVAC هو نقطة المتابعة الرئيسية",
-    agent: "Risk Agent",
-    excerpt: "Mobilization is required within 21 days and specialized HVAC coverage may require confirmed subcontractor capacity.",
-    excerptAr: "التعبئة مطلوبة خلال 21 يوما وقد تتطلب تغطية HVAC المتخصصة قدرة مؤكدة من مقاول فرعي.",
-    citation: "Synthetic tender section 8.1 and 8.2.",
-  },
-  {
-    id: "evaluation-1",
-    type: "strategy",
-    title: "Technical quality dominates price",
-    titleAr: "الجودة الفنية أهم من السعر",
-    agent: "Bid Strategy Agent",
-    excerpt: "Technical quality and experience account for 70 percent of evaluation, while price accounts for 20 percent.",
-    excerptAr: "الجودة الفنية والخبرة تمثلان 70 بالمئة من التقييم، بينما السعر يمثل 20 بالمئة.",
-    citation: "Synthetic tender section 5.1 Evaluation weighting.",
-  },
-];
-
-const checklist = [
-  ["ISO 9001 and ISO 27001 certificates", "pass"],
-  ["Riyadh operating permit", "pass"],
-  ["Two similar smart facilities references", "pass"],
-  ["Signed method statement", "watch"],
-  ["HVAC subcontractor confirmation", "watch"],
-];
-
-const risks = [
-  ["Specialized HVAC coverage", "Medium", "Confirm subcontractor availability before bid gate."],
-  ["21-day mobilization", "Medium", "Prepare named team roster and mobilization plan."],
-  ["Data sharing boundaries", "Low", "Ask how dashboard data may be shared with subcontractors."],
-];
-
-const questions = [
-  "Please confirm the complete HVAC asset inventory and required specialist certifications.",
-  "How will SLA response time be measured for incidents logged outside business hours?",
-  "Can the buyer clarify which dashboard data may be shared with subcontractors?",
-];
-
-const prepareQuestions = [
-  "Can you prove two similar smart facilities projects with signed references?",
-  "Who is your confirmed HVAC subcontractor and what capacity is reserved?",
-  "How will your team mobilize within 21 days after award?",
-];
-
-const deckSlides = [
-  {
-    title: "Decision Summary",
-    titleAr: "ملخص القرار",
-    body: "Bid recommended with one watch item: confirm HVAC partner capacity before final approval.",
-    bodyAr: "التوصية هي التقديم مع نقطة متابعة: تأكيد قدرة شريك HVAC قبل الموافقة النهائية.",
-  },
-  {
-    title: "Tender Fit",
-    titleAr: "ملاءمة المناقصة",
-    body: "The bidder profile matches ISO, Riyadh permit, bilingual support, and smart facilities experience.",
-    bodyAr: "ملف الشركة يطابق شهادات ISO وتصريح الرياض والدعم ثنائي اللغة وخبرة المرافق الذكية.",
-  },
-  {
-    title: "Eligibility & Gaps",
-    titleAr: "الأهلية والفجوات",
-    body: "Core eligibility passes. Watch items: method statement and HVAC subcontractor confirmation.",
-    bodyAr: "الأهلية الأساسية ناجحة. نقاط المتابعة: بيان المنهجية وتأكيد مقاول HVAC.",
-  },
-  {
-    title: "Risks to Watch",
-    titleAr: "المخاطر المهمة",
-    body: "The tight 21-day mobilization window makes delivery readiness the main operational risk.",
-    bodyAr: "نافذة التعبئة خلال 21 يوما تجعل جاهزية التنفيذ أهم خطر تشغيلي.",
-  },
-  {
-    title: "Proof Behind Recommendation",
-    titleAr: "الدليل وراء التوصية",
-    body: "Evidence cites mandatory eligibility, submission deadlines, evaluation weight, and mobilization clauses.",
-    bodyAr: "الأدلة تستند إلى الأهلية الإلزامية ومواعيد التقديم ووزن التقييم وبنود التعبئة.",
-  },
-  {
-    title: "Tender Questions: Ask the Issuer",
-    titleAr: "أسئلة المناقصة: اسأل الجهة الطارحة",
-    body: "Clarify HVAC inventory, SLA measurement, and subcontractor data sharing before submission.",
-    bodyAr: "استوضح قائمة أصول HVAC وقياس SLA ومشاركة بيانات المقاولين قبل التقديم.",
-  },
-  {
-    title: "Tender Questions: Prepare to Answer",
-    titleAr: "أسئلة المناقصة: استعد للإجابة",
-    body: "Prepare proof for similar projects, subcontractor capacity, and mobilization plan.",
-    bodyAr: "جهز إثبات المشاريع المشابهة وقدرة المقاول وخطة التعبئة.",
-  },
-  {
-    title: "Action Plan",
-    titleAr: "خطة العمل",
-    body: "Confirm partner, finalize method statement, submit clarification questions, and prepare executive approval.",
-    bodyAr: "أكد الشريك، أكمل بيان المنهجية، أرسل أسئلة الاستيضاح، وجهز موافقة الإدارة.",
-  },
-];
-
-const defaultSourceDocuments = [
-  {
-    id: "sample-main-tender",
-    role: "sample",
-    filename: "smart_city_maintenance_tender.json",
-    file_type: ".json",
-    size_bytes: 0,
-    parser_status: "preloaded_example",
-    text_char_count: 0,
-  },
-];
-
-let sourceDocuments = [...defaultSourceDocuments];
 
 const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-function localized(key) {
-  return t[state.language][key] || t.en[key] || key;
+const ICONS = Object.freeze({
+  "upload-cloud": '<path d="M12 13v8"/><path d="m8 17 4-4 4 4"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>',
+  "book-open": '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H3Z"/><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3h6Z"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  files: '<path d="M15 2H6a2 2 0 0 0-2 2v14"/><path d="M8 6h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><path d="M11 12h6"/><path d="M11 16h4"/>',
+  eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  "file-check": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-5"/>',
+  "file-text": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/><path d="M8 9h2"/>',
+  "rotate-ccw": '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/>',
+  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  gauge: '<path d="M20.2 14.2a8 8 0 1 0-16.4 0"/><path d="M12 14l3-3"/><path d="M8 19h8"/>',
+  "clipboard-check": '<path d="M9 3h6"/><path d="M10 2h4a2 2 0 0 1 2 2v1H8V4a2 2 0 0 1 2-2Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="m9 14 2 2 4-5"/>',
+  "message-circle": '<path d="M21 11.5a8.5 8.5 0 0 1-12.8 7.3L3 20l1.3-5A8.5 8.5 0 1 1 21 11.5Z"/>',
+  network: '<circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M8.6 7.5 10.8 15"/><path d="m15.4 7.5-2.2 7.5"/><path d="M9 6h6"/>',
+  presentation: '<path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+  "circle-help": '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 4.8 2.4c-.9.6-1.4 1.1-1.4 2.1"/><path d="M12 17h.01"/>',
+  "triangle-alert": '<path d="m21.7 18-8.9-15.4a1 1 0 0 0-1.7 0L2.3 18a1 1 0 0 0 .9 1.5h17.6a1 1 0 0 0 .9-1.5Z"/><path d="M12 8v5"/><path d="M12 16h.01"/>',
+  "shield-check": '<path d="M20 13c0 5-3.5 7.5-7.4 8.8a2 2 0 0 1-1.2 0C7.5 20.5 4 18 4 13V5l8-3 8 3Z"/><path d="m9 12 2 2 4-5"/>',
+  "search-check": '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="m8.5 11 1.7 1.7 3.4-4"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+});
+
+function iconMarkup(name) {
+  const paths = ICONS[name] || ICONS["circle-help"];
+  return `<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths}</svg>`;
+}
+
+function hydrateIcons(scope = document) {
+  scope.querySelectorAll("[data-icon]").forEach((node) => {
+    node.innerHTML = iconMarkup(node.dataset.icon);
+  });
+}
+
+const labels = {
+  en: {
+    howToUse: "How to use",
+    uploadTitle: "Upload tender/RFP files",
+    uploadHelp: "PDF, DOCX, TXT, JPG, PNG, WEBP. We do not save your files.",
+    uploadRun: "Upload files & Run Analysis",
+    or: "OR",
+    runExample: "Run Analysis with preloaded files",
+    viewExample: "View preloaded files",
+    analyzedFiles: "Analyzed files",
+    startFresh: "Start fresh",
+    addMore: "Add more files",
+    noFiles: "No files selected yet.",
+    previewNotice: "Start your analysis by uploading files or running the preloaded example.",
+    startTitle: "Start your analysis",
+    startBody:
+      'Upload tender files or run the preloaded example. TenderLens will then fill this workspace with a score, checklist, evidence, map, deck, and questions. Using the "Run Analysis with preloaded files" button (or uploading the exact example files) will generate pre-generated stored output. This is done to save Gemini API quota and to display an example use case. You can use the App for live analysis by bringing your own files and uploading them.',
+    emptyOverallTitle: "No analysis yet",
+    emptyOverallBody: "Your overall score and executive summary will appear here after TenderLens checks the files.",
+    overall: "Overall result",
+    sampleRun: "Prepared example",
+    uploadedRun: "Uploaded files",
+    verify: "AI-generated review. Verify before making procurement decisions.",
+    analysis: "Analysis",
+    ask: "Ask TenderLens",
+    map: "Tender Map",
+    deck: "Briefing Deck",
+    questions: "Questions to Ask",
+    checklist: "Checklist",
+    checklistDesc: "Every row links a requirement to evidence and risk.",
+    evidence: "Evidence",
+    evidenceDesc: "Selected evidence for the active requirement.",
+    attention: "What needs attention",
+    attentionDesc: "Risks that may need clarification.",
+    checked: "What TenderLens checked",
+    askDesc: "Ask follow-up questions about the documents, evidence, risks, and next steps.",
+    mapDesc: "A simple view of how files, requirements, evidence, risks, and actions connect.",
+    deckDesc: "A lightweight stakeholder briefing created from the analysis result.",
+    questionsDesc: "Practical questions to send to the vendor or project owner before submission.",
+    exampleTitle: "Example Files",
+    exampleDescription: "Use these fictional files to test TenderLens AI without uploading your own documents.",
+    useExamples: "Use these files",
+    skip: "Skip",
+    nextSlide: "Next",
+    getStarted: "Get started",
+    ready: "Ready",
+    analyzed: "Analyzed",
+    compliantRows: (count) => `${count} compliant rows`,
+    riskRows: (count) => `${count} items need attention`,
+    resultTitleNoEvidence: "Response evidence needed",
+    resultTitleStrong: "Strong response with a few checks",
+    resultTitleRisk: "Good foundation with risks to resolve",
+    uploadLimit: "Upload up to 5 files. 4.0 MB per file.",
+    chatIntro: "Ask me about the biggest risks, why a requirement is partial, or what you should ask the vendor next.",
+    noMajorRisks: "No major risks listed.",
+    uploadAccepted: (count) => `${count} file${count === 1 ? "" : "s"} accepted. Run analysis to review them.`,
+    running: "TenderLens is checking the evidence...",
+    backendUnavailable: "Live backend analysis is unavailable. A bounded local text review was generated for this session.",
+    unsupportedLocal:
+      "Live backend analysis is required for PDF, DOCX, and image parsing. Use TXT/MD here or connect the cloud runtime.",
+    quickQuestions: [
+      "What are the biggest risks?",
+      "Why is this partial?",
+      "What should I ask the vendor?",
+      "Summarize this in Arabic",
+    ],
+    riskLabel: { Low: "Low", Medium: "Medium", High: "High" },
+    statusLabel: { Compliant: "Compliant", Partial: "Partial", Gap: "Gap", "Needs Review": "Needs Review" },
+    mapSvgTitle: "TenderLens AI Tender Map",
+    mapHeaders: ["Files", "Requirements", "Evidence", "Risks & actions"],
+    score: "Score",
+    deckSlide: (current, total) => `Slide ${current} of ${total}`,
+    onboarding: [
+      {
+        counter: "1 OF 2",
+        title: "Understand tender documents faster",
+        body: "TenderLens AI reads tender and proposal files, finds requirements, checks evidence, and highlights risks.",
+      },
+      {
+        counter: "2 OF 2",
+        title: "Three simple steps",
+        body: "Follow these simple steps to analyze your proposals. You can also read the detailed instructions in the user guide.",
+      },
+    ],
+    onboardingChecks: ["Extract requirements", "Match evidence", "Highlight risks"],
+    onboardingSteps: ["Upload files or use example files", "Wait for results", "Ask questions about your documents", "Download the analysis"],
+  },
+  ar: {
+    howToUse: "طريقة الاستخدام",
+    uploadTitle: "ارفع ملفات المناقصة",
+    uploadHelp: "PDF و DOCX و TXT وصور. لا نحفظ ملفاتك.",
+    uploadRun: "ارفع الملفات وابدأ التحليل",
+    or: "أو",
+    runExample: "حلل الملفات الجاهزة",
+    viewExample: "عرض الملفات الجاهزة",
+    analyzedFiles: "الملفات المحللة",
+    startFresh: "بدء جديد",
+    addMore: "إضافة ملفات",
+    noFiles: "لم يتم اختيار ملفات بعد.",
+    previewNotice: "ابدأ التحليل برفع الملفات أو تشغيل المثال الجاهز.",
+    startTitle: "ابدأ التحليل",
+    startBody:
+      "ارفع ملفات المناقصة أو شغل المثال الجاهز. سيملأ TenderLens مساحة العمل بالنتيجة والقائمة والأدلة والخريطة والعرض والأسئلة.",
+    emptyOverallTitle: "لا يوجد تحليل بعد",
+    emptyOverallBody: "ستظهر النتيجة العامة والملخص التنفيذي هنا بعد فحص الملفات.",
+    overall: "النتيجة العامة",
+    sampleRun: "مثال معد مسبقا",
+    uploadedRun: "ملفات مرفوعة",
+    verify: "مراجعة مولدة بالذكاء الاصطناعي. تحقق قبل اتخاذ قرارات الشراء.",
+    analysis: "التحليل",
+    ask: "اسأل TenderLens",
+    map: "خريطة المناقصة",
+    deck: "ملخص العرض",
+    questions: "أسئلة يجب طرحها",
+    checklist: "قائمة المتطلبات",
+    checklistDesc: "كل صف يربط المتطلب بالدليل ومستوى المخاطر.",
+    evidence: "الأدلة",
+    evidenceDesc: "الدليل المختار للمتطلب النشط.",
+    attention: "ما يحتاج الانتباه",
+    attentionDesc: "مخاطر قد تحتاج إلى توضيح.",
+    checked: "ما الذي فحصه TenderLens",
+    askDesc: "اسأل أسئلة متابعة عن المستندات والأدلة والمخاطر والخطوات التالية.",
+    mapDesc: "عرض بسيط يوضح ارتباط الملفات والمتطلبات والأدلة والمخاطر والإجراءات.",
+    deckDesc: "ملخص خفيف لأصحاب المصلحة يتم إنشاؤه من نتيجة التحليل.",
+    questionsDesc: "أسئلة عملية لإرسالها إلى المورد أو مالك المشروع قبل التقديم.",
+    exampleTitle: "ملفات مثال",
+    exampleDescription: "استخدم هذه الملفات الخيالية لتجربة TenderLens AI بدون رفع ملفاتك.",
+    useExamples: "استخدام هذه الملفات",
+    skip: "تخطي",
+    nextSlide: "التالي",
+    getStarted: "ابدأ",
+    ready: "جاهز",
+    analyzed: "تم التحليل",
+    compliantRows: (count) => `${count} بنود ممتثلة`,
+    riskRows: (count) => `${count} بنود تحتاج انتباها`,
+    resultTitleNoEvidence: "تحتاج إلى أدلة استجابة",
+    resultTitleStrong: "عرض قوي مع بعض النقاط التي تحتاج مراجعة",
+    resultTitleRisk: "أساس جيد مع مخاطر يجب حلها",
+    uploadLimit: "يمكن رفع 5 ملفات كحد أقصى. 4.0 MB لكل ملف.",
+    chatIntro: "اسألني عن أكبر المخاطر أو سبب اعتبار متطلب ما جزئيا أو ما الذي يجب سؤاله للمورد.",
+    noMajorRisks: "لا توجد مخاطر رئيسية مدرجة.",
+    uploadAccepted: (count) => `تم قبول ${count} ملف. شغل التحليل لمراجعتها.`,
+    running: "يقوم TenderLens بمراجعة الأدلة...",
+    backendUnavailable: "تعذر الوصول إلى تحليل الخادم. تم إنشاء مراجعة نصية محلية محدودة لهذه الجلسة.",
+    unsupportedLocal: "يتطلب تحليل PDF و DOCX والصور اتصالا بالخادم السحابي. استخدم TXT/MD هنا أو صل بيئة التشغيل السحابية.",
+    quickQuestions: ["ما أكبر المخاطر؟", "لماذا هذا البند جزئي؟", "ما الذي يجب أن أسأله للمورد؟", "لخص النتائج بالعربية"],
+    riskLabel: { Low: "منخفض", Medium: "متوسط", High: "عال" },
+    statusLabel: { Compliant: "ممتثل", Partial: "جزئي", Gap: "فجوة", "Needs Review": "يحتاج مراجعة" },
+    mapSvgTitle: "خريطة مناقصة TenderLens AI",
+    mapHeaders: ["الملفات", "المتطلبات", "الأدلة", "المخاطر والإجراءات"],
+    score: "النتيجة",
+    deckSlide: (current, total) => `الشريحة ${current} من ${total}`,
+    onboarding: [
+      {
+        counter: "1 من 2",
+        title: "افهم مستندات المناقصة بسرعة",
+        body: "يقرأ TenderLens AI ملفات المناقصة والعرض، ويجد المتطلبات، ويفحص الأدلة، ويبرز المخاطر.",
+      },
+      {
+        counter: "2 من 2",
+        title: "ثلاث خطوات بسيطة",
+        body: "اتبع هذه الخطوات البسيطة لتحليل العروض. يمكنك أيضا قراءة التعليمات التفصيلية في دليل الاستخدام.",
+      },
+    ],
+    onboardingChecks: ["استخراج المتطلبات", "مطابقة الأدلة", "إبراز المخاطر"],
+    onboardingSteps: ["ارفع الملفات أو استخدم ملفات المثال", "انتظر النتائج", "اسأل عن مستنداتك", "نزل التحليل"],
+  },
+};
+
+const exampleFiles = [
+  {
+    display: "RFP example",
+    name: "Riyadh Smart Parking RFP.pdf",
+    size: "3 KB",
+    format: "PDF",
+    path: "./demo-docs/riyadh-smart-parking-rfp.pdf",
+  },
+  {
+    display: "Proposal example",
+    name: "Najm Urban Mobility Proposal.docx",
+    size: "10 KB",
+    format: "DOCX",
+    path: "./demo-docs/najm-urban-mobility-proposal.docx",
+  },
+  {
+    display: "Technical addendum",
+    name: "Technical Compliance Addendum.pdf",
+    size: "3 KB",
+    format: "PDF",
+    path: "./demo-docs/technical-compliance-addendum.pdf",
+  },
+];
+
+const demoResult = {
+  score: 75,
+  executiveBrief:
+    "The proposal is strong on language support, uptime, data residency, support, APIs, and sustainability reporting. It still needs clarification on bid security validity, security evidence, go-live timing, and training seats before submission.",
+  matrix: [
+    {
+      requirement: "Bid security must equal 2% of contract value and remain valid for at least 120 days.",
+      category: "Commercial",
+      status: "Partial",
+      risk: "Medium",
+      response: "The proposal provides 2% bid security, but the validity period is 90 days unless extended during clarification.",
+      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Bid security: 2% of contract value, valid for 90 days from submission." }],
+    },
+    {
+      requirement: "Portal, resident notifications, and enforcement interface must support Arabic and English.",
+      category: "Functional",
+      status: "Compliant",
+      risk: "Low",
+      response: "The proposal confirms Arabic and English support across operator, resident, and enforcement workflows.",
+      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "The operator portal and resident notifications are available in Arabic and English." }],
+    },
+    {
+      requirement: "Hosted production service must meet 99.5% monthly uptime with 72-hour maintenance notice.",
+      category: "SLA",
+      status: "Compliant",
+      risk: "Low",
+      response: "The proposal and addendum commit to 99.5% uptime and 72-hour scheduled maintenance notice.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm commits to 99.5% monthly uptime for the hosted production service." }],
+    },
+    {
+      requirement: "Supplier must provide ISO 27001, SOC 2 Type II, or equivalent independent security audit evidence.",
+      category: "Security",
+      status: "Partial",
+      risk: "Medium",
+      response: "An independent penetration test is available, but ISO 27001 certification is not yet issued.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "ISO 27001 certification is scheduled for final audit in Q4 2026 and is not yet issued." }],
+    },
+    {
+      requirement: "Production go-live for the five pilot districts must be completed by 30 September 2026.",
+      category: "Delivery",
+      status: "Partial",
+      risk: "High",
+      response: "The proposed go-live date is 15 October 2026, which is after the mandatory deadline.",
+      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Go-live is planned for 15 October 2026 after staged district acceptance." }],
+    },
+    {
+      requirement: "Resident personal data and plate metadata must be stored in Saudi Arabia.",
+      category: "Data Residency",
+      status: "Compliant",
+      risk: "Low",
+      response: "Production data and backups are committed to a Riyadh/KSA hosting location.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Backups will remain within the Kingdom of Saudi Arabia." }],
+    },
+    {
+      requirement: "Critical incidents need human response within 30 minutes and standard tickets within 4 business hours.",
+      category: "Support",
+      status: "Compliant",
+      risk: "Low",
+      response: "The proposal and addendum meet both incident and standard ticket response targets.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Critical production incidents receive a named support engineer within 30 minutes." }],
+    },
+    {
+      requirement: "Platform must integrate with the municipal payment gateway and expose REST APIs.",
+      category: "Integration",
+      status: "Compliant",
+      risk: "Low",
+      response: "The proposal includes payment gateway integration and REST APIs for occupancy, permits, violations, and payments.",
+      citations: [{ file: "najm-urban-mobility-proposal.docx", quote: "Najm exposes REST APIs for occupancy, permits, violation status, and payment events." }],
+    },
+    {
+      requirement: "Supplier must deliver role-based training for at least 50 municipal staff before go-live.",
+      category: "Training",
+      status: "Partial",
+      risk: "Medium",
+      response: "The base proposal includes 40 trainees. Ten additional remote trainees may be added at no license cost.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm can add 10 additional trainees at no license cost if training is delivered remotely." }],
+    },
+    {
+      requirement: "Supplier must provide quarterly sustainability reporting.",
+      category: "Reporting",
+      status: "Compliant",
+      risk: "Low",
+      response: "The addendum commits to quarterly sustainability reports covering energy profile and maintenance trips.",
+      citations: [{ file: "technical-compliance-addendum.pdf", quote: "Najm will submit a quarterly sustainability report covering cloud hosting region energy profile." }],
+    },
+  ],
+  trace: ["Validated files", "Found mandatory requirements", "Matched evidence", "Calibrated risks"],
+  risks: [
+    "Go-live is later than the mandatory deadline.",
+    "Bid security validity is shorter than requested.",
+    "ISO 27001 certification is not yet issued.",
+    "Training reaches 50 seats only if remote additional trainees are accepted.",
+  ],
+  nextActions: [
+    "Request a revised go-live plan that meets 30 September 2026.",
+    "Ask for written confirmation extending bid security validity to 120 days.",
+    "Confirm whether the March 2026 penetration test is accepted as equivalent security evidence.",
+    "Confirm that 50 training seats are included before go-live.",
+  ],
+  files: exampleFiles.map((file) => file.name),
+};
+
+const STATUS_SCORES = {
+  Compliant: 100,
+  Partial: 55,
+  "Needs Review": 35,
+  Gap: 0,
+};
+
+const RISK_PENALTIES = {
+  Low: 0,
+  Medium: 5,
+  High: 10,
+};
+
+function text() {
+  return labels[state.language];
 }
 
 function escapeText(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -394,285 +371,541 @@ function escapeText(value) {
     .replaceAll("'", "&#039;");
 }
 
-function applyLanguage(language) {
-  state.language = language;
-  document.documentElement.lang = language;
-  document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
-  $("#langEn").classList.toggle("active", language === "en");
-  $("#langAr").classList.toggle("active", language === "ar");
-  $$("[data-i18n]").forEach((node) => {
-    node.textContent = t[language][node.dataset.i18n] || node.textContent;
+function extension(name) {
+  const dot = name.lastIndexOf(".");
+  return dot >= 0 ? name.slice(dot).toLowerCase() : "";
+}
+
+function fileFormat(name) {
+  return extension(name).replace(".", "").toUpperCase() || "FILE";
+}
+
+function shortFileName(name) {
+  return name
+    .replace(/riyadh-smart-parking-/i, "")
+    .replace(/najm-urban-mobility-/i, "")
+    .replace(/technical-compliance-/i, "")
+    .replace(/\.(pdf|docx|txt|md|jpg|jpeg|png|webp)$/i, "")
+    .replaceAll("-", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function firstWords(value, limit = 12) {
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  return words.length > limit ? `${words.slice(0, limit).join(" ")}...` : words.join(" ");
+}
+
+function slug(value, fallback = "node") {
+  const normalized = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 44);
+  return normalized || fallback;
+}
+
+function calculateComplianceScore(matrix) {
+  if (!matrix.length) return 0;
+  const total = matrix.reduce((sum, row) => {
+    const penalty = row.status === "Compliant" ? 0 : RISK_PENALTIES[row.risk] || 0;
+    return sum + Math.max(0, (STATUS_SCORES[row.status] ?? 35) - penalty);
+  }, 0);
+  return Math.min(100, Math.max(0, Math.round(total / matrix.length / 5) * 5));
+}
+
+function normalizeResult(result) {
+  const matrix = (result.matrix || []).map((row) => ({
+    requirement: row.requirement || "Structured compliance review",
+    category: row.category || "Tender",
+    status: ["Compliant", "Partial", "Gap", "Needs Review"].includes(row.status) ? row.status : "Needs Review",
+    risk: ["Low", "Medium", "High"].includes(row.risk) ? row.risk : "Medium",
+    response: row.response || "No response evidence found.",
+    citations: Array.isArray(row.citations) && row.citations.length
+      ? row.citations.slice(0, 3)
+      : [{ file: "Uploaded document", quote: row.response || "No cited evidence was returned." }],
+  }));
+  return {
+    ...result,
+    matrix,
+    score: Number.isFinite(result.score) ? result.score : calculateComplianceScore(matrix),
+    trace: result.trace || [],
+    risks: result.risks || [],
+    nextActions: result.nextActions || [],
+    files: result.files || [],
+  };
+}
+
+function reportToComplianceResult(report) {
+  const evidenceById = new Map((report.evidence || []).map((item) => [item.id, item]));
+  const rows = (report.findings || []).slice(0, 10).map((finding) => {
+    const evidenceItems = (finding.evidence_ids || []).map((id) => evidenceById.get(id)).filter(Boolean);
+    const status = finding.status === "pass" ? "Compliant" : finding.status === "fail" ? "Gap" : "Partial";
+    const combined = `${finding.agent} ${finding.summary} ${(finding.actions || []).join(" ")}`.toLowerCase();
+    let risk = status === "Compliant" ? "Low" : "Medium";
+    if (/deadline|late|penalt|bond|security|risk|mandatory|fail|blocker/.test(combined) && status !== "Compliant") {
+      risk = "High";
+    }
+    return {
+      requirement: finding.summary,
+      category: String(finding.agent || "Tender").replace(/\s*Agent$/i, ""),
+      status,
+      risk,
+      response: (finding.actions || [finding.summary])[0] || finding.summary,
+      citations: evidenceItems.length
+        ? evidenceItems.slice(0, 3).map((item) => ({
+            file: citationFile(item.citation),
+            quote: item.excerpt || item.title || item.citation,
+          }))
+        : [{ file: "Uploaded document", quote: finding.summary }],
+    };
   });
-  $$("[data-i18n-placeholder]").forEach((node) => {
-    node.placeholder = t[language][node.dataset.i18nPlaceholder] || node.placeholder;
+
+  const risks = (report.risks || []).map((risk) => (typeof risk === "string" ? risk : risk.title || risk.mitigation)).filter(Boolean);
+  const files = (report.source_documents || []).map((item) => item.filename).filter(Boolean);
+  const normalized = normalizeResult({
+    score: Number.isFinite(report.score) ? report.score : undefined,
+    executiveBrief: report.executive_summary || "TenderLens completed a source-backed review of the uploaded files.",
+    matrix: rows.length ? rows : [
+      {
+        requirement: "Structured uploaded-file review",
+        category: "System",
+        status: "Needs Review",
+        risk: "Medium",
+        response: "The backend returned a report without checklist rows.",
+        citations: [{ file: files[0] || "Uploaded document", quote: report.executive_summary || "Review returned without row details." }],
+      },
+    ],
+    trace: report.workflow_trace || [],
+    risks,
+    nextActions: report.next_actions || [],
+    files,
   });
-  updateAnalysisBanner(state.analysisSource);
-  renderEvidence();
-  renderLists();
-  renderSourceDocuments();
+  normalized.score = calculateComplianceScore(normalized.matrix);
+  return normalized;
+}
+
+function citationFile(citation) {
+  const value = String(citation || "Uploaded document");
+  const colon = value.lastIndexOf(":");
+  return colon >= 0 ? value.slice(colon + 1).trim() : value;
+}
+
+function validateSelectedFiles(files) {
+  if (!files.length) return { ok: false, message: "Select at least one file." };
+  if (files.length > MAX_UPLOAD_FILES) return { ok: false, message: "Upload is limited to 5 files." };
+  for (const file of files) {
+    if (!supportedExt.includes(extension(file.name))) {
+      return { ok: false, message: `${file.name}: unsupported file type.` };
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return { ok: false, message: `${file.name}: file is larger than the 4 MB limit.` };
+    }
+    if (file.size <= 0) {
+      return { ok: false, message: `${file.name}: uploaded file is empty.` };
+    }
+  }
+  return { ok: true, message: text().uploadAccepted(files.length) };
+}
+
+function updateI18n() {
+  const copy = text();
+  document.documentElement.lang = state.language;
+  document.documentElement.dir = state.language === "ar" ? "rtl" : "ltr";
+  $("[data-i18n='uploadLimitText']");
+  Object.entries(copy).forEach(([key, value]) => {
+    if (typeof value !== "string") return;
+    $$(`[data-i18n="${key}"]`).forEach((node) => {
+      node.textContent = value;
+    });
+  });
+  $("#uploadLimitText").textContent = copy.uploadLimit;
+  $("#chatInput").placeholder = state.language === "ar" ? "اسأل أي شيء عن هذه المستندات..." : "Ask anything about these documents...";
+  $("#langEn").classList.toggle("active", state.language === "en");
+  $("#langAr").classList.toggle("active", state.language === "ar");
+  renderOnboarding();
+  if (state.currentResult) renderResult();
+}
+
+function renderFiles(status = state.currentResult ? text().analyzed : text().ready) {
+  const list = $("#analyzedFiles");
+  const files = state.uploadedFiles.length
+    ? state.uploadedFiles.map((file) => ({
+        name: file.name,
+        size: `${Math.max(1, Math.round(file.size / 1024))} KB`,
+        format: fileFormat(file.name),
+      }))
+    : state.analysisSource === "sample"
+      ? exampleFiles
+      : [];
+
+  if (!files.length) {
+    list.innerHTML = `<div class="empty-file-state">${escapeText(text().noFiles)}</div>`;
+    return;
+  }
+
+  list.innerHTML = files
+    .map(
+      (file, index) => `
+        <article class="file-chip">
+          <span class="file-chip-icon" aria-hidden="true">${iconMarkup("file-text")}</span>
+          <span>
+            <strong>${escapeText(file.display || shortFileName(file.name))}</strong>
+            <span>${escapeText(file.size || "")} · ${escapeText(file.format || fileFormat(file.name))}</span>
+          </span>
+          <span class="file-state">${escapeText(status)}</span>
+          <button class="file-remove" type="button" data-remove="${index}" aria-label="Remove file">×</button>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function showResultShell(show) {
+  $("#startHero").classList.toggle("hidden", show);
+  $("#emptyResult").classList.toggle("hidden", show);
+  $("#resultShell").classList.toggle("hidden", !show);
+  $$(".download-group button").forEach((button) => {
+    button.disabled = !show;
+  });
+}
+
+function resultTitle(result) {
+  if (result.score === 0) return text().resultTitleNoEvidence;
+  if (result.score >= 80) return text().resultTitleStrong;
+  return text().resultTitleRisk;
+}
+
+function renderResult() {
+  const result = state.currentResult;
+  if (!result) {
+    showResultShell(false);
+    return;
+  }
+
+  showResultShell(true);
+  $("#preparedBadge").textContent = state.analysisSource === "sample" ? text().sampleRun : text().uploadedRun;
+  $("#resultTitle").textContent = resultTitle(result);
+  $("#executiveBrief").textContent = result.executiveBrief;
+  $("#scoreValue").textContent = String(result.score);
+  $("#scoreRing").style.setProperty("--score-deg", `${result.score * 3.6}deg`);
+
+  const compliant = result.matrix.filter((row) => row.status === "Compliant").length;
+  const attention = result.matrix.filter((row) => row.status !== "Compliant" || row.risk !== "Low").length;
+  $("#compliantRows").textContent = text().compliantRows(compliant);
+  $("#riskRows").textContent = text().riskRows(attention);
+
+  renderFiles(text().analyzed);
+  renderChecklist();
+  renderAttention();
+  renderTrace();
+  renderChat();
+  renderMap();
   renderDeck();
-  renderWorkflowTrace(state.report?.workflow_trace || fallbackWorkflowTrace);
-  updateScenario();
+  renderQuestions();
+  switchTab(state.activeTab);
 }
 
-function renderEvidence() {
-  const list = $("#evidenceList");
-  const visible = evidence.filter((item) => state.activeFilter === "all" || item.type === state.activeFilter);
-  list.innerHTML = visible
-    .map((item) => {
-      const title = state.language === "ar" ? item.titleAr : item.title;
-      const excerpt = state.language === "ar" ? item.excerptAr : item.excerpt;
+function statusClass(status) {
+  return `status-${status.toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+function renderChecklist() {
+  const result = state.currentResult;
+  const copy = text();
+  $("#checklistRows").innerHTML = result.matrix
+    .map(
+      (row, index) => `
+        <button class="checklist-row ${index === state.activeRow ? "active" : ""}" data-row="${index}" type="button">
+          <span>
+            <strong>${escapeText(row.requirement)}</strong>
+            <small>${escapeText(row.category)}</small>
+          </span>
+          <span class="status-pill ${statusClass(row.status)}">${escapeText(copy.statusLabel[row.status])}</span>
+          <span class="risk-${row.risk.toLowerCase()}">${escapeText(copy.riskLabel[row.risk])}</span>
+          <span class="row-response">${escapeText(row.response)}</span>
+        </button>
+      `,
+    )
+    .join("");
+  renderActiveEvidence();
+}
+
+function renderActiveEvidence() {
+  const row = state.currentResult?.matrix[state.activeRow] || state.currentResult?.matrix[0];
+  if (!row) {
+    $("#activeEvidence").innerHTML = "";
+    return;
+  }
+  $("#activeEvidence").innerHTML = row.citations
+    .map(
+      (citation) => `
+        <figure class="evidence-quote">
+          <figcaption>${escapeText(citation.file || "Uploaded document")}${citation.page ? ` · ${escapeText(citation.page)}` : ""}</figcaption>
+          <blockquote>${escapeText(citation.quote || row.response)}</blockquote>
+        </figure>
+      `,
+    )
+    .join("");
+}
+
+function renderAttention() {
+  const risks = state.currentResult.risks.length ? state.currentResult.risks : [text().noMajorRisks];
+  $("#attentionList").innerHTML = risks.map((risk) => `<li>${escapeText(risk)}</li>`).join("");
+}
+
+function renderTrace() {
+  const trace = state.currentResult.trace.length
+    ? state.currentResult.trace
+    : ["Validated upload", "Found mandatory requirements", "Matched evidence", "Calibrated risks"];
+  $("#traceList").innerHTML = trace
+    .slice(0, 8)
+    .map((step, index) => `<li><span>${index + 1}</span>${escapeText(step)}</li>`)
+    .join("");
+}
+
+function renderChat() {
+  if (!$("#chatLog").children.length) {
+    addChatMessage(text().chatIntro, "agent");
+  }
+  $("#quickQuestions").innerHTML = text().quickQuestions
+    .map((question) => `<button type="button" data-question="${escapeText(question)}">${escapeText(question)}</button>`)
+    .join("");
+}
+
+function buildTenderMap(result) {
+  const files = (result.files && result.files.length ? result.files : exampleFiles.map((file) => file.name)).slice(0, 4);
+  const rows = result.matrix.slice(0, 6);
+  return {
+    files,
+    rows: rows.map((row, index) => ({
+      ...row,
+      id: `requirement-${index}-${slug(row.requirement)}`,
+      evidence: row.citations[0]?.quote || row.response,
+      file: row.citations[0]?.file || files[0] || "Uploaded document",
+    })),
+  };
+}
+
+function renderMap() {
+  const map = buildTenderMap(state.currentResult);
+  $("#tenderMapSvg").innerHTML = buildTenderMapSvg(map);
+}
+
+function colorForRisk(risk) {
+  if (risk === "High") return { fill: "#fff1ef", stroke: "#e2b4ad", dot: "#b42318" };
+  if (risk === "Medium") return { fill: "#fff8e9", stroke: "#e2c585", dot: "#bd750f" };
+  return { fill: "#eef3ff", stroke: "#b7c9ff", dot: "#4165d8" };
+}
+
+function buildTenderMapSvg(map) {
+  const rows = map.rows;
+  const rowHeight = 132;
+  const height = Math.max(640, 122 + rows.length * rowHeight);
+  const headers = text().mapHeaders;
+  const fileRows = map.files.map((file, index) => ({ label: shortFileName(file), y: 140 + index * 132 }));
+  const lastFileY = fileRows[fileRows.length - 1]?.y || 140;
+  const pathColor = "#aeb8b5";
+
+  const fileCards = fileRows
+    .map(
+      (file, index) => `
+        <rect x="36" y="${file.y}" width="210" height="72" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
+        <text x="52" y="${file.y + 34}" font-size="14" fill="#101214">${escapeText(firstWords(file.label, 4))}</text>
+        <circle cx="226" cy="${file.y + 18}" r="5" fill="#4968d9"/>
+        ${index === fileRows.length - 1 ? rows.map((_, rowIndex) => {
+          const targetY = 140 + rowIndex * rowHeight + 36;
+          return `<path d="M246 ${file.y + 36} C 306 ${file.y + 36}, 286 ${targetY}, 338 ${targetY}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>`;
+        }).join("") : ""}
+      `,
+    )
+    .join("");
+
+  const rowCards = rows
+    .map((row, index) => {
+      const y = 140 + index * rowHeight;
+      const risk = colorForRisk(row.risk);
       return `
-        <article class="evidence-card" data-id="${escapeText(item.id)}">
-          <header>
-            <strong>${escapeText(title)}</strong>
-            <span class="tag">${escapeText(item.agent)}</span>
-          </header>
-          <p>${escapeText(excerpt)}</p>
-          <div class="citation">${escapeText(item.citation)}</div>
-        </article>`;
+        <rect x="340" y="${y}" width="240" height="72" rx="14" fill="#fff8e9" stroke="#e5c884" stroke-width="1.5"/>
+        <text x="358" y="${y + 28}" font-size="14" fill="#101214">${escapeText(firstWords(row.requirement, 7))}</text>
+        <text x="358" y="${y + 48}" font-size="14" fill="#101214">${escapeText(firstWords(row.requirement.split(" ").slice(7).join(" "), 7))}</text>
+        <circle cx="558" cy="${y + 18}" r="5" fill="#bd750f"/>
+        <path d="M580 ${y + 36} L 655 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="660" y="${y}" width="250" height="72" rx="14" fill="#effaf6" stroke="#91d4c6" stroke-width="1.5"/>
+        <text x="678" y="${y + 28}" font-size="14" fill="#101214">${escapeText(firstWords(row.evidence, 7))}</text>
+        <text x="678" y="${y + 48}" font-size="14" fill="#101214">${escapeText(firstWords(row.evidence.split(" ").slice(7).join(" "), 7))}</text>
+        <circle cx="888" cy="${y + 18}" r="5" fill="#3f8e73"/>
+        <path d="M910 ${y + 36} L 985 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="990" y="${y}" width="230" height="72" rx="14" fill="${risk.fill}" stroke="${risk.stroke}" stroke-width="1.5"/>
+        <text x="1008" y="${y + 36}" font-size="14" fill="#101214">${escapeText(text().riskLabel[row.risk])} risk</text>
+        <circle cx="1198" cy="${y + 18}" r="5" fill="${risk.dot}"/>
+      `;
     })
     .join("");
+
+  return `
+    <svg viewBox="0 0 1260 ${height}" role="img" aria-label="${escapeText(text().mapSvgTitle)}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L8 4 L0 8 z" fill="${pathColor}"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="1260" height="${height}" rx="24" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
+      <text x="36" y="46" font-size="28" font-weight="760" fill="#101214">${escapeText(text().mapSvgTitle)}</text>
+      <text x="36" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[0])}</text>
+      <text x="340" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[1])}</text>
+      <text x="660" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[2])}</text>
+      <text x="990" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[3])}</text>
+      ${fileCards}
+      ${rows.length && fileRows.length ? `<path d="M246 ${lastFileY + 36} C 300 ${lastFileY + 36}, 298 ${lastFileY + 36}, 338 ${lastFileY + 36}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>` : ""}
+      ${rowCards}
+    </svg>
+  `;
 }
 
-function renderLists() {
-  $("#checklist").innerHTML = checklist
-    .map(([label, status]) => `<li><strong>${state.language === "ar" ? status === "pass" ? "ناجح" : "متابعة" : status === "pass" ? "Pass" : "Watch"}:</strong> ${escapeText(label)}</li>`)
-    .join("");
-  $("#riskGrid").innerHTML = risks
-    .map(([title, severity, mitigation]) => `<div class="risk-item"><strong>${escapeText(title)}</strong><span>${escapeText(severity)} - ${escapeText(mitigation)}</span></div>`)
-    .join("");
-  $("#questions").innerHTML = questions
-    .map((question) => `<li><strong>Q:</strong> ${escapeText(question)}</li>`)
-    .join("");
-  $("#prepareQuestions").innerHTML = prepareQuestions
-    .map((question) => `<li><strong>Q:</strong> ${escapeText(question)}</li>`)
-    .join("");
-}
-
-function sourceRoleLabel(role) {
-  if (role === "main") return localized("mainSource");
-  if (role === "supporting") return localized("supportingSource");
-  return localized("sampleSource");
-}
-
-function renderSourceDocuments() {
-  const target = $("#sourceDocuments");
-  if (!target) return;
-  target.innerHTML = sourceDocuments
-    .map((document) => {
-      const chars = Number(document.text_char_count || 0);
-      const detail = chars > 0
-        ? `${chars.toLocaleString(state.language === "ar" ? "ar" : "en")} chars`
-        : document.parser_status || "";
-      return `
-        <article class="source-document">
-          <strong>${escapeText(sourceRoleLabel(document.role))}</strong>
-          <span>${escapeText(document.filename)}</span>
-          <em>${escapeText(detail)}</em>
-        </article>`;
-    })
-    .join("");
+function buildBriefingDeck(result) {
+  const compliant = result.matrix.filter((row) => row.status === "Compliant").slice(0, 3);
+  const risky = result.matrix.filter((row) => row.risk !== "Low" || row.status !== "Compliant").slice(0, 4);
+  const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(row.requirement, 8)}: ${citation.quote}`));
+  return [
+    { eyebrow: "Snapshot", title: "Overall result", bullets: [`${text().score}: ${result.score}/100`, result.executiveBrief] },
+    { eyebrow: "Strengths", title: "Top compliance wins", bullets: compliant.length ? compliant.map((row) => row.requirement) : ["No fully compliant rows found yet."] },
+    { eyebrow: "Attention", title: "Biggest risks", bullets: risky.length ? risky.map((row) => `${text().riskLabel[row.risk]} risk: ${row.requirement}`) : ["No major risks detected."] },
+    { eyebrow: "Evidence", title: "Evidence highlights", bullets: evidence.length ? evidence.slice(0, 4) : ["No evidence highlights available."] },
+    { eyebrow: "Action", title: "Next actions", bullets: result.nextActions.length ? result.nextActions.slice(0, 5) : ["Review requirements with the project team."] },
+  ];
 }
 
 function renderDeck() {
-  const slide = deckSlides[state.activeSlide] || deckSlides[0];
-  const title = state.language === "ar" ? slide.titleAr : slide.title;
-  const body = state.language === "ar" ? slide.bodyAr : slide.body;
-  $("#slidePreview").innerHTML = `
-    <article class="deck-slide">
-      <div class="slide-number">${String(state.activeSlide + 1).padStart(2, "0")}</div>
-      <p class="eyebrow">${escapeText(localized("briefingDeck"))}</p>
-      <h3>${escapeText(title)}</h3>
-      <p>${escapeText(body)}</p>
-      <div class="slide-proof">
-        <span>Strong requirement alignment</span>
-        <span>Evidence checked</span>
-        <span>Actionable next step</span>
-      </div>
-      <div class="slide-sources">
-        <span>01_Main_Tender.md</span>
-        <span>03_Technical_Spec.docx</span>
-        <span>+3 sources</span>
-      </div>
-    </article>`;
-  $("#slideCount").textContent = `${state.activeSlide + 1} / ${deckSlides.length}`;
-  $("#slideRail").innerHTML = deckSlides
-    .map((item, index) => {
-      const label = state.language === "ar" ? item.titleAr : item.title;
-      return `<button class="${index === state.activeSlide ? "active" : ""}" data-slide="${index}" type="button">${escapeText(index + 1)}. ${escapeText(label)}</button>`;
-    })
+  const deck = buildBriefingDeck(state.currentResult);
+  state.activeSlide = Math.min(state.activeSlide, deck.length - 1);
+  const slide = deck[state.activeSlide];
+  const label = text().deckSlide(state.activeSlide + 1, deck.length);
+  $("#slidePill").textContent = label;
+  $("#deckCounter").textContent = `${state.activeSlide + 1}/${deck.length}`;
+  $("#deckFooterText").textContent = label;
+  $("#deckEyebrow").textContent = slide.eyebrow;
+  $("#deckTitle").textContent = slide.title;
+  $("#deckBullets").innerHTML = slide.bullets
+    .slice(0, 5)
+    .map((bullet, index) => `<li><span>${index + 1}</span>${escapeText(bullet)}</li>`)
+    .join("");
+  $("#deckDots").innerHTML = deck
+    .map((item, index) => `<button class="${index === state.activeSlide ? "active" : ""}" data-slide="${index}" type="button" aria-label="${escapeText(text().deckSlide(index + 1, deck.length))}"></button>`)
     .join("");
 }
 
-function updateAnalysisBanner(source) {
-  const badge = $(".transparency-banner .result-badge");
-  const text = $(".transparency-banner p");
-  if (!badge || !text) return;
-  if (source === "upload-api") {
-    badge.textContent = localized("uploadedBadge");
-    text.textContent = localized("uploadedAnalysisBanner");
-    return;
-  }
-  badge.textContent = localized("preparedBadge");
-  text.textContent = localized("analysisBanner");
-}
-
-function renderWorkflowTrace(trace = [], currentIndex = -1) {
-  const traceText = trace.join(" ");
-  workflowStages.forEach((stage, index) => {
-    const node = $(stage.selector);
-    const done = stage.match.some((needle) => traceText.includes(needle));
-    node.classList.toggle("done", done);
-    node.classList.toggle("current", index === currentIndex);
-  });
-}
-
-function formatRecommendation(recommendation) {
-  const value = String(recommendation || "bid").replaceAll("_", " ");
-  return state.language === "ar"
-    ? value.toUpperCase()
-    : value.toUpperCase();
-}
-
-function evidenceType(item) {
-  const tags = Array.isArray(item.tags) ? item.tags.join(" ").toLowerCase() : "";
-  const text = `${item.id || ""} ${item.concept_id || ""} ${item.title || ""} ${tags}`.toLowerCase();
-  if (text.includes("deadline")) return "deadline";
-  if (text.includes("risk")) return "risk";
-  if (text.includes("eligib") || text.includes("compliance")) return "eligibility";
-  return "strategy";
-}
-
-function applyReport(report, source = "api") {
-  state.report = report;
-  state.analysisSource = source;
-  updateAnalysisBanner(source);
-  $("#recommendation").textContent = formatRecommendation(report.recommendation);
-  $("#confidence").textContent = `${Math.round(Number(report.confidence || 0) * 100)}%`;
-  $("#summaryTitle").textContent =
-    state.language === "ar" ? "نتيجة التحليل" : "Analysis result";
-  $("#summaryText").textContent = report.executive_summary || t[state.language].summaryText;
-  const audit = report.audit || {};
-  $("#auditStatus").textContent = audit.status === "pass"
-    ? t[state.language].auditPass
-    : state.language === "ar" ? "بحاجة لمراجعة" : "Needs review";
-  const audited = Number(audit.audited_claims || 0);
-  const unsupported = Number(audit.unsupported_claim_count || 0);
-  const auditText = state.language === "ar"
-    ? `تم فحص ${audited} ادعاءات، ${unsupported} غير مدعومة`
-    : `${audited} claims checked, ${unsupported} unsupported`;
-  const auditSpan = document.querySelector(".audit-tile span");
-  if (auditSpan) auditSpan.textContent = auditText;
-
-  if (Array.isArray(report.evidence) && report.evidence.length) {
-    evidence = report.evidence.slice(0, 8).map((item) => ({
-      id: item.id,
-      type: evidenceType(item),
-      title: item.title,
-      titleAr: item.titleAr || item.title_ar || item.title,
-      agent: "Evidence Tool",
-      excerpt: item.excerpt,
-      excerptAr: item.excerptAr || item.excerpt_ar || item.excerpt,
-      citation: item.citation,
+function buildQuestions(result) {
+  const rowQuestions = result.matrix
+    .filter((row) => row.status !== "Compliant" || row.risk !== "Low")
+    .slice(0, 6)
+    .map((row) => ({
+      question:
+        state.language === "ar"
+          ? `يرجى توضيح كيفية تلبية هذا المتطلب: ${row.requirement}`
+          : `Can you clarify how you will satisfy this requirement: ${row.requirement.charAt(0).toLowerCase()}${row.requirement.slice(1)}`,
+      why:
+        state.language === "ar"
+          ? `${text().statusLabel[row.status]} بمستوى مخاطر ${text().riskLabel[row.risk]}. ${row.response}`
+          : `${row.status} item with ${row.risk.toLowerCase()} risk. ${row.response}`,
     }));
-  }
-  if (Array.isArray(report.source_documents) && report.source_documents.length) {
-    sourceDocuments = report.source_documents;
-  }
-  if (Array.isArray(report.findings) && report.findings.length) {
-    checklist.length = 0;
-    report.findings.slice(0, 7).forEach((finding) => {
-      checklist.push([finding.summary, finding.status === "pass" ? "pass" : "watch"]);
-    });
-  }
-  if (Array.isArray(report.risks) && report.risks.length) {
-    risks.length = 0;
-    report.risks.forEach((risk) => {
-      risks.push([risk.title, risk.severity, risk.mitigation]);
-    });
-  }
-  if (Array.isArray(report.clarification_questions) && report.clarification_questions.length) {
-    questions.length = 0;
-    report.clarification_questions.forEach((item) => {
-      questions.push(item.question);
-    });
-  }
-  if (Array.isArray(report.prepare_to_answer) && report.prepare_to_answer.length) {
-    prepareQuestions.length = 0;
-    report.prepare_to_answer.forEach((item) => {
-      prepareQuestions.push(item.question || item);
-    });
-  }
-  renderWorkflowTrace(report.workflow_trace || fallbackWorkflowTrace);
-  renderEvidence();
-  renderLists();
-  renderSourceDocuments();
-  renderDeck();
+  const actionQuestions = result.nextActions.slice(0, 4).map((action, index) => ({
+    question: action.endsWith("?") ? action : `${action}?`,
+    why: result.risks[index] || "This action was recommended by TenderLens AI.",
+  }));
+  return [...rowQuestions, ...actionQuestions].slice(0, 8);
 }
 
-function preparedExampleReport() {
-  return {
-    recommendation: "bid",
-    confidence: Number($("#confidence").textContent.replace("%", "")) / 100 || 0.95,
-    executive_summary: t[state.language].summaryText,
-    audit: {
-      status: "pass",
-      audited_claims: 7,
-      unsupported_claim_count: 0,
-    },
-    evidence,
-    findings: checklist.map(([summary, status]) => ({
-      summary,
-      status,
-    })),
-    risks: risks.map(([title, severity, mitigation]) => ({
-      title,
-      severity,
-      mitigation,
-    })),
-    clarification_questions: questions.map((question) => ({ question })),
-    prepare_to_answer: prepareQuestions.map((question) => ({ question })),
-    source_documents: defaultSourceDocuments,
-    workflow_trace: fallbackWorkflowTrace,
-  };
+function renderQuestions() {
+  const questions = buildQuestions(state.currentResult);
+  $("#questionsList").innerHTML = questions
+    .map(
+      (item, index) => `
+        <article class="question-card">
+          <div class="question-row">
+            <span class="question-number">${index + 1}</span>
+            <div>
+              <h3>${escapeText(item.question)}</h3>
+              <p>${escapeText(item.why)}</p>
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  $$(".workspace-tabs button").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
+  $$(".tab-panel").forEach((panel) => panel.classList.toggle("hidden", panel.dataset.panel !== tab));
+}
+
+function addChatMessage(content, role = "agent") {
+  const node = document.createElement("div");
+  node.className = `message ${role}`;
+  node.textContent = content;
+  $("#chatLog").appendChild(node);
+  $("#chatLog").scrollTop = $("#chatLog").scrollHeight;
+}
+
+function answerQuestion(question) {
+  const lower = question.toLowerCase();
+  const result = state.currentResult;
+  if (!result) return "Run an analysis first so TenderLens can answer using your documents.";
+  if (lower.includes("arabic") || /عرب/.test(question)) {
+    return "الخلاصة: توجد نقاط قوة واضحة، لكن يجب توضيح المخاطر والمتطلبات الجزئية قبل التقديم.";
+  }
+  if (lower.includes("risk") || lower.includes("مخاطر")) {
+    return result.risks.slice(0, 3).join(" ");
+  }
+  if (lower.includes("partial") || lower.includes("جزئي")) {
+    const row = result.matrix.find((item) => item.status === "Partial") || result.matrix[0];
+    return `${row.requirement}: ${row.response}`;
+  }
+  if (lower.includes("ask") || lower.includes("vendor") || lower.includes("سأ")) {
+    return buildQuestions(result)[0]?.question || "Ask the vendor to confirm every mandatory requirement with source-backed evidence.";
+  }
+  return result.executiveBrief;
 }
 
 async function postJson(path, payload, timeoutMs = 7000) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(path, {
+    const response = await fetch(requestUrl(path), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } finally {
     window.clearTimeout(timer);
   }
 }
 
-async function postFormData(path, formData, timeoutMs = 15000) {
+function configuredBackendUrl() {
+  return String(window.TENDERLENS_CONFIG?.backendUrl || "").replace(/\/+$/, "");
+}
+
+function requestUrl(path, options = {}) {
+  const backendUrl = configuredBackendUrl();
+  return options.preferBackend && backendUrl ? `${backendUrl}${path}` : path;
+}
+
+async function postFormData(path, formData, timeoutMs = 60000, options = {}) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(path, {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
+    const response = await fetch(requestUrl(path, options), { method: "POST", body: formData, signal: controller.signal });
     if (!response.ok) {
       let detail = `HTTP ${response.status}`;
       try {
         const body = await response.json();
         detail = body.detail || detail;
       } catch {
-        // Keep the HTTP status detail.
+        // Keep HTTP status as detail.
       }
       throw new Error(detail);
     }
@@ -683,295 +916,390 @@ async function postFormData(path, formData, timeoutMs = 15000) {
 }
 
 function createUploadAnalysisFormData() {
-  const mainFile = $("#fileInput").files[0];
-  const supportingFiles = Array.from($("#supportingFileInput")?.files || []);
   const formData = new FormData();
-  formData.append("main_file", mainFile);
-  supportingFiles.forEach((file) => formData.append("supporting_files", file));
+  state.uploadedFiles.forEach((file, index) => {
+    formData.append(index === 0 ? "main_file" : "supporting_files", file);
+  });
   formData.append("profile_id", "default-bidder-profile");
   formData.append("language", state.language);
   formData.append("voice", "false");
   return formData;
 }
 
+async function buildLocalUploadedResult() {
+  const textFiles = state.uploadedFiles.filter((file) => [".txt", ".md"].includes(extension(file.name)));
+  if (!textFiles.length) throw new Error(text().unsupportedLocal);
+  const entries = await Promise.all(textFiles.map(async (file) => ({ file, content: await file.text() })));
+  const combined = entries.map((entry) => entry.content).join("\n\n").toLowerCase();
+  const has = (pattern) => pattern.test(combined);
+  const rows = [
+    {
+      requirement: "Mandatory certifications and eligibility evidence should be present.",
+      category: "Eligibility",
+      status: has(/iso|certification|license|qualified/) ? "Compliant" : "Needs Review",
+      risk: has(/iso|certification|license|qualified/) ? "Low" : "Medium",
+      response: has(/iso|certification|license|qualified/)
+        ? "Uploaded text contains certification or eligibility language."
+        : "No clear certification or eligibility evidence was found in text-readable files.",
+      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
+    },
+    {
+      requirement: "Submission deadline and required documents should be confirmed.",
+      category: "Submission",
+      status: has(/deadline|submission|submit|envelope/) ? "Partial" : "Needs Review",
+      risk: has(/deadline|submission|submit|envelope/) ? "Medium" : "High",
+      response: has(/deadline|submission|submit|envelope/)
+        ? "Deadline or submission language is present, but the exact checklist should be verified."
+        : "No reliable deadline language was found in text-readable files.",
+      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
+    },
+    {
+      requirement: "Delivery risks, service levels, and implementation constraints should be assessed.",
+      category: "Delivery",
+      status: has(/risk|sla|delivery|implementation|mobilization|penalty/) ? "Partial" : "Needs Review",
+      risk: has(/penalty|late|delay|risk/) ? "High" : "Medium",
+      response: has(/risk|sla|delivery|implementation|mobilization|penalty/)
+        ? "Delivery or service-level language was detected and should be clarified."
+        : "No delivery risk language was found in text-readable files.",
+      citations: [{ file: entries[entries.length - 1].file.name, quote: firstWords(entries[entries.length - 1].content, 24) }],
+    },
+    {
+      requirement: "Pricing, bid security, insurance, or commercial attachments should be checked.",
+      category: "Commercial",
+      status: has(/price|commercial|bond|security|insurance|guarantee/) ? "Partial" : "Gap",
+      risk: has(/bond|security|insurance|guarantee/) ? "Medium" : "High",
+      response: has(/price|commercial|bond|security|insurance|guarantee/)
+        ? "Commercial language is present, but TenderLens needs source-backed validation."
+        : "No clear commercial evidence was found in text-readable files.",
+      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
+    },
+  ];
+  return normalizeResult({
+    executiveBrief:
+      "Uploaded text-readable files were reviewed locally because the live backend was unavailable. Treat this as a bounded draft until the cloud runtime validates every source document.",
+    matrix: rows,
+    trace: ["Validated files", "Read text locally", "Derived checklist rows", "Calculated deterministic score"],
+    risks: ["Cloud backend validation is not connected for this run.", "PDF, DOCX, and image parsing require the production backend."],
+    nextActions: ["Connect the deployed backend runtime.", "Verify all mandatory requirements against source documents."],
+    files: state.uploadedFiles.map((file) => file.name),
+  });
+}
+
 async function runAnalysis() {
-  addChatMessage(localized("analysisRunning"));
-  renderWorkflowTrace(["router.accept_input"], 0);
-  if (!state.hasUploadedTenderFiles) {
-    applyReport(preparedExampleReport(), "prepared-example");
-    addChatMessage(localized("analysisFallback"));
+  $("#uploadStatus").classList.remove("error");
+  $("#uploadStatus").textContent = text().running;
+  if (!state.uploadedFiles.length) {
+    usePreloadedExample();
     return;
   }
+
+  const validation = validateSelectedFiles(state.uploadedFiles);
+  if (!validation.ok) {
+    $("#uploadStatus").textContent = validation.message;
+    $("#uploadStatus").classList.add("error");
+    return;
+  }
+
   try {
-    const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData());
-    applyReport(result.report, "upload-api");
-    addChatMessage(localized("analysisReady"));
+    const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 60000, { preferBackend: true });
+    state.currentResult = reportToComplianceResult(result.report);
+    state.analysisSource = "uploaded";
+    $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length);
   } catch (error) {
-    addChatMessage(`${localized("liveUnavailable")} ${error.message || ""}`.trim());
-  }
-}
-
-function updateScenario() {
-  const capacity = Number($("#capacitySlider").value);
-  const margin = Number($("#marginSlider").value);
-  const partner = $("#partnerToggle").checked;
-  let score = 0.86;
-  if (capacity >= 24) score += 0.04;
-  if (capacity < 18) score -= 0.12;
-  score += partner ? 0.05 : -0.08;
-  if (margin < 8) score -= 0.05;
-  score = Math.max(0, Math.min(1, score));
-  const pct = Math.round(score * 100);
-  $("#confidence").textContent = `${pct}%`;
-  $("#scenarioResult").textContent =
-    state.language === "ar"
-      ? `درجة السيناريو ${pct}%. ${partner ? "الشريك يقلل مخاطر التنفيذ." : "عدم توفر الشريك يزيد المخاطر."}`
-      : `Scenario score ${pct}%. ${partner ? "Partner coverage reduces delivery risk." : "No partner coverage increases delivery risk."}`;
-}
-
-function addChatMessage(text, role = "agent") {
-  const node = document.createElement("div");
-  node.className = "message";
-  node.textContent = `${role === "user" ? "You" : "TenderLens"}: ${text}`;
-  $("#chatLog").appendChild(node);
-  $("#chatLog").scrollTop = $("#chatLog").scrollHeight;
-}
-
-function validateSingleFile(file, roleLabel) {
-  const lower = file.name.toLowerCase();
-  const okType = supportedExt.some((ext) => lower.endsWith(ext));
-  if (!okType) {
-    return state.language === "ar" ? `${roleLabel}: نوع الملف غير مدعوم.` : `${roleLabel}: unsupported file type.`;
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return state.language === "ar" ? `${roleLabel}: الملف أكبر من حد 5 ميجابايت.` : `${roleLabel}: file is larger than the 5 MB limit.`;
-  }
-  return "";
-}
-
-function validateTenderFiles() {
-  const status = $("#uploadStatus");
-  const mainFile = $("#fileInput").files[0];
-  const supportingFiles = Array.from($("#supportingFileInput")?.files || []);
-  const files = [mainFile, ...supportingFiles].filter(Boolean);
-  status.classList.remove("error");
-  state.hasUploadedTenderFiles = false;
-
-  if (!files.length) {
-    status.textContent = "";
-    return false;
-  }
-  if (!mainFile) {
-    status.textContent = state.language === "ar" ? "يرجى إضافة ملف المناقصة الرئيسي أولا." : "Please add the Main Tender File first.";
-    status.classList.add("error");
-    return false;
-  }
-  if (files.length > 5) {
-    status.textContent = state.language === "ar" ? "يمكن رفع 5 ملفات كحد أقصى." : "You can add up to 5 files total.";
-    status.classList.add("error");
-    return false;
-  }
-  const totalBytes = files.reduce((total, file) => total + file.size, 0);
-  if (totalBytes > 12 * 1024 * 1024) {
-    status.textContent = state.language === "ar" ? "إجمالي الملفات أكبر من حد 12 ميجابايت." : "Tender Files are larger than the 12 MB total limit.";
-    status.classList.add("error");
-    return false;
-  }
-  for (const file of files) {
-    const role = file === mainFile ? localized("mainTenderFile") : localized("supportingFiles");
-    const error = validateSingleFile(file, role);
-    if (error) {
-      status.textContent = error;
-      status.classList.add("error");
-      return false;
-    }
-  }
-  state.hasUploadedTenderFiles = true;
-  status.textContent = state.language === "ar"
-    ? `تم قبول ${files.length} ملف. لن نحفظ ملفاتك.`
-    : `${files.length} file${files.length === 1 ? "" : "s"} accepted. We do not save your files.`;
-  return true;
-}
-
-function validateUpload() {
-  return validateTenderFiles();
-}
-
-async function validateUploadWithBackend(file) {
-  if (!file) {
-    validateTenderFiles();
-    return;
-  }
-  validateTenderFiles();
-  const status = $("#uploadStatus");
-  if (status.classList.contains("error")) return;
-  try {
-    const mainFile = $("#fileInput").files[0];
-    const supportingFiles = Array.from($("#supportingFileInput")?.files || []);
-    const files = [
-      { filename: mainFile.name, size_bytes: mainFile.size, role: "main" },
-      ...supportingFiles.map((item) => ({
-        filename: item.name,
-        size_bytes: item.size,
-        role: "supporting",
-      })),
-    ];
-    const result = await postJson("/api/upload/tender-files/validate", { files }, 4000);
-    if (!result.accepted) {
-      status.textContent = result.reason || result.message || status.textContent;
-      status.classList.add("error");
+    try {
+      state.currentResult = await buildLocalUploadedResult();
+      state.analysisSource = "uploaded";
+      $("#uploadStatus").textContent = text().backendUnavailable;
+    } catch (localError) {
+      $("#uploadStatus").textContent = localError.message || error.message || text().unsupportedLocal;
+      $("#uploadStatus").classList.add("error");
       return;
     }
-    status.textContent = state.language === "ar"
-      ? "تم قبول بيانات الملفات. لن نحفظ ملفاتك."
-      : "Tender Files accepted. We do not save your files.";
-  } catch (error) {
-    status.textContent = state.language === "ar"
-      ? "تم قبول بيانات الملفات محليا. لن نحفظ ملفاتك."
-      : "Tender Files accepted locally. We do not save your files.";
   }
-}
-
-async function startVoice() {
-  $("#voiceOverlay").classList.remove("hidden", "error");
-  const card = $(".voice-card");
-  card.className = "voice-card";
-  $("#voiceStateLabel").textContent = state.language === "ar" ? "جار الاتصال" : "Connecting";
-  $("#voiceHelp").textContent = state.language === "ar" ? "سيظهر طلب إذن الميكروفون الآن." : "Microphone permission will appear now.";
-  try {
-    state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    card.classList.add("listening");
-    $("#voiceStateLabel").textContent = state.language === "ar" ? "أستمع" : "Listening";
-    $("#voiceHelp").textContent = state.language === "ar" ? "اسأل عن قرار التقديم أو المخاطر أو الأدلة." : "Ask about bid fit, risks, or evidence.";
-    $("#transcript").textContent =
-      state.language === "ar"
-        ? "مثال: هل يمكننا التقديم؟ الوكيل سيعرض الأدلة في اللوحة."
-        : "Example: Can we bid? The agent will keep evidence visible in the cockpit.";
-    highlightEvidence("eligibility-1");
-  } catch (error) {
-    $("#voiceOverlay").classList.add("error");
-    $("#voiceStateLabel").textContent = state.language === "ar" ? "تعذر الاتصال" : "Error";
-    $("#voiceHelp").textContent = state.language === "ar" ? "تعذر الوصول للميكروفون. وضع الكتابة متاح." : "Microphone unavailable. Typing mode remains available.";
-  }
-}
-
-function stopVoice() {
-  if (state.voiceStream) {
-    state.voiceStream.getTracks().forEach((track) => track.stop());
-  }
-  state.voiceStream = null;
-  $("#voiceOverlay").classList.add("hidden");
-  $("#voiceOverlay").classList.remove("error");
-  $$(".evidence-card").forEach((card) => card.classList.remove("active"));
-}
-
-function highlightEvidence(id) {
-  $$(".evidence-card").forEach((card) => card.classList.toggle("active", card.dataset.id === id));
+  state.activeRow = 0;
+  state.activeSlide = 0;
+  renderResult();
 }
 
 function usePreloadedExample() {
+  state.currentResult = normalizeResult(structuredClone(demoResult));
+  state.analysisSource = "sample";
+  state.uploadedFiles = [];
+  state.activeRow = 0;
+  state.activeSlide = 0;
   $("#fileInput").value = "";
-  if ($("#supportingFileInput")) $("#supportingFileInput").value = "";
-  state.hasUploadedTenderFiles = false;
-  $("#uploadStatus").textContent = localized("preloadedNote");
   $("#uploadStatus").classList.remove("error");
-  sourceDocuments = [...defaultSourceDocuments];
-  applyReport(preparedExampleReport(), "prepared-example");
-  addChatMessage(localized("analysisFallback"));
+  $("#uploadStatus").textContent = "Preloaded files use a prepared sample result so you can test the interface without spending Gemini quota.";
+  renderResult();
 }
 
-function showWelcomeIfNeeded() {
-  const modal = $("#welcomeModal");
-  if (!modal) return;
-  if (window.localStorage.getItem("tenderlens-welcome-dismissed") === "yes") return;
-  modal.classList.remove("hidden");
+function selectFiles(files) {
+  state.uploadedFiles = Array.from(files).slice(0, MAX_UPLOAD_FILES);
+  const validation = validateSelectedFiles(state.uploadedFiles);
+  $("#uploadStatus").textContent = validation.message;
+  $("#uploadStatus").classList.toggle("error", !validation.ok);
+  state.analysisSource = "uploaded";
+  renderFiles(text().ready);
+  if (validation.ok) {
+    void runAnalysis();
+  }
 }
 
-function closeWelcome(persist = false) {
-  const modal = $("#welcomeModal");
-  if (!modal) return;
-  modal.classList.add("hidden");
+function startFresh() {
+  state.currentResult = null;
+  state.uploadedFiles = [];
+  state.analysisSource = "empty";
+  state.activeRow = 0;
+  state.activeSlide = 0;
+  $("#fileInput").value = "";
+  $("#supportingFileInput").value = "";
+  $("#uploadStatus").textContent = "";
+  $("#chatLog").innerHTML = "";
+  renderFiles();
+  showResultShell(false);
+}
+
+function renderExamplesModal() {
+  $("#exampleFileList").innerHTML = exampleFiles
+    .map(
+      (file) => `
+        <article class="example-file-row">
+          <span class="file-chip-icon" aria-hidden="true">${iconMarkup("file-text")}</span>
+          <div>
+            <strong>${escapeText(file.display)}</strong>
+            <p>${escapeText(file.name)} · ${escapeText(file.size)} · ${escapeText(file.format)}</p>
+          </div>
+          <a href="${escapeText(file.path)}" target="_blank" rel="noreferrer">Open</a>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderOnboarding() {
+  const copy = text();
+  const slide = copy.onboarding[state.onboardingSlide];
+  $("#onboardingCounter").textContent = slide.counter;
+  $("#welcomeTitle").textContent = slide.title;
+  $("#welcomeBody").textContent = slide.body;
+  $("#dotOne").classList.toggle("active", state.onboardingSlide === 0);
+  $("#dotTwo").classList.toggle("active", state.onboardingSlide === 1);
+  $("#nextOnboarding").textContent = state.onboardingSlide === 0 ? copy.nextSlide : copy.getStarted;
+  if (state.onboardingSlide === 0) {
+    $("#onboardingVisual").innerHTML = `
+      <div class="onboarding-checks">
+        ${copy.onboardingChecks.map((item, index) => `<div><span class="title-icon ${["cobalt", "mint", "danger"][index]}" aria-hidden="true">${iconMarkup(["search-check", "shield-check", "triangle-alert"][index])}</span>${escapeText(item)}</div>`).join("")}
+      </div>
+    `;
+  } else {
+    $("#onboardingVisual").innerHTML = `
+      <div class="numbered-steps">
+        ${copy.onboardingSteps.map((item, index) => `<div><span>${index + 1}</span>${escapeText(item)}</div>`).join("")}
+      </div>
+    `;
+  }
+}
+
+function closeWelcome(persist = true) {
+  $("#welcomeModal").classList.add("hidden");
   if (persist) {
     window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
   }
 }
 
-$("#langEn").addEventListener("click", () => applyLanguage("en"));
-$("#langAr").addEventListener("click", () => applyLanguage("ar"));
-$("#analyzeButton").addEventListener("click", runAnalysis);
-$("#useSampleButton").addEventListener("click", usePreloadedExample);
-$("#sendChat").addEventListener("click", () => {
-  const value = $("#chatInput").value.trim();
-  if (!value) return;
-  addChatMessage(value, "user");
-  $("#chatInput").value = "";
-  addChatMessage(state.language === "ar" ? "أقوى دليل هو توافق الأهلية، وأهم مخاطرة هي تغطية HVAC." : "The strongest evidence is eligibility fit; the main watch item is HVAC coverage.");
-  highlightEvidence("risks-1");
-});
-$("#fileInput").addEventListener("change", (event) => validateUploadWithBackend(event.target.files[0]));
-$("#supportingFileInput").addEventListener("change", () => validateUploadWithBackend($("#fileInput").files[0]));
-$("#voiceButton").addEventListener("click", startVoice);
-$("#endVoice").addEventListener("click", stopVoice);
-$("#muteVoice").addEventListener("click", () => {
-  state.voiceMuted = !state.voiceMuted;
-  $("#voiceStateLabel").textContent = state.voiceMuted
-    ? state.language === "ar" ? "مكتوم" : "Muted"
-    : state.language === "ar" ? "أستمع" : "Listening";
-});
-$("#interruptVoice").addEventListener("click", () => {
-  $("#voiceStateLabel").textContent = state.language === "ar" ? "تمت المقاطعة" : "Interrupted";
-  $("#voiceHelp").textContent = state.language === "ar" ? "تم إيقاف الرد الصوتي. يمكنك المتابعة كتابة." : "Spoken response stopped. You can continue typing.";
-});
-$("#filters").addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-filter]");
-  if (!button) return;
-  state.activeFilter = button.dataset.filter;
-  $$("#filters .chip").forEach((chip) => chip.classList.toggle("active", chip === button));
-  renderEvidence();
-});
-["capacitySlider", "marginSlider", "partnerToggle"].forEach((id) => {
-  $(`#${id}`).addEventListener("input", updateScenario);
-});
-$("#prevSlide").addEventListener("click", () => {
-  state.activeSlide = (state.activeSlide - 1 + deckSlides.length) % deckSlides.length;
-  renderDeck();
-});
-$("#nextSlide").addEventListener("click", () => {
-  state.activeSlide = (state.activeSlide + 1) % deckSlides.length;
-  renderDeck();
-});
-$("#slideRail").addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-slide]");
-  if (!button) return;
-  state.activeSlide = Number(button.dataset.slide);
-  renderDeck();
-});
+function showWelcomeIfNeeded() {
+  if (window.localStorage.getItem("tenderlens-welcome-dismissed") !== "yes") {
+    $("#welcomeModal").classList.remove("hidden");
+  }
+}
 
-$$(".feature-nav a").forEach((link) => {
-  link.addEventListener("click", () => {
-    $$(".feature-nav a").forEach((item) => item.classList.toggle("active", item === link));
+function downloadTextFile(filename, content, type = "text/plain") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function reportText() {
+  const result = state.currentResult;
+  if (!result) return "";
+  return [
+    "TenderLens AI",
+    `${text().score}: ${result.score}/100`,
+    "",
+    result.executiveBrief,
+    "",
+    "Checklist",
+    ...result.matrix.map((row, index) => `${index + 1}. [${row.status} / ${row.risk}] ${row.requirement} - ${row.response}`),
+    "",
+    "Next actions",
+    ...result.nextActions.map((action, index) => `${index + 1}. ${action}`),
+  ].join("\n");
+}
+
+function downloadReport(format) {
+  if (!state.currentResult) return;
+  const content = reportText();
+  const ext = format === "docx" ? "doc" : format;
+  downloadTextFile(`tenderlens-analysis.${ext}`, content, format === "pdf" ? "application/pdf" : "text/plain");
+}
+
+function downloadMap() {
+  const svg = $("#tenderMapSvg svg")?.outerHTML || "";
+  if (svg) downloadTextFile("tenderlens-map.svg", svg, "image/svg+xml");
+}
+
+async function startVoice() {
+  $("#voiceOverlay").classList.remove("hidden");
+  $("#voiceStateLabel").textContent = "Connecting";
+  try {
+    state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    $("#voiceStateLabel").textContent = "Listening";
+    $("#voiceHelp").textContent = "Ask about risks, evidence, or next actions.";
+  } catch {
+    $("#voiceStateLabel").textContent = "Error";
+    $("#voiceHelp").textContent = "Microphone unavailable. Typing mode remains available.";
+  }
+}
+
+function stopVoice() {
+  if (state.voiceStream) state.voiceStream.getTracks().forEach((track) => track.stop());
+  state.voiceStream = null;
+  $("#voiceOverlay").classList.add("hidden");
+}
+
+function bindEvents() {
+  $("#langEn").addEventListener("click", () => {
+    state.language = "en";
+    updateI18n();
   });
-});
-$("#welcomeSample").addEventListener("click", () => {
-  usePreloadedExample();
-  closeWelcome();
-  document.querySelector("#analysis").scrollIntoView({ behavior: "smooth" });
-});
-$("#welcomeUpload").addEventListener("click", () => {
-  closeWelcome();
-  $("#fileInput").focus();
-});
-$("#welcomeHowTo").addEventListener("click", () => {
-  closeWelcome();
-  document.querySelector("#how-to-use").scrollIntoView({ behavior: "smooth" });
-});
-$("#welcomeDismiss").addEventListener("click", () => closeWelcome(true));
+  $("#langAr").addEventListener("click", () => {
+    state.language = "ar";
+    updateI18n();
+  });
 
-addChatMessage("I am ready with the preloaded files, bidder profile, proof, and evidence check.");
-applyReport(preparedExampleReport(), "prepared-example");
-renderEvidence();
-renderLists();
-renderSourceDocuments();
-renderDeck();
-updateScenario();
-showWelcomeIfNeeded();
+  ["uploadRunButton", "heroUploadButton", "emptyUploadButton", "addMoreButton"].forEach((id) => {
+    $(`#${id}`).addEventListener("click", () => $("#fileInput").click());
+  });
+  ["useSampleButton", "heroSampleButton", "emptySampleButton", "useExamplesFromModal"].forEach((id) => {
+    $(`#${id}`).addEventListener("click", () => {
+      $("#examplesModal").classList.add("hidden");
+      usePreloadedExample();
+    });
+  });
+
+  $("#fileInput").addEventListener("change", (event) => selectFiles(event.target.files || []));
+  $("#supportingFileInput").addEventListener("change", (event) => selectFiles(event.target.files || []));
+  $("#startFreshButton").addEventListener("click", startFresh);
+
+  $("#analyzedFiles").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-remove]");
+    if (!button) return;
+    const index = Number(button.dataset.remove);
+    state.uploadedFiles.splice(index, 1);
+    if (state.analysisSource === "sample") {
+      startFresh();
+      return;
+    }
+    renderFiles();
+  });
+
+  $(".workspace-tabs").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-tab]");
+    if (button) switchTab(button.dataset.tab);
+  });
+
+  $("#checklistRows").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-row]");
+    if (!row) return;
+    state.activeRow = Number(row.dataset.row);
+    renderChecklist();
+  });
+
+  $("#chatForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = $("#chatInput").value.trim();
+    if (!value) return;
+    addChatMessage(value, "user");
+    $("#chatInput").value = "";
+    window.setTimeout(() => addChatMessage(answerQuestion(value), "agent"), 180);
+  });
+
+  $("#quickQuestions").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-question]");
+    if (!button) return;
+    const question = button.dataset.question;
+    addChatMessage(question, "user");
+    window.setTimeout(() => addChatMessage(answerQuestion(question), "agent"), 180);
+  });
+
+  $("#prevSlide").addEventListener("click", () => {
+    const deck = buildBriefingDeck(state.currentResult);
+    state.activeSlide = (state.activeSlide - 1 + deck.length) % deck.length;
+    renderDeck();
+  });
+  $("#nextSlide").addEventListener("click", () => {
+    const deck = buildBriefingDeck(state.currentResult);
+    state.activeSlide = (state.activeSlide + 1) % deck.length;
+    renderDeck();
+  });
+  $("#deckDots").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-slide]");
+    if (!button) return;
+    state.activeSlide = Number(button.dataset.slide);
+    renderDeck();
+  });
+
+  $("#downloadTxt").addEventListener("click", () => downloadReport("txt"));
+  $("#downloadPdf").addEventListener("click", () => downloadReport("pdf"));
+  $("#downloadDocx").addEventListener("click", () => downloadReport("docx"));
+  $("#downloadPptx").addEventListener("click", () => downloadReport("pptx"));
+  $("#downloadMapSvg").addEventListener("click", downloadMap);
+
+  $("#viewExamplesButton").addEventListener("click", () => $("#examplesModal").classList.remove("hidden"));
+  $("#closeExamples").addEventListener("click", () => $("#examplesModal").classList.add("hidden"));
+  $("#examplesModal").addEventListener("click", (event) => {
+    if (event.target.id === "examplesModal") $("#examplesModal").classList.add("hidden");
+  });
+
+  $("#howToButton").addEventListener("click", () => {
+    state.onboardingSlide = 0;
+    renderOnboarding();
+    $("#welcomeModal").classList.remove("hidden");
+  });
+  $("#welcomeClose").addEventListener("click", () => closeWelcome());
+  $("#skipOnboarding").addEventListener("click", () => closeWelcome());
+  $("#nextOnboarding").addEventListener("click", () => {
+    if (state.onboardingSlide === 0) {
+      state.onboardingSlide = 1;
+      renderOnboarding();
+    } else {
+      closeWelcome();
+    }
+  });
+
+  $("#muteVoice").addEventListener("click", () => {
+    $("#voiceStateLabel").textContent = "Muted";
+  });
+  $("#interruptVoice").addEventListener("click", () => {
+    $("#voiceStateLabel").textContent = "Interrupted";
+  });
+  $("#endVoice").addEventListener("click", stopVoice);
+}
+
+function init() {
+  hydrateIcons();
+  renderExamplesModal();
+  renderFiles();
+  bindEvents();
+  updateI18n();
+  showResultShell(false);
+  showWelcomeIfNeeded();
+}
+
+init();

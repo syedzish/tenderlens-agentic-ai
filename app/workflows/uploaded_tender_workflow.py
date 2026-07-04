@@ -14,6 +14,7 @@ from app.services.contracts import (
 )
 from app.services.data_loader import get_company_profile
 from app.services.profile.matcher import score_profile_against_requirements
+from app.services.scenario.compliance_score import calculate_findings_score
 from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS, simulate_strategy_overlay
 from app.services.upload.extraction import ExtractedTenderDocument
 
@@ -301,4 +302,5 @@ def run_uploaded_tender_files_analysis(
         voice_summary=voice_summary,
         unresolved_evidence_gaps=[] if audit.status == "pass" else [issue.message for issue in audit.issues],
         workflow_trace=workflow_trace,
+        score=calculate_findings_score(findings),
     )

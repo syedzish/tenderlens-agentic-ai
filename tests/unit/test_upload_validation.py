@@ -10,14 +10,18 @@ from app.services.upload.validation import (
 
 
 class UploadValidationTest(unittest.TestCase):
-    def test_accepts_supported_file_under_5_mb(self) -> None:
+    def test_accepts_supported_file_under_4_mb(self) -> None:
         result = validate_upload_metadata("tender.pdf", MAX_UPLOAD_BYTES)
         self.assertTrue(result.accepted)
 
-    def test_rejects_file_over_5_mb(self) -> None:
+    def test_accepts_supported_image_metadata(self) -> None:
+        result = validate_upload_metadata("tender-page.png", 1024)
+        self.assertTrue(result.accepted)
+
+    def test_rejects_file_over_4_mb(self) -> None:
         result = validate_upload_metadata("tender.pdf", MAX_UPLOAD_BYTES + 1)
         self.assertFalse(result.accepted)
-        self.assertIn("5 MB", result.reason)
+        self.assertIn("4 MB", result.reason)
 
     def test_rejects_unsupported_type(self) -> None:
         result = validate_upload_metadata("tender.exe", 1024)
@@ -55,13 +59,13 @@ class UploadValidationTest(unittest.TestCase):
         self.assertFalse(result.accepted)
         self.assertIn("5 files", result.reason)
 
-    def test_rejects_package_file_over_5_mb(self) -> None:
+    def test_rejects_package_file_over_4_mb(self) -> None:
         result = validate_tender_files_metadata(
             [UploadFileMetadata("main.pdf", MAX_UPLOAD_BYTES + 1, "main")]
         )
 
         self.assertFalse(result.accepted)
-        self.assertIn("5 MB", result.reason)
+        self.assertIn("4 MB", result.reason)
 
     def test_rejects_total_over_12_mb(self) -> None:
         result = validate_tender_files_metadata(

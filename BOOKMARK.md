@@ -4,14 +4,71 @@ This file is the operational handoff point. Update it at the start and completio
 
 ## Current State
 
-- Last updated: 2026-07-04 02:35 Asia/Riyadh
-- Current milestone: Frontend visual correction after user review
-- Current task: Redesign UI toward approved TenderLens screens and verify with Playwright MCP/browser screenshots.
-- Status: Verified locally; commit/push in progress
+- Last updated: 2026-07-04 10:37 Asia/Riyadh
+- Current milestone: TenderLens reference UI parity and production upload runtime wiring
+- Current task: Match the reference TenderLens AI UI/UX, make uploaded-file analysis production-ready, and verify with regression/unit/Playwright tests.
+- Status: Completed locally with text/PDF/image upload support; cloud deploy/push blocked because sandbox escalation for Vercel/gcloud/git execution was rejected due usage limit.
 - Working directory: `D:\Projects\kaggle\tenderlens-agentic-ai`
 - Repo URL: https://github.com/syedzish/tenderlens-agentic-ai
 
 ## Active Task
+
+### 2026-07-04 09:55 Asia/Riyadh - Complete TenderLens Reference UI And Runtime Wiring Locally
+
+- Status: Completed locally; deployment/push pending external CLI access.
+- Files touched:
+  - `frontend/index.html`
+  - `frontend/styles.css`
+  - `frontend/app.js`
+  - `frontend/runtime-config.js`
+  - `frontend/scripts/build.mjs`
+  - `frontend/scripts/smoke-check.mjs`
+  - `frontend/brand/*`
+  - `frontend/demo-docs/*`
+  - `app/services/upload/extraction.py`
+  - `app/services/upload/validation.py`
+  - `app/services/scenario/compliance_score.py`
+  - `app/services/contracts.py`
+  - `app/workflows/tender_workflow.py`
+  - `app/workflows/uploaded_tender_workflow.py`
+  - `app/agent.py`
+  - `api/*`
+  - `tests/frontend/*`
+  - `tests/unit/*`
+  - `docs/*`
+  - `README.md`
+  - `.env.example`
+  - `STEPS_TO_FINISH.md`
+- Decisions made:
+  - Replaced the previous UI with the reference TenderLens AI layout, logo asset, color system, onboarding modal, preloaded-files modal, tabs, score card, Tender Map, Briefing Deck, and Questions to Ask styling.
+  - Made score display deterministic by recalculating it from checklist/findings rows instead of trusting sampled model prose.
+  - Added text-based PDF extraction without adding external dependencies after dependency installation escalation was rejected.
+  - Aligned file-size behavior to the reference UI: 5 files total, 4 MB per file, 12 MB total.
+  - Added Vercel API proxy routes for lightweight JSON calls.
+  - Added `TENDERLENS_PUBLIC_BACKEND_URL` runtime config so production multipart uploads can go directly to the deployed backend instead of hitting Vercel's 4.5 MB function payload limit.
+  - Updated `STEPS_TO_FINISH.md` and deployment docs so live cloud backend runtime is required, not optional.
+  - Added credential-gated Gemini/Vertex vision extraction for JPG, PNG, and WEBP uploads so the backend matches the reference UI's advertised file types. Without live credentials, image uploads fail clearly instead of producing fake analysis.
+- Tests run:
+  - `node --check frontend\app.js` - passed.
+  - `node --check frontend\scripts\build.mjs` - passed.
+  - `node --check frontend\scripts\smoke-check.mjs` - passed.
+  - `node --check api\_proxy.js` - passed.
+  - `node --check api\analyze.js` - passed.
+  - `node --check api\health.js` - passed.
+  - `node --check api\upload\analyze.js` - passed.
+  - `node --check api\upload\tender-files\validate.js` - passed.
+  - `npm test` - passed.
+  - `npm run build` - passed.
+  - `.venv\Scripts\python.exe -m unittest tests.unit.test_upload_validation tests.unit.test_upload_extraction_and_analysis tests.unit.test_api_routes -v` - 26 focused upload/API tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\unit -p "test_*.py"` - 45 tests passed.
+  - `.venv\Scripts\python.exe -m unittest discover -s tests\conformance -p "test_*.py"` - 3 tests passed.
+  - `.venv\Scripts\python.exe -m pytest tests\integration -q` - 6 tests passed, with only pytest cache permission warning.
+  - `.venv\Scripts\python.exe -m compileall app tests\unit tests\conformance tests\integration` - passed.
+  - `npx playwright test --reporter=line` - 16 passed, 2 intentionally skipped duplicate visual-capture cases.
+- Known blockers:
+  - Vercel CLI, Google Cloud SDK, and Git executable access outside the sandbox require escalation; escalation was rejected because the session hit its usage limit.
+  - Because deployment/push could not be performed, do not clear `BOOKMARK.md` yet.
+- Next exact action: When CLI execution is available, run git status/diff, commit/push, deploy backend runtime, set Vercel `TENDERLENS_PUBLIC_BACKEND_URL`/`AGENT_RUNTIME_ENDPOINT`/`TENDERLENS_BACKEND_URL`, redeploy Vercel, and smoke test uploaded-file analysis on the public URL.
 
 ### 2026-07-04 02:35 Asia/Riyadh - Complete Premium UI Correction And Visual Verification
 
@@ -56,7 +113,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `STEPS_TO_FINISH.md`
 - Decisions made:
   - User approved committing and pushing the broader project setup changes.
-  - Add a simple finish guide that separates what is already implemented from what the user still needs to do for Kaggle submission and optional live cloud services.
+  - Add a simple finish guide that separates what is already implemented from what the user still needs to do for Kaggle submission and required live cloud services.
   - Keep limitations transparent: Preloaded Example Files use pre-generated example results; uploaded TXT/MD/DOCX Tender Files can be analyzed; PDF text analysis and live Agent Runtime/Gemini Live deployment require follow-up setup.
 - Tests run: Not yet in this final task; verification will run after the guide is added.
 - Known blockers:
@@ -72,7 +129,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `README.md`
   - `STEPS_TO_FINISH.md`
 - Decisions made:
-  - Added `STEPS_TO_FINISH.md` as the simple user-facing checklist for Vercel, Kaggle video/writeup/assets, and optional live cloud agent setup.
+  - Added `STEPS_TO_FINISH.md` as the simple user-facing checklist for Vercel, Kaggle video/writeup/assets, and live cloud agent setup.
   - Added a README pointer to `STEPS_TO_FINISH.md`.
   - Kept remaining user actions explicit: verify latest Vercel deployment, record YouTube video, create Kaggle writeup, attach links/assets, and optionally configure live Agent Runtime/Gemini Live credentials.
 - Tests run:
@@ -184,7 +241,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `artifacts/frontend-desktop-friendly-ui.png`
   - `artifacts/frontend-mobile-friendly-ui.png`
 - Decisions made:
-  - Added structured Tender Files metadata validation with exactly one Main Tender File, optional Supporting Files, 5 files total, 5 MB per file, and 12 MB total.
+  - Added structured Tender Files metadata validation with exactly one Main Tender File, optional Supporting Files, 5 files total, 4 MB per file, and 12 MB total.
   - Kept the existing single-file `/api/upload/validate` endpoint for compatibility.
   - Added `/api/upload/tender-files/validate` for set-level validation matching the UI.
   - Added `validate_tender_files` to MCP tools and strict ADK tool filter.
@@ -316,7 +373,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `docs/`
 - Decisions made:
   - Build in a new separate project folder under `D:\Projects\kaggle\tenderlens-agentic-ai`.
-  - Follow the approved plan: ADK 2.0, Agents CLI, Agent Runtime, Vercel, mandatory A2A Evidence Audit Agent, Bounded Evidence Quality Loop, OKF + RAG, MCP, typed mode, voice mode, 5 MB upload, English default, Arabic RTL.
+  - Follow the approved plan: ADK 2.0, Agents CLI, Agent Runtime, Vercel, mandatory A2A Evidence Audit Agent, Bounded Evidence Quality Loop, OKF + RAG, MCP, typed mode, voice mode, 4 MB upload, English default, Arabic RTL.
   - Create documentation before implementation code.
 - Tests run: None yet.
 - Known blockers: None.
@@ -443,7 +500,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `DATA_SOURCES.md`
 - Decisions made:
   - Use a synthetic curated tender as the first reliable public demo path.
-  - Keep user upload path bounded by metadata validation first: PDF/TXT/MD/DOCX and 5 MB max.
+  - Keep user upload path bounded by metadata validation first: PDF/TXT/MD/DOCX and 4 MB max.
   - Add deterministic OKF/RAG/profile/scenario/voice/sanitization services before deeper LLM wiring.
   - Replace the scaffold weather/time agent with a TenderLens Router Agent that wraps the deterministic tools.
   - Keep a guarded `app.__init__` fallback so deterministic unit tests run even while ADK dependencies are not locally synced.
@@ -749,7 +806,7 @@ This file is the operational handoff point. Update it at the start and completio
 - Decisions made:
   - Make the cockpit call `/api/analyze` when a backend is available.
   - Keep curated static analysis fallback for the public Vercel demo before Agent Runtime is deployed.
-  - Make upload validation try `/api/upload/validate` after local 5 MB/type checks, with local fallback if backend is unavailable.
+  - Make upload validation try `/api/upload/validate` after local 4 MB/type checks, with local fallback if backend is unavailable.
   - Add deterministic FastAPI route tests instead of relying only on live ADK/LLM integration tests.
 - Tests run:
   - `node --check frontend\app.js` - passed.
@@ -850,7 +907,7 @@ This file is the operational handoff point. Update it at the start and completio
   - `BOOKMARK.md`
 - Decisions made:
   - Replaced single-upload planning with user-facing Tender Files planning: Main Tender File plus optional Supporting Files.
-  - Set upload limits to 5 files total, 5 MB per file, and 12 MB total.
+  - Set upload limits to 5 files total, 4 MB per file, and 12 MB total.
   - Added source precedence: Main Tender File is authoritative, Supporting Files add evidence, addenda can override only when clearly labeled/versioned.
   - Added file-level citations, `source_documents` OKF/RAG metadata, no evidence mixing across uploaded file sets, and transient cleanup/privacy rules.
   - Locked primary navigation order: How to Use, Analysis, Discuss with TenderLens, Tender Map, Briefing Deck, Questions.
@@ -871,7 +928,7 @@ This file is the operational handoff point. Update it at the start and completio
 - Decisions made:
   - Generated a cohesive concept set using the approved navigation order, Tender Files model, premium icon colors, Briefing Deck carousel, and richer procurement-cockpit palette.
   - Kept generated images as preview artifacts under Codex generated image storage; do not implement UI until user approves or requests revisions.
-  - Discarded the first Discuss with TenderLens concept because it showed a file over the 5 MB per-file limit; use the revised Discuss concept instead.
+  - Discarded the first Discuss with TenderLens concept because it showed a file over the 4 MB per-file limit; use the revised Discuss concept instead.
 - Selected generated images:
   - Brand/logo board: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a4795f3dcb8819bab293aac99dd441f.png`
   - How to Use screen: `C:\Users\szishan\.codex\generated_images\019f22f2-f190-78d1-a964-46d6c676fcf1\ig_00b18d41549be3d2016a47964b0fdc819bbfe0a6b5dd38a815.png`

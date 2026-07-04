@@ -14,52 +14,41 @@ async function capture(page, name) {
   await page.screenshot({ path: `${outputDir}/${name}.png`, fullPage: false });
 }
 
-async function scrollTo(page, selector) {
-  await page.evaluate((target) => {
-    document.querySelector(target)?.scrollIntoView({ block: "start" });
-  }, selector);
-  await page.waitForTimeout(350);
-}
-
-test("captures premium desktop cockpit screens", async ({ page }, testInfo) => {
+test("captures reference-style desktop workspace screens", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "chromium-desktop", "visual screenshots are captured once with explicit viewports");
   await page.setViewportSize({ width: 1680, height: 945 });
   await suppressWelcome(page);
   await page.goto("/");
 
-  await expect(page.locator(".topbar")).toBeVisible();
-  await expect(page.locator(".feature-nav")).toBeVisible();
-  await expect(page.locator(".how-to-use-section")).toContainText("Start with files, then follow the evidence");
-  await capture(page, "desktop-01-how-to-use");
+  await expect(page.locator(".app-header")).toContainText("TenderLens AI");
+  await expect(page.locator(".start-hero")).toContainText("Start your analysis");
+  await capture(page, "desktop-01-start");
 
-  await scrollTo(page, "#analysis");
-  await expect(page.locator("#recommendation")).toHaveText("BID");
-  await expect(page.locator(".decision-band")).toBeVisible();
+  await page.getByRole("button", { name: "Run Analysis with preloaded files" }).first().click();
+  await expect(page.locator("#scoreValue")).toHaveText("75");
+  await expect(page.locator("#checklistRows .checklist-row")).toHaveCount(10);
   await capture(page, "desktop-02-analysis");
 
-  await scrollTo(page, "#tender-map");
-  await expect(page.locator("#tender-map .concept-graph")).toBeVisible();
-  await expect(page.locator("#sourceDocuments")).toContainText("Preloaded Example Files");
+  await page.getByRole("button", { name: "Tender Map" }).click();
+  await expect(page.locator("#tenderMapSvg svg")).toBeVisible();
   await capture(page, "desktop-03-tender-map");
 
-  await scrollTo(page, "#briefing-deck");
-  await expect(page.locator("#briefing-deck .deck-slide")).toBeVisible();
-  await expect(page.locator("#slideCount")).toContainText("1 / 8");
+  await page.getByRole("button", { name: "Briefing Deck" }).click();
+  await expect(page.locator("#deckTitle")).toHaveText("Overall result");
   await capture(page, "desktop-04-briefing-deck");
 
-  await scrollTo(page, "#tender-questions");
-  await expect(page.locator("#tender-questions")).toContainText("Ask the Issuer");
-  await expect(page.locator("#tender-questions")).toContainText("Prepare to Answer");
-  await capture(page, "desktop-05-tender-questions");
+  await page.getByRole("button", { name: "Questions to Ask" }).click();
+  await expect(page.locator("#questionsList .question-card")).toHaveCount(8);
+  await capture(page, "desktop-05-questions");
 });
 
-test("captures mobile responsive cockpit", async ({ page }, testInfo) => {
+test("captures mobile responsive start screen", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "chromium-desktop", "visual screenshots are captured once with explicit viewports");
   await page.setViewportSize({ width: 390, height: 844 });
   await suppressWelcome(page);
   await page.goto("/");
 
-  await expect(page.locator(".feature-nav")).toContainText("Tender Questions");
-  await expect(page.locator(".how-to-use-section")).toBeVisible();
-  await capture(page, "mobile-01-how-to-use");
+  await expect(page.locator(".left-rail")).toContainText("Upload tender/RFP files");
+  await expect(page.locator(".start-hero")).toBeVisible();
+  await capture(page, "mobile-01-start");
 });
