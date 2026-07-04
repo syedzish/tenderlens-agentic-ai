@@ -77,6 +77,17 @@ test("rejects oversized uploads before analysis", async ({ page }) => {
 
 test("uploaded text files get a bounded deterministic analysis when backend is unavailable", async ({ page }) => {
   await suppressWelcome(page);
+
+  await page.route("**/runtime-config.js", async (route) => {
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: 'window.TENDERLENS_CONFIG = { backendUrl: "https://offline.backend" };',
+    });
+  });
+  await page.route("https://offline.backend/api/upload/analyze", async (route) => {
+    await route.fulfill({ status: 503, contentType: "application/json", body: '{"detail":"backend offline"}' });
+  });
+
   await page.goto("/");
 
   await page.locator("#fileInput").setInputFiles([

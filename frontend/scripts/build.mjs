@@ -13,7 +13,10 @@ for (const file of ["index.html", "styles.css", "app.js"]) {
   await copyFile(join(frontendRoot, file), join(dist, file));
 }
 
-const publicBackendUrl = (process.env.TENDERLENS_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+const publicBackendUrl = (
+  process.env.TENDERLENS_PUBLIC_BACKEND_URL ||
+  "https://tenderlens-agentic-ai-668759684658.us-east1.run.app"
+).replace(/\/+$/, "");
 await writeFile(
   join(dist, "runtime-config.js"),
   `window.TENDERLENS_CONFIG = ${JSON.stringify({ backendUrl: publicBackendUrl })};\n`,

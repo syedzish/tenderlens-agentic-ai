@@ -1,7 +1,13 @@
 const ALLOWED_METHODS = new Set(["GET", "POST", "OPTIONS"]);
+const PUBLIC_CLOUD_RUN_BACKEND =
+  "https://tenderlens-agentic-ai-668759684658.us-east1.run.app";
 
 function backendBase() {
-  return (process.env.AGENT_RUNTIME_ENDPOINT || process.env.TENDERLENS_BACKEND_URL || "").replace(/\/+$/, "");
+  return (
+    process.env.AGENT_RUNTIME_ENDPOINT ||
+    process.env.TENDERLENS_BACKEND_URL ||
+    PUBLIC_CLOUD_RUN_BACKEND
+  ).replace(/\/+$/, "");
 }
 
 function copyHeaders(req) {
@@ -40,7 +46,7 @@ async function proxy(req, res, path) {
   const base = backendBase();
   if (!base) {
     res.status(503).json({
-      detail: "AGENT_RUNTIME_ENDPOINT is not configured for this Vercel deployment.",
+      detail: "TenderLens backend endpoint is not configured for this Vercel deployment.",
     });
     return;
   }
