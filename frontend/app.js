@@ -90,7 +90,7 @@ const labels = {
     askDesc: "Ask follow-up questions about the documents, evidence, risks, and next steps.",
     mapDesc: "A simple view of how files, requirements, evidence, risks, and actions connect.",
     deckDesc: "A lightweight stakeholder briefing created from the analysis result.",
-    questionsDesc: "Practical questions to send to the vendor or project owner before submission.",
+    questionsDesc: "Practical questions to send to the issuer or project owner before submission.",
     exampleTitle: "Example Files",
     exampleDescription: "Use these fictional example files to test TenderLens Agentic AI without uploading your own documents.",
     useExamples: "Use these files",
@@ -115,7 +115,7 @@ const labels = {
     quickQuestions: [
       "What are the biggest risks?",
       "Why is this partial?",
-      "What should I ask the vendor?",
+      "What should I ask the issuer?",
       "Summarize this in Arabic",
     ],
     riskLabel: { Low: "Low", Medium: "Medium", High: "High" },
@@ -865,7 +865,7 @@ function answerQuestion(question) {
     const row = result.matrix.find((item) => item.status === "Partial") || result.matrix[0];
     return `${row.requirement}: ${row.response}`;
   }
-  if (lower.includes("ask") || lower.includes("vendor") || lower.includes("سأ")) {
+  if (lower.includes("ask") || lower.includes("issuer") || lower.includes("vendor") || lower.includes("سأ")) {
     return buildQuestions(result)[0]?.question || "Ask the issuer to confirm every mandatory requirement with source-backed evidence.";
   }
   return result.executiveBrief;
