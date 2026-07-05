@@ -67,7 +67,7 @@ const labels = {
     previewNotice: "Start your analysis by uploading files or running the example.",
     startTitle: "Start your analysis",
     startBody:
-      'Upload tender files or run the example files. TenderLens Agentic AI will then fill this workspace with a bid score, checklist, evidence, map, deck, and questions. The example files use prepared example results so you can understand the workflow without spending model quota. Upload your own Tender Files to run a new analysis.',
+      "Upload tender files or run the example files. TenderLens Agentic AI will then fill this workspace with a bid score, checklist, evidence, map, deck, and questions. Use example files to explore prepared results, or upload your own Tender Files to run a new analysis.",
     emptyOverallTitle: "No analysis yet",
     emptyOverallBody: "Your overall score and executive summary will appear here after TenderLens checks the files.",
     overall: "Overall result",
@@ -75,7 +75,7 @@ const labels = {
     uploadedRun: "Uploaded files",
     verify: "AI-generated review. Verify before making procurement decisions.",
     analysis: "Analysis",
-    ask: "Ask TenderLens",
+    ask: "Discuss with TenderLens",
     voiceMode: "Voice Mode",
     map: "Tender Map",
     deck: "Briefing Deck",
@@ -87,12 +87,12 @@ const labels = {
     attention: "What needs attention",
     attentionDesc: "Risks that may need clarification.",
     checked: "What TenderLens checked",
-    askDesc: "Ask follow-up questions about the documents, evidence, risks, and next steps.",
+    askDesc: "Discuss the documents, evidence, risks, and next steps by chat or voice.",
     mapDesc: "A simple view of how files, requirements, evidence, risks, and actions connect.",
     deckDesc: "A lightweight stakeholder briefing created from the analysis result.",
     questionsDesc: "Practical questions to send to the issuer or project owner before submission.",
     exampleTitle: "Example Files",
-    exampleDescription: "Use these fictional example files to test TenderLens Agentic AI without uploading your own documents.",
+    exampleDescription: "Use these example files to explore prepared results without uploading your own documents.",
     useExamples: "Use these files",
     skip: "Skip",
     nextSlide: "Next",
@@ -105,7 +105,24 @@ const labels = {
     resultTitleStrong: "Bid-ready with a few checks",
     resultTitleRisk: "Conditional bid with risks to resolve",
     uploadLimit: "Upload up to 5 files. 4.0 MB per file.",
-    chatIntro: "Ask me about the biggest risks, why a requirement is partial, or what you should ask the issuer next.",
+    chatIntro: "Discuss the active analysis. You can ask about risks, missing documents, evidence, or next actions.",
+    chatNeedsAnalysis: "Run an analysis first so TenderLens can answer using your documents.",
+    voiceNeedsAnalysis: "Run an analysis first, then use voice to discuss the active result.",
+    emptyChecklistTitle: "No requirements checked yet",
+    emptyChecklistBody: "TenderLens will list tender requirements, evidence, and risk levels here after analysis.",
+    emptyEvidenceTitle: "Evidence will appear after analysis",
+    emptyEvidenceBody: "Select a checked requirement after analysis to see the source quote.",
+    emptyAttentionTitle: "No risks found yet",
+    emptyAttentionBody: "Risks and clarifications will appear here once TenderLens reviews the files.",
+    emptyTraceTitle: "Nothing checked yet",
+    emptyTraceBody: "The review steps will appear here after analysis.",
+    emptyMapTitle: "Tender Map will appear after analysis",
+    emptyMapBody: "TenderLens will connect files, requirements, evidence, risks, and actions.",
+    emptyDeckTitle: "Briefing Deck will appear after analysis",
+    emptyDeckBody: "The deck will summarize the result, strengths, risks, evidence, and next actions.",
+    emptyQuestionsTitle: "Questions will appear after analysis",
+    emptyQuestionsBody: "TenderLens will prepare practical questions for the issuer or project owner.",
+    noDeckCounter: "No deck yet",
     noMajorRisks: "No major risks listed.",
     uploadAccepted: (count) => `${count} file${count === 1 ? "" : "s"} accepted. Run analysis to review them.`,
     running: "TenderLens is checking the evidence...",
@@ -127,17 +144,17 @@ const labels = {
     onboarding: [
       {
         counter: "1 OF 2",
-        title: "Understand tender documents faster",
-        body: "TenderLens Agentic AI reads tender files, checks them against your bid readiness, and highlights risks.",
+        title: "Explore prepared results",
+        body: "Use example files to explore prepared results, or upload your own Tender Files to run a new analysis.",
       },
       {
         counter: "2 OF 2",
-        title: "Three simple steps",
-        body: "Follow these simple steps to analyze your proposals. You can also read the detailed instructions in the user guide.",
+        title: "Discuss the analysis",
+        body: "After analysis, TenderLens fills the workspace with a checklist, evidence, map, briefing deck, and questions. Discuss with TenderLens by chat or voice.",
       },
     ],
-    onboardingChecks: ["Extract requirements", "Match evidence", "Highlight risks"],
-    onboardingSteps: ["Upload files or use example files", "Wait for results", "Ask questions by typing or voice", "Download the analysis"],
+    onboardingChecks: ["Use example files", "Upload Tender Files", "Discuss results"],
+    onboardingSteps: ["Use example files or upload Tender Files", "Review the workspace", "Discuss by chat or voice", "Download after analysis"],
   },
   ar: {
     howToUse: "طريقة الاستخدام",
@@ -154,7 +171,7 @@ const labels = {
     previewNotice: "ابدأ التحليل برفع الملفات أو تشغيل المثال.",
     startTitle: "ابدأ التحليل",
     startBody:
-      "ارفع ملفات المناقصة أو شغل ملفات المثال. سيملأ TenderLens Agentic AI مساحة العمل بنتيجة قرار التقديم والقائمة والأدلة والخريطة والعرض والأسئلة.",
+      "ارفع ملفات المناقصة أو شغل ملفات المثال. سيملأ TenderLens Agentic AI مساحة العمل بنتيجة قرار التقديم والقائمة والأدلة والخريطة والعرض والأسئلة. استخدم ملفات المثال لاستكشاف نتائج معدة، أو ارفع ملفاتك لتشغيل تحليل جديد.",
     emptyOverallTitle: "لا يوجد تحليل بعد",
     emptyOverallBody: "ستظهر النتيجة العامة والملخص التنفيذي هنا بعد فحص الملفات.",
     overall: "النتيجة العامة",
@@ -162,7 +179,7 @@ const labels = {
     uploadedRun: "ملفات مرفوعة",
     verify: "مراجعة مولدة بالذكاء الاصطناعي. تحقق قبل اتخاذ قرارات الشراء.",
     analysis: "التحليل",
-    ask: "اسأل TenderLens",
+    ask: "ناقش مع TenderLens",
     voiceMode: "وضع الصوت",
     map: "خريطة المناقصة",
     deck: "ملخص العرض",
@@ -174,12 +191,12 @@ const labels = {
     attention: "ما يحتاج الانتباه",
     attentionDesc: "مخاطر قد تحتاج إلى توضيح.",
     checked: "ما الذي فحصه TenderLens",
-    askDesc: "اسأل أسئلة متابعة عن المستندات والأدلة والمخاطر والخطوات التالية.",
+    askDesc: "ناقش المستندات والأدلة والمخاطر والخطوات التالية بالكتابة أو الصوت.",
     mapDesc: "عرض بسيط يوضح ارتباط الملفات والمتطلبات والأدلة والمخاطر والإجراءات.",
     deckDesc: "ملخص خفيف لأصحاب المصلحة يتم إنشاؤه من نتيجة التحليل.",
     questionsDesc: "أسئلة عملية لإرسالها إلى المورد أو مالك المشروع قبل التقديم.",
     exampleTitle: "ملفات مثال",
-    exampleDescription: "استخدم ملفات المثال الخيالية لتجربة TenderLens Agentic AI بدون رفع ملفاتك.",
+    exampleDescription: "استخدم ملفات المثال لاستكشاف نتائج معدة بدون رفع ملفاتك.",
     useExamples: "استخدام هذه الملفات",
     skip: "تخطي",
     nextSlide: "التالي",
@@ -192,7 +209,24 @@ const labels = {
     resultTitleStrong: "جاهز للتقديم مع بعض المراجعات",
     resultTitleRisk: "تقديم مشروط مع مخاطر يجب حلها",
     uploadLimit: "يمكن رفع 5 ملفات كحد أقصى. 4.0 MB لكل ملف.",
-    chatIntro: "اسألني عن أكبر المخاطر أو سبب اعتبار متطلب ما جزئيا أو ما الذي يجب سؤاله لجهة الطرح.",
+    chatIntro: "ناقش التحليل الحالي. يمكنك السؤال عن المخاطر أو المستندات الناقصة أو الأدلة أو الخطوات التالية.",
+    chatNeedsAnalysis: "شغل التحليل أولا حتى يتمكن TenderLens من الإجابة باستخدام مستنداتك.",
+    voiceNeedsAnalysis: "شغل التحليل أولا، ثم استخدم الصوت لمناقشة النتيجة الحالية.",
+    emptyChecklistTitle: "لم يتم فحص المتطلبات بعد",
+    emptyChecklistBody: "سيعرض TenderLens المتطلبات والأدلة ومستويات المخاطر هنا بعد التحليل.",
+    emptyEvidenceTitle: "ستظهر الأدلة بعد التحليل",
+    emptyEvidenceBody: "اختر متطلبا مفحوصا بعد التحليل لرؤية الاقتباس من المصدر.",
+    emptyAttentionTitle: "لا توجد مخاطر بعد",
+    emptyAttentionBody: "ستظهر المخاطر والتوضيحات هنا بعد مراجعة الملفات.",
+    emptyTraceTitle: "لم يتم فحص أي شيء بعد",
+    emptyTraceBody: "ستظهر خطوات المراجعة هنا بعد التحليل.",
+    emptyMapTitle: "ستظهر خريطة المناقصة بعد التحليل",
+    emptyMapBody: "سيربط TenderLens الملفات والمتطلبات والأدلة والمخاطر والإجراءات.",
+    emptyDeckTitle: "سيظهر العرض الموجز بعد التحليل",
+    emptyDeckBody: "سيلخص العرض النتيجة ونقاط القوة والمخاطر والأدلة والخطوات التالية.",
+    emptyQuestionsTitle: "ستظهر الأسئلة بعد التحليل",
+    emptyQuestionsBody: "سيعد TenderLens أسئلة عملية لإرسالها إلى جهة الطرح أو مالك المشروع.",
+    noDeckCounter: "لا يوجد عرض بعد",
     noMajorRisks: "لا توجد مخاطر رئيسية مدرجة.",
     uploadAccepted: (count) => `تم قبول ${count} ملف. شغل التحليل لمراجعتها.`,
     running: "يقوم TenderLens بمراجعة الأدلة...",
@@ -208,17 +242,17 @@ const labels = {
     onboarding: [
       {
         counter: "1 من 2",
-        title: "افهم مستندات المناقصة بسرعة",
-        body: "يقرأ TenderLens Agentic AI ملفات المناقصة، ويفحص جاهزية تقديمك، ويبرز المخاطر.",
+        title: "استكشف نتائج معدة",
+        body: "استخدم ملفات المثال لاستكشاف نتائج معدة، أو ارفع ملفات المناقصة الخاصة بك لتشغيل تحليل جديد.",
       },
       {
         counter: "2 من 2",
-        title: "ثلاث خطوات بسيطة",
-        body: "اتبع هذه الخطوات البسيطة لتحليل العروض. يمكنك أيضا قراءة التعليمات التفصيلية في دليل الاستخدام.",
+        title: "ناقش التحليل",
+        body: "بعد التحليل، يملأ TenderLens مساحة العمل بقائمة متطلبات وأدلة وخريطة وعرض موجز وأسئلة. ناقش النتيجة بالكتابة أو الصوت.",
       },
     ],
-    onboardingChecks: ["استخراج المتطلبات", "مطابقة الأدلة", "إبراز المخاطر"],
-    onboardingSteps: ["ارفع الملفات أو استخدم ملفات المثال", "انتظر النتائج", "اسأل عن مستنداتك", "نزل التحليل"],
+    onboardingChecks: ["استخدم ملفات المثال", "ارفع ملفات المناقصة", "ناقش النتائج"],
+    onboardingSteps: ["استخدم ملفات المثال أو ارفع ملفات المناقصة", "راجع مساحة العمل", "ناقش بالكتابة أو الصوت", "نزل التحليل بعد اكتماله"],
   },
 };
 
@@ -339,6 +373,12 @@ const exampleResult = {
     "Security certification evidence is not final.",
     "Training capacity is below the stated minimum unless the extra seats are confirmed.",
   ],
+  missingDocuments: [
+    "120-day bid bond letter",
+    "ISO 27001 certificate or independent security evidence",
+    "Written confirmation for 50 training seats",
+    "Revised go-live plan for 30 September 2026",
+  ],
   nextActions: [
     "Revise the delivery plan to meet 30 September 2026 before deciding to bid.",
     "Obtain a 120-day bid bond letter from the bank.",
@@ -372,6 +412,16 @@ function escapeText(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function emptyState(title, body, icon = "gauge") {
+  return `
+    <div class="empty-panel-state">
+      <span class="empty-panel-icon" aria-hidden="true">${iconMarkup(icon)}</span>
+      <strong>${escapeText(title)}</strong>
+      <p>${escapeText(body)}</p>
+    </div>
+  `;
 }
 
 function extension(name) {
@@ -433,6 +483,7 @@ function normalizeResult(result) {
     score: Number.isFinite(result.score) ? result.score : calculateComplianceScore(matrix),
     trace: result.trace || [],
     risks: result.risks || [],
+    missingDocuments: result.missingDocuments || result.missing_documents || [],
     nextActions: result.nextActions || [],
     files: result.files || [],
   };
@@ -480,6 +531,7 @@ function reportToComplianceResult(report) {
     ],
     trace: report.workflow_trace || [],
     risks,
+    missingDocuments: report.missing_documents || [],
     nextActions: report.next_actions || [],
     files,
   });
@@ -522,11 +574,12 @@ function updateI18n() {
     });
   });
   $("#uploadLimitText").textContent = copy.uploadLimit;
-  $("#chatInput").placeholder = state.language === "ar" ? "اسأل أي شيء عن هذه المستندات..." : "Ask anything about these documents...";
+  $("#chatInput").placeholder = state.language === "ar" ? "اسأل عن هذه المستندات أو التحليل..." : "Ask about these documents or the analysis...";
   $("#langEn").classList.toggle("active", state.language === "en");
   $("#langAr").classList.toggle("active", state.language === "ar");
   renderOnboarding();
   if (state.currentResult) renderResult();
+  else renderEmptyWorkspace();
 }
 
 function renderFiles(status = state.currentResult ? text().analyzed : text().ready) {
@@ -566,10 +619,23 @@ function renderFiles(status = state.currentResult ? text().analyzed : text().rea
 function showResultShell(show) {
   $("#startHero").classList.toggle("hidden", show);
   $("#emptyResult").classList.toggle("hidden", show);
-  $("#resultShell").classList.toggle("hidden", !show);
+  $("#resultShell").classList.remove("hidden");
+  $(".result-summary").classList.toggle("hidden", !show);
   $$(".download-group button").forEach((button) => {
     button.disabled = !show;
   });
+}
+
+function renderEmptyWorkspace() {
+  showResultShell(false);
+  renderChecklist();
+  renderAttention();
+  renderTrace();
+  renderChat();
+  renderMap();
+  renderDeck();
+  renderQuestions();
+  switchTab(state.activeTab);
 }
 
 function resultTitle(result) {
@@ -581,7 +647,7 @@ function resultTitle(result) {
 function renderResult() {
   const result = state.currentResult;
   if (!result) {
-    showResultShell(false);
+    renderEmptyWorkspace();
     return;
   }
 
@@ -615,6 +681,11 @@ function statusClass(status) {
 function renderChecklist() {
   const result = state.currentResult;
   const copy = text();
+  if (!result) {
+    $("#checklistRows").innerHTML = emptyState(copy.emptyChecklistTitle, copy.emptyChecklistBody, "clipboard-check");
+    renderActiveEvidence();
+    return;
+  }
   $("#checklistRows").innerHTML = result.matrix
     .map(
       (row, index) => `
@@ -636,7 +707,8 @@ function renderChecklist() {
 function renderActiveEvidence() {
   const row = state.currentResult?.matrix[state.activeRow] || state.currentResult?.matrix[0];
   if (!row) {
-    $("#activeEvidence").innerHTML = "";
+    const copy = text();
+    $("#activeEvidence").innerHTML = emptyState(copy.emptyEvidenceTitle, copy.emptyEvidenceBody, "file-text");
     return;
   }
   $("#activeEvidence").innerHTML = row.citations
@@ -652,11 +724,21 @@ function renderActiveEvidence() {
 }
 
 function renderAttention() {
+  if (!state.currentResult) {
+    const copy = text();
+    $("#attentionList").innerHTML = `<li class="empty-list-state">${escapeText(copy.emptyAttentionTitle)}. ${escapeText(copy.emptyAttentionBody)}</li>`;
+    return;
+  }
   const risks = state.currentResult.risks.length ? state.currentResult.risks : [text().noMajorRisks];
   $("#attentionList").innerHTML = risks.map((risk) => `<li>${escapeText(risk)}</li>`).join("");
 }
 
 function renderTrace() {
+  if (!state.currentResult) {
+    const copy = text();
+    $("#traceList").innerHTML = `<li class="empty-list-state"><span>0</span>${escapeText(copy.emptyTraceTitle)}. ${escapeText(copy.emptyTraceBody)}</li>`;
+    return;
+  }
   const trace = state.currentResult.trace.length
     ? state.currentResult.trace
     : ["Validated upload", "Found mandatory requirements", "Matched evidence", "Calibrated risks"];
@@ -690,8 +772,15 @@ function buildTenderMap(result) {
 }
 
 function renderMap() {
+  if (!state.currentResult) {
+    const copy = text();
+    $("#tenderMapSvg").innerHTML = emptyState(copy.emptyMapTitle, copy.emptyMapBody, "network");
+    $("#downloadMapSvg").disabled = true;
+    return;
+  }
   const map = buildTenderMap(state.currentResult);
   $("#tenderMapSvg").innerHTML = buildTenderMapSvg(map);
+  $("#downloadMapSvg").disabled = false;
 }
 
 function colorForRisk(risk) {
@@ -779,7 +868,24 @@ function buildBriefingDeck(result) {
 }
 
 function renderDeck() {
+  if (!state.currentResult) {
+    const copy = text();
+    $("#slidePill").textContent = copy.noDeckCounter;
+    $("#deckCounter").textContent = "0/0";
+    $("#deckFooterText").textContent = copy.noDeckCounter;
+    $("#deckEyebrow").textContent = copy.deck;
+    $("#deckTitle").textContent = copy.emptyDeckTitle;
+    $("#deckBullets").innerHTML = `<li class="deck-empty-state">${escapeText(copy.emptyDeckBody)}</li>`;
+    $("#deckDots").innerHTML = "";
+    $("#prevSlide").disabled = true;
+    $("#nextSlide").disabled = true;
+    $("#downloadPptx").disabled = true;
+    return;
+  }
   const deck = buildBriefingDeck(state.currentResult);
+  $("#prevSlide").disabled = false;
+  $("#nextSlide").disabled = false;
+  $("#downloadPptx").disabled = false;
   state.activeSlide = Math.min(state.activeSlide, deck.length - 1);
   const slide = deck[state.activeSlide];
   const label = text().deckSlide(state.activeSlide + 1, deck.length);
@@ -819,6 +925,11 @@ function buildQuestions(result) {
 }
 
 function renderQuestions() {
+  if (!state.currentResult) {
+    const copy = text();
+    $("#questionsList").innerHTML = emptyState(copy.emptyQuestionsTitle, copy.emptyQuestionsBody, "circle-help");
+    return;
+  }
   const questions = buildQuestions(state.currentResult);
   $("#questionsList").innerHTML = questions
     .map(
@@ -854,9 +965,27 @@ function addChatMessage(content, role = "agent") {
 function answerQuestion(question) {
   const lower = question.toLowerCase();
   const result = state.currentResult;
-  if (!result) return "Run an analysis first so TenderLens can answer using your documents.";
+  if (!result) return text().chatNeedsAnalysis;
   if (lower.includes("arabic") || /عرب/.test(question)) {
     return "الخلاصة: توجد نقاط قوة واضحة، لكن يجب توضيح المخاطر والمتطلبات الجزئية قبل التقديم.";
+  }
+  if (lower.includes("missing") || lower.includes("document") || /مستند|وثيق|ناقص/.test(question)) {
+    const documents = result.missingDocuments?.length ? result.missingDocuments : result.nextActions;
+    return documents.length
+      ? `Documents or confirmations to close: ${documents.slice(0, 4).join(" ")}`
+      : "No missing documents are listed in the current analysis.";
+  }
+  if (lower.includes("next") || lower.includes("action") || /خطو|إجراء/.test(question)) {
+    return result.nextActions.length
+      ? `Next actions: ${result.nextActions.slice(0, 4).join(" ")}`
+      : "No next actions are listed in the current analysis.";
+  }
+  if (lower.includes("evidence") || lower.includes("citation") || lower.includes("checklist") || /دليل|أدلة/.test(question)) {
+    const row = result.matrix[state.activeRow] || result.matrix[0];
+    const evidence = row?.citations?.map((citation) => `${citation.file}: ${citation.quote}`).join(" ");
+    return row && evidence
+      ? `${row.requirement} Evidence: ${evidence}`
+      : "No evidence quote is selected yet.";
   }
   if (lower.includes("risk") || lower.includes("مخاطر")) {
     return result.risks.slice(0, 3).join(" ");
@@ -867,6 +996,15 @@ function answerQuestion(question) {
   }
   if (lower.includes("ask") || lower.includes("issuer") || lower.includes("vendor") || lower.includes("سأ")) {
     return buildQuestions(result)[0]?.question || "Ask the issuer to confirm every mandatory requirement with source-backed evidence.";
+  }
+  const queryTerms = lower.split(/[^a-z0-9]+/).filter((word) => word.length > 4);
+  const matchedRow = result.matrix.find((row) => {
+    const haystack = `${row.requirement} ${row.response} ${row.category} ${row.citations.map((citation) => `${citation.file} ${citation.quote}`).join(" ")}`.toLowerCase();
+    return queryTerms.some((word) => haystack.includes(word));
+  });
+  if (matchedRow) {
+    const citation = matchedRow.citations[0];
+    return `${matchedRow.requirement} ${matchedRow.response}${citation ? ` Evidence: ${citation.file}: ${citation.quote}` : ""}`;
   }
   return result.executiveBrief;
 }
@@ -1032,7 +1170,7 @@ function useExampleFiles() {
   state.activeSlide = 0;
   $("#fileInput").value = "";
   $("#uploadStatus").classList.remove("error");
-  $("#uploadStatus").textContent = "Example files use a prepared example result so you can test the interface without spending model quota.";
+  $("#uploadStatus").textContent = "Example files show prepared results so you can explore the workspace quickly.";
   renderResult();
 }
 
@@ -1059,7 +1197,7 @@ function startFresh() {
   $("#uploadStatus").textContent = "";
   $("#chatLog").innerHTML = "";
   renderFiles();
-  showResultShell(false);
+  renderEmptyWorkspace();
 }
 
 function renderExamplesModal() {
@@ -1159,7 +1297,16 @@ function downloadMap() {
 
 async function startVoice() {
   $("#voiceOverlay").classList.remove("hidden");
+  $("#transcript").textContent = "";
+  if (!state.currentResult) {
+    $("#voiceStateLabel").textContent = "Analysis needed";
+    $("#voiceHelp").textContent = text().voiceNeedsAnalysis;
+    $("#transcript").textContent = text().chatNeedsAnalysis;
+    return;
+  }
   $("#voiceStateLabel").textContent = "Connecting";
+  $("#voiceHelp").textContent = "Preparing voice mode for the active analysis.";
+  $("#transcript").textContent = `Ready to discuss: ${state.currentResult.executiveBrief}`;
   try {
     state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     $("#voiceStateLabel").textContent = "Listening";
@@ -1244,11 +1391,13 @@ function bindEvents() {
   $("#voiceModeButton").addEventListener("click", startVoice);
 
   $("#prevSlide").addEventListener("click", () => {
+    if (!state.currentResult) return;
     const deck = buildBriefingDeck(state.currentResult);
     state.activeSlide = (state.activeSlide - 1 + deck.length) % deck.length;
     renderDeck();
   });
   $("#nextSlide").addEventListener("click", () => {
+    if (!state.currentResult) return;
     const deck = buildBriefingDeck(state.currentResult);
     state.activeSlide = (state.activeSlide + 1) % deck.length;
     renderDeck();
@@ -1303,7 +1452,7 @@ function init() {
   renderFiles();
   bindEvents();
   updateI18n();
-  showResultShell(false);
+  renderEmptyWorkspace();
   showWelcomeIfNeeded();
 }
 

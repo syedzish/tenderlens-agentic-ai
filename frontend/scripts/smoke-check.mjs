@@ -21,7 +21,7 @@ const requiredHtml = [
   "welcomeModal",
   "examplesModal",
   "Upload tender/RFP files",
-  "Ask TenderLens",
+  "Discuss with TenderLens",
   "Tender Map",
   "Briefing Deck",
   "Questions to Ask",
@@ -88,6 +88,9 @@ const oldVisibleLabels = [
   "Sample tender",
   "Typing Mode",
   "Clarifications",
+  "Ask TenderLens",
+  "model quota",
+  "preloaded",
 ];
 
 for (const label of oldVisibleLabels) {

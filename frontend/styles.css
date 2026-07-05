@@ -652,6 +652,39 @@ img {
   line-height: 1.55;
 }
 
+.empty-panel-state {
+  min-height: 170px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  border: 1px dashed var(--line-dark);
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty-panel-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--violet);
+  background: rgba(107, 94, 232, 0.12);
+}
+
+.empty-panel-state strong {
+  font-size: 1rem;
+}
+
+.empty-panel-state p,
+.empty-list-state {
+  color: var(--graphite);
+  line-height: 1.5;
+}
+
 .empty-actions {
   gap: 10px;
   margin-top: 10px;
@@ -1242,6 +1275,12 @@ img {
   font-weight: 760;
 }
 
+#deckBullets li.deck-empty-state {
+  display: block;
+  border-style: dashed;
+  text-align: center;
+}
+
 .deck-footer {
   min-height: 58px;
   display: flex;
@@ -1331,6 +1370,7 @@ img {
   width: min(1380px, calc(100vw - 48px));
   max-height: calc(100vh - 48px);
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 32px;
@@ -1410,9 +1450,11 @@ img {
 }
 
 .onboarding-content {
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
   gap: 48px;
+  overflow-y: auto;
   padding: 52px 56px;
 }
 
@@ -1557,6 +1599,13 @@ img {
 
 .modal-actions {
   gap: 14px;
+}
+
+.deck-nav button:disabled,
+.deck-heading .secondary-action:disabled,
+.map-heading .secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .voice-overlay {
@@ -1706,6 +1755,10 @@ img {
 }
 
 @media (max-width: 640px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+
   .header-actions,
   .download-group,
   .file-actions,
@@ -1789,11 +1842,54 @@ img {
     padding: 16px 18px;
   }
 
+  .onboarding-content {
+    gap: 20px;
+    padding: 22px 18px;
+  }
+
   .onboarding-copy h2 {
-    font-size: 2.35rem;
+    margin-top: 18px;
+    font-size: 1.9rem;
+    line-height: 1.08;
   }
 
   .onboarding-copy p {
+    margin-top: 16px;
     font-size: 1rem;
+  }
+
+  .guide-link {
+    width: 100%;
+    min-height: 52px;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 0 14px;
+    text-align: center;
+  }
+
+  .onboarding-visual {
+    padding: 14px;
+  }
+
+  .onboarding-checks div {
+    min-height: 58px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .numbered-steps {
+    gap: 14px;
+  }
+
+  .numbered-steps div {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 12px;
+    font-size: 0.98rem;
+  }
+
+  .numbered-steps span {
+    width: 46px;
+    height: 46px;
+    border-width: 4px;
   }
 }

@@ -12,13 +12,47 @@ test("onboarding popup walks through both reference slides", async ({ page }) =>
   await page.goto("/");
 
   await expect(page.locator("#welcomeModal")).not.toHaveClass(/hidden/);
-  await expect(page.locator("#welcomeTitle")).toHaveText("Understand tender documents faster");
+  await expect(page.locator("#welcomeTitle")).toHaveText("Explore prepared results");
+  await expect(page.locator("#welcomeBody")).toContainText("Use example files to explore prepared results");
 
   await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.locator("#welcomeTitle")).toHaveText("Three simple steps");
+  await expect(page.locator("#welcomeTitle")).toHaveText("Discuss the analysis");
+  await expect(page.locator("#welcomeBody")).toContainText("Discuss with TenderLens by chat or voice");
 
   await page.getByRole("button", { name: "Get started" }).click();
   await expect(page.locator("#welcomeModal")).toHaveClass(/hidden/);
+});
+
+test("pre-analysis workspace keeps tabs and empty states visible", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/");
+
+  await expect(page.locator("#startHero")).toBeVisible();
+  await expect(page.locator("#emptyResult")).toBeVisible();
+  await expect(page.locator("#resultShell")).toBeVisible();
+  await expect(page.locator(".result-summary")).toHaveClass(/hidden/);
+  await expect(page.locator(".workspace-tabs")).toContainText("Discuss with TenderLens");
+  await expect(page.locator("#checklistRows")).toContainText("No requirements checked yet");
+  await expect(page.locator("#activeEvidence")).toContainText("Evidence will appear after analysis");
+
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+  await expect(page.locator("#askPanel")).not.toHaveClass(/hidden/);
+  await page.locator("#chatInput").fill("What are the biggest risks?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("Run an analysis first");
+
+  await page.getByRole("button", { name: "Start voice mode" }).click();
+  await expect(page.locator("#voiceStateLabel")).toHaveText("Analysis needed");
+  await page.locator("#endVoice").click();
+
+  await page.getByRole("button", { name: "Tender Map" }).click();
+  await expect(page.locator("#tenderMapSvg")).toContainText("Tender Map will appear after analysis");
+
+  await page.getByRole("button", { name: "Briefing Deck" }).click();
+  await expect(page.locator("#deckTitle")).toHaveText("Briefing Deck will appear after analysis");
+
+  await page.getByRole("button", { name: "Questions to Ask" }).click();
+  await expect(page.locator("#questionsList")).toContainText("Questions will appear after analysis");
 });
 
 test("runs example analysis with deterministic displayed score", async ({ page }) => {
@@ -53,12 +87,24 @@ test("tabs render map, deck, questions, and chat without navigation jumps", asyn
   await page.getByRole("button", { name: "Questions to Ask" }).click();
   await expect(page.locator("#questionsList .question-card").first()).toContainText("Can you clarify");
 
-  await page.getByRole("button", { name: "Ask TenderLens" }).click();
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
   await expect(page.getByRole("button", { name: "Start voice mode" })).toBeVisible();
   await page.locator("#chatInput").fill("What are the biggest risks?");
   await page.locator("#sendChat").click();
   await expect(page.locator("#chatLog")).toContainText("What are the biggest risks?");
   await expect(page.locator("#chatLog")).toContainText("The current go-live plan");
+
+  await page.locator("#chatInput").fill("Which documents are missing?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("120-day bid bond letter");
+
+  await page.locator("#chatInput").fill("What evidence supports the active checklist item?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("bid-readiness-notes.docx");
+
+  await page.locator("#chatInput").fill("What next actions should we take?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("Revise the delivery plan");
 });
 
 test("rejects oversized uploads before analysis", async ({ page }) => {
@@ -130,21 +176,22 @@ test("configured backend URL receives production uploaded-file analysis directly
       },
       body: JSON.stringify({
         report: {
-          executive_summary: "Live upload backend succeeded.",
+          executive_summary: "Live upload backend succeeded for the generated ZebraDock tender.",
           score: 15,
           findings: [
             {
               agent: "Evidence Agent",
               status: "pass",
-              summary: "ISO evidence is present.",
-              actions: ["Proceed with source-backed evidence."],
+              summary: "ZebraDock renewal deadline is 12 August.",
+              actions: ["Collect the ZebraDock permit renewal letter."],
               evidence_ids: ["e1"],
             },
           ],
-          evidence: [{ id: "e1", citation: "uploaded:direct-upload.txt", excerpt: "ISO evidence." }],
+          evidence: [{ id: "e1", citation: "uploaded:zebradock-live-test.md", excerpt: "ZebraDock renewal deadline is 12 August and the permit letter is mandatory." }],
           risks: [],
-          next_actions: ["Proceed with source-backed evidence."],
-          source_documents: [{ filename: "direct-upload.txt" }],
+          missing_documents: ["ZebraDock permit renewal letter"],
+          next_actions: ["Collect the ZebraDock permit renewal letter."],
+          source_documents: [{ filename: "zebradock-live-test.md" }],
           workflow_trace: ["backend.upload_analyze"],
         },
       }),
@@ -157,13 +204,20 @@ test("configured backend URL receives production uploaded-file analysis directly
 
   await page.goto("/");
   await page.locator("#fileInput").setInputFiles({
-    name: "direct-upload.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("ISO evidence is present."),
+    name: "zebradock-live-test.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("ZebraDock renewal deadline is 12 August. The permit renewal letter is mandatory."),
   });
 
   await expect(page.locator("#uploadStatus")).toContainText("1 file accepted");
   await expect(page.locator("#scoreValue")).toHaveText("100");
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+  await page.locator("#chatInput").fill("What does ZebraDock require?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("ZebraDock renewal deadline is 12 August");
+  await page.locator("#chatInput").fill("Which documents are missing?");
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog")).toContainText("ZebraDock permit renewal letter");
   expect(backendCalls).toBe(1);
   expect(localProxyCalls).toBe(0);
 });
