@@ -6,6 +6,7 @@ to run locally, inside Agent Runtime passthrough, or behind Vercel server routes
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Literal
 
@@ -24,6 +25,11 @@ from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS
 from app.services.upload.extraction import UploadExtractionError, extract_uploaded_document
 from app.workflows.tender_workflow import run_tender_analysis
 from app.workflows.uploaded_tender_workflow import run_uploaded_tender_files_analysis
+
+LOGGER = logging.getLogger(__name__)
+FRIENDLY_MODEL_RETRY = (
+    "TenderLens could not reach the model right now. Please try again after some time."
+)
 
 
 class AnalyzeRequest(BaseModel):
@@ -89,7 +95,28 @@ def _has_live_discuss_credentials() -> bool:
     if api_key and "your-" not in api_key.lower():
         return True
     use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in {"1", "true", "yes"}
-    return use_vertex and bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    return bool(use_vertex and project and not project.startswith("your-"))
+
+
+def _model_provider() -> str:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if api_key and "your-" not in api_key.lower():
+        return "gemini-api"
+    use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in {"1", "true", "yes"}
+    project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    if use_vertex and project and not project.startswith("your-"):
+        return "vertex-ai"
+    return "unavailable"
+
+
+def _model_status(model_name: str) -> dict:
+    provider = _model_provider()
+    return {
+        "connected": provider != "unavailable",
+        "provider": provider,
+        "model": model_name,
+    }
 
 
 def _report_text(report: dict) -> str:
@@ -202,6 +229,8 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
             "You are Discuss with TenderLens, a bidder-side tender analysis assistant. "
             "Answer only from the provided analysis report and evidence. "
             "If the report does not contain enough evidence, say what is missing. "
+            "Do not repeat earlier answers. Address the latest user question directly, "
+            "then include one concise source-grounded reason and one next step when useful. "
             f"{language_instruction}\n\n"
             f"Mode: {request.mode}\n"
             f"Question: {request.message}\n\n"
@@ -219,7 +248,8 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
         grounded["answer"] = answer.strip()
         return grounded
     except Exception as exc:  # pragma: no cover - network/client dependent.
-        raise HTTPException(status_code=502, detail=f"Live discussion model failed: {exc}") from exc
+        LOGGER.warning("Live discussion model call failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail=FRIENDLY_MODEL_RETRY) from exc
 
 
 def attach_tenderlens_api_routes(app: FastAPI) -> None:
@@ -230,6 +260,19 @@ def attach_tenderlens_api_routes(app: FastAPI) -> None:
             "service": "TenderLens Agentic AI",
             "upload_max_mb": 5,
             "voice_mode": "explicit_start_only",
+        }
+
+    @app.get("/api/model-status")
+    def model_status() -> dict:
+        return {
+            "service": "TenderLens Agentic AI",
+            "friendly_retry": FRIENDLY_MODEL_RETRY,
+            "discuss": _model_status(
+                os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.0-flash")
+            ),
+            "upload": _model_status(
+                os.getenv("TENDERLENS_VISION_MODEL", "gemini-flash-latest")
+            ),
         }
 
     @app.get("/api/tenders")
@@ -331,7 +374,7 @@ def attach_tenderlens_api_routes(app: FastAPI) -> None:
         if not _has_live_discuss_credentials():
             raise HTTPException(
                 status_code=503,
-                detail="Live Discuss with TenderLens model is not configured.",
+                detail=FRIENDLY_MODEL_RETRY,
             )
         return _model_discuss_answer(request)
 

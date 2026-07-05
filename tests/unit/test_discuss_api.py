@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from app.fast_api_app import app
@@ -40,6 +42,7 @@ def test_discuss_without_live_credentials_is_explicit(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_GENAI_USE_VERTEXAI", raising=False)
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
 
     client = TestClient(app)
     response = client.post(
@@ -53,4 +56,24 @@ def test_discuss_without_live_credentials_is_explicit(monkeypatch):
     )
 
     assert response.status_code == 503
-    assert "not configured" in response.json()["detail"].lower()
+    assert "please try again after some time" in response.json()["detail"].lower()
+
+
+def test_model_status_reports_safe_connectivity_without_secret_values(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "super-secret-test-value")
+    monkeypatch.setenv("TENDERLENS_DISCUSS_MODEL", "gemini-test-discuss")
+    monkeypatch.setenv("TENDERLENS_VISION_MODEL", "gemini-test-vision")
+
+    client = TestClient(app)
+    response = client.get("/api/model-status")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["service"] == "TenderLens Agentic AI"
+    assert body["discuss"]["connected"] is True
+    assert body["upload"]["connected"] is True
+    assert body["discuss"]["model"] == "gemini-test-discuss"
+    assert body["upload"]["model"] == "gemini-test-vision"
+    serialized = json.dumps(body)
+    assert "super-secret-test-value" not in serialized
+    assert "GEMINI_API_KEY" not in serialized

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import JSZip from "../../frontend/node_modules/jszip/dist/jszip.min.js";
 
 const port = Number(process.env.PORT || 3000);
 
@@ -10,6 +11,23 @@ async function readDownloadHead(download, length = 4) {
     stream.on("end", () => resolve(Buffer.concat(chunks).subarray(0, length).toString("binary")));
     stream.on("error", reject);
   });
+}
+
+async function readDownloadBuffer(download) {
+  const stream = await download.createReadStream();
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("error", reject);
+  });
+}
+
+async function readZipEntry(download, entryName) {
+  const zip = await JSZip.loadAsync(await readDownloadBuffer(download));
+  const entry = zip.file(entryName);
+  expect(entry, `${entryName} should exist in downloaded zip`).toBeTruthy();
+  return entry.async("string");
 }
 
 async function ask(page, question) {
@@ -24,9 +42,20 @@ async function ask(page, question) {
 
 async function suppressWelcome(page) {
   await page.addInitScript(() => {
-    window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
+    window.localStorage.setItem("tenderlens-welcome-dismissed-v3", "yes");
   });
 }
+
+test("old onboarding dismissal key does not hide updated onboarding slides", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
+  });
+
+  await page.goto("/");
+
+  await expect(page.locator("#welcomeModal")).not.toHaveClass(/hidden/);
+  await expect(page.locator("#welcomeBody")).toContainText("Use example files to explore prepared results");
+});
 
 test("onboarding popup walks through both reference slides", async ({ page }) => {
   await page.goto("/");
@@ -59,6 +88,20 @@ test("how-to actions open the guide page instead of the onboarding modal or pdf"
   await page.getByRole("link", { name: "Back to workspace" }).click();
   await expect(page).toHaveURL(/#workspace$/);
   await expect(page.locator("#workspace")).toBeVisible();
+});
+
+test("how-to guide localizes cleanly in Arabic", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/#how-to-use");
+
+  await page.locator("#langAr").click();
+
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("#guidePage")).toBeVisible();
+  await expect(page.locator("#guidePage")).toContainText("طريقة استخدام TenderLens Agentic AI");
+  await expect(page.locator("#guideTitle")).toContainText("راجع ملفات المناقصة");
+  await expect(page.locator("#guidePage")).toContainText("ناقش مع TenderLens");
+  await expect(page.locator("#guidePage")).not.toContainText("Review tender documents");
 });
 
 test("onboarding guide link opens the guide page and does not navigate to a pdf", async ({ page }) => {
@@ -121,6 +164,18 @@ test("runs example analysis with deterministic displayed score", async ({ page }
 
 test("tabs render map, deck, questions, and chat without navigation jumps", async ({ page }) => {
   await suppressWelcome(page);
+  await page.route("**/api/discuss", async (route) => {
+    const payload = route.request().postDataJSON();
+    let answer = "The current go-live plan misses the mandatory deadline.";
+    if (payload.message.includes("missing")) answer = "Missing documents include the 120-day bid bond letter.";
+    if (payload.message.includes("evidence")) answer = "Evidence is cited from bid-readiness-notes.docx.";
+    if (payload.message.includes("next")) answer = "Revise the delivery plan before bid approval.";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ answer, citations: ["bid-readiness-notes.docx"], followups: [] }),
+    });
+  });
   await page.goto("/");
   await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
 
@@ -217,7 +272,7 @@ test("analysis shows a blocking premium progress state while upload review is ru
   await expect(page.locator("#scoreValue")).toHaveText("80");
 });
 
-test("uploaded text files get a bounded deterministic analysis when backend is unavailable", async ({ page }) => {
+test("uploaded-file analysis shows a friendly retry state when the model backend is unavailable", async ({ page }) => {
   await suppressWelcome(page);
 
   await page.route("**/runtime-config.js", async (route) => {
@@ -232,23 +287,16 @@ test("uploaded text files get a bounded deterministic analysis when backend is u
 
   await page.goto("/");
 
-  await page.locator("#fileInput").setInputFiles([
-    {
-      name: "main-tender.md",
-      mimeType: "text/markdown",
-      buffer: Buffer.from("Eligibility requires ISO 9001. Submission deadline is 30 September. Bid security is mandatory."),
-    },
-    {
-      name: "proposal-response.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("Delivery risk includes mobilization and service levels. The proposal includes ISO certification evidence."),
-    },
-  ]);
+  await page.locator("#fileInput").setInputFiles({
+    name: "main-tender.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("Eligibility requires ISO 9001. Submission deadline is 30 September. Bid security is mandatory."),
+  });
 
-  await expect(page.locator("#preparedBadge")).toHaveText("Uploaded files");
-  await expect(page.locator("#scoreValue")).not.toHaveText("78");
-  await expect(page.locator("#checklistRows .checklist-row")).toHaveCount(4);
-  await expect(page.locator("#uploadStatus")).toContainText("bounded local text review");
+  await expect(page.locator("#uploadStatus")).toContainText("Please try again after some time");
+  await expect(page.locator("#uploadStatus")).toHaveClass(/error/);
+  await expect(page.locator("#emptyResult")).toBeVisible();
+  await expect(page.locator("#checklistRows")).toContainText("No requirements checked yet");
 });
 
 test("configured backend URL receives production uploaded-file analysis directly", async ({ page }) => {
@@ -296,6 +344,17 @@ test("configured backend URL receives production uploaded-file analysis directly
   await page.route(`http://127.0.0.1:${port}/api/upload/analyze`, async (route) => {
     localProxyCalls += 1;
     await route.fulfill({ status: 500, contentType: "application/json", body: '{"detail":"local proxy used"}' });
+  });
+  await page.route("**/api/discuss", async (route) => {
+    const payload = route.request().postDataJSON();
+    const answer = payload.message.includes("missing")
+      ? "The missing document is the ZebraDock permit renewal letter."
+      : "ZebraDock renewal deadline is 12 August, and the permit renewal letter is mandatory.";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ answer, citations: ["uploaded:zebradock-live-test.md"], followups: [] }),
+    });
   });
 
   await page.goto("/");
@@ -378,6 +437,32 @@ test("discuss sends active analysis context to backend and renders grounded mode
   expect(discussPayload.report.missing_documents).toContain("ZebraDock permit renewal letter");
 });
 
+test("discuss shows a friendly retry message instead of a canned answer when the model is unavailable", async ({ page }) => {
+  await suppressWelcome(page);
+
+  let calls = 0;
+  await page.route("**/api/discuss", async (route) => {
+    calls += 1;
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        detail: "TenderLens could not reach the discussion model right now. Please try again after some time.",
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+
+  const response = await ask(page, "can you summarize in two points?");
+
+  await expect(response).toContainText("Please try again after some time");
+  await expect(response).not.toContainText("Conditional bid with risks");
+  expect(calls).toBe(1);
+});
+
 test("voice mode captures speech, sends transcript to discuss, and speaks the model answer", async ({ page }) => {
   await suppressWelcome(page);
 
@@ -440,6 +525,69 @@ test("voice mode captures speech, sends transcript to discuss, and speaks the mo
   await expect.poll(() => page.evaluate(() => window.__spokenText.join(" "))).toContain("120-day bid bond letter");
 });
 
+test("voice mode can run more than one user-started conversation turn", async ({ page }) => {
+  await suppressWelcome(page);
+
+  await page.addInitScript(() => {
+    window.__spokenText = [];
+    window.__voiceTurns = ["Which document is missing?", "What should we do next?"];
+    window.speechSynthesis = {
+      speak(utterance) {
+        window.__spokenText.push(utterance.text);
+        setTimeout(() => utterance.onend && utterance.onend(), 0);
+      },
+      cancel() {},
+    };
+    window.SpeechSynthesisUtterance = class {
+      constructor(text) {
+        this.text = text;
+        this.lang = "";
+      }
+    };
+    window.webkitSpeechRecognition = class {
+      constructor() {
+        this.continuous = false;
+        this.interimResults = false;
+        this.lang = "en-US";
+      }
+      start() {
+        const transcript = window.__voiceTurns.shift() || "No question";
+        setTimeout(() => {
+          this.onresult && this.onresult({ results: [[{ transcript }]] });
+        }, 0);
+      }
+      stop() {}
+      abort() {}
+    };
+  });
+
+  const messages = [];
+  await page.route("**/api/discuss", async (route) => {
+    const payload = route.request().postDataJSON();
+    messages.push(payload.message);
+    const answer = payload.message.includes("next")
+      ? "Next action: collect the signed bid bond confirmation."
+      : "Missing document: the 120-day bid bond letter.";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ answer, citations: ["bid-readiness-notes.docx"], followups: [] }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+  await page.getByRole("button", { name: "Start voice mode" }).click();
+
+  await expect(page.locator("#transcript")).toContainText("120-day bid bond letter", { timeout: 5000 });
+  await page.getByRole("button", { name: "Listen again" }).click();
+  await expect(page.locator("#transcript")).toContainText("signed bid bond confirmation", { timeout: 5000 });
+
+  expect(messages).toEqual(["Which document is missing?", "What should we do next?"]);
+  await expect.poll(() => page.evaluate(() => window.__spokenText.join(" "))).toContain("signed bid bond confirmation");
+});
+
 test("exports create valid pptx docx pdf txt files after analysis", async ({ page }) => {
   await suppressWelcome(page);
   await page.goto("/");
@@ -451,6 +599,9 @@ test("exports create valid pptx docx pdf txt files after analysis", async ({ pag
     await page.getByRole("button", { name: "PPTX" }).click();
     const download = await downloadPromise;
     expect(await readDownloadHead(download)).toBe("PK\u0003\u0004");
+    const slideXml = await readZipEntry(download, "ppt/slides/slide1.xml");
+    expect(slideXml).toContain('srgbClr val="0B302F"');
+    expect(slideXml).toContain('srgbClr val="F8F2E6"');
   }
 
   for (const [name, magic] of [
@@ -484,11 +635,19 @@ test("map wraps labels and downloaded svg keeps text inside cards", async ({ pag
     }).length,
   );
   expect(overflowingText).toBe(0);
+  const mappedFiles = await page.locator("#tenderMapSvg svg g[data-source-file]").evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("data-source-file")),
+  );
+  const fileCardCount = await page.locator("#tenderMapSvg svg g[data-card^='file-']").count();
+  expect(mappedFiles.length).toBeGreaterThanOrEqual(5);
+  expect(new Set(mappedFiles).size).toBe(fileCardCount);
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "SVG" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("tenderlens-map.svg");
+  const svg = (await readDownloadBuffer(download)).toString("utf8");
+  expect(svg).toContain("data-source-file");
 });
 
 test("switches to Arabic RTL without losing result state", async ({ page }) => {
@@ -520,4 +679,26 @@ test("Arabic mode uses valid Arabic labels across result surfaces", async ({ pag
   await expect(page.locator("#tenderMapSvg")).toContainText("المتطلبات");
   await page.getByRole("button", { name: "ملخص العرض" }).click();
   await expect(page.locator("#deckTitle")).not.toHaveText("Overall result");
+});
+
+test("Arabic uploaded-file model failure stays friendly and translated", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.route("**/api/upload/analyze", async (route) => route.abort());
+
+  await page.goto("/");
+  await page.locator("#fileInput").setInputFiles({
+    name: "arabic-local-test.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(
+      "Submission deadline is 12 August. Bid security and commercial insurance attachments are mandatory. Delivery SLA risk needs clarification.",
+    ),
+  });
+
+  await expect(page.locator("#uploadStatus")).toContainText("Please try again after some time");
+  await page.locator("#langAr").click();
+
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("#uploadStatus")).toContainText("يرجى المحاولة بعد بعض الوقت");
+  await expect(page.locator("#emptyResult")).toBeVisible();
+  await expect(page.locator("#checklistRows")).toContainText("لم يتم فحص المتطلبات بعد");
 });

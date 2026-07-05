@@ -310,6 +310,10 @@ img {
 }
 
 .guide-hero > div {
+  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border-radius: 28px;
   background: var(--ink);
   color: var(--white);
@@ -341,6 +345,10 @@ img {
 .guide-grid {
   display: grid;
   gap: 16px;
+}
+
+.guide-side {
+  align-content: stretch;
 }
 
 .guide-side article,
@@ -1341,6 +1349,13 @@ img {
   background: #f7f5ee;
 }
 
+.message.warning {
+  border-color: #e5c884;
+  background: #fff8e9;
+  color: #4f3512;
+  box-shadow: 0 10px 26px rgba(189, 117, 15, 0.10);
+}
+
 .map-heading,
 .deck-heading {
   align-items: center;
@@ -1924,6 +1939,13 @@ img {
 [dir="rtl"] .chat-form input,
 [dir="rtl"] .quick-questions {
   text-align: right;
+}
+
+[dir="rtl"] .guide-actions,
+[dir="rtl"] .guide-back,
+[dir="rtl"] .guide-chips,
+[dir="rtl"] .guide-grid article a {
+  justify-content: flex-end;
 }
 
 @media (max-width: 1380px) {

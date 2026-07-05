@@ -5,7 +5,7 @@ const outputDir = "artifacts/visual-checks";
 
 async function suppressWelcome(page) {
   await page.addInitScript(() => {
-    window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
+    window.localStorage.setItem("tenderlens-welcome-dismissed-v3", "yes");
   });
 }
 

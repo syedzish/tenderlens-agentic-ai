@@ -1,5 +1,6 @@
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_UPLOAD_FILES = 5;
+const WELCOME_STORAGE_KEY = "tenderlens-welcome-dismissed-v3";
 const supportedExt = [".pdf", ".txt", ".md", ".docx", ".jpg", ".jpeg", ".png", ".webp"];
 
 const state = {
@@ -12,6 +13,7 @@ const state = {
   currentReport: null,
   uploadedFiles: [],
   analysisSource: "empty",
+  analysisError: null,
   isAnalyzing: false,
   isDiscussing: false,
   chatHistory: [],
@@ -98,6 +100,7 @@ const labels = {
     questionsDesc: "Practical questions to send to the issuer or project owner before submission.",
     exampleTitle: "Example Files",
     exampleDescription: "Use these example files to explore prepared results without uploading your own documents.",
+    exampleStatus: "Example files show prepared results so you can explore the workspace quickly.",
     useExamples: "Use these files",
     skip: "Skip",
     nextSlide: "Next",
@@ -134,14 +137,25 @@ const labels = {
     analysisLoadingTitle: "TenderLens is reviewing evidence...",
     analysisLoadingBody: "Please keep this workspace open while the agents read the files and prepare the report.",
     discussing: "TenderLens is preparing a grounded answer...",
-    discussUnavailable: "Live Discuss with TenderLens is unavailable. Check the model configuration and try again.",
+    discussUnavailable: "TenderLens could not reach the model right now. Please try again after some time.",
+    modelRetryTitle: "Model connection needs a moment",
+    modelRetryBody: "Please try again after some time. Your current analysis stays available in the workspace.",
     voiceReady: "Ready",
     voiceListening: "Listening",
     voiceProcessing: "Processing",
     voiceSpeaking: "Speaking",
     voiceUnsupported: "Unsupported",
     voiceError: "Error",
-    backendUnavailable: "Live backend analysis is unavailable. A bounded local text review was generated for this session.",
+    voiceMuted: "Muted",
+    voiceInterrupted: "Interrupted",
+    voiceReadyBody: "Ask about risks, evidence, missing documents, or next actions.",
+    voiceListeningBody: "Listening for your question.",
+    voiceUnsupportedBody: "This browser does not support speech recognition. Please use typed chat.",
+    voiceErrorBody: "Microphone or speech recognition failed. Typed chat remains available.",
+    voiceMute: "Mute",
+    voiceListenAgain: "Listen again",
+    voiceEnd: "End",
+    backendUnavailable: "TenderLens could not reach the analysis model right now. Please try again after some time.",
     unsupportedLocal:
       "Live backend analysis is required for PDF, DOCX, and image parsing. Use TXT/MD here or connect the cloud runtime.",
     quickQuestions: [
@@ -212,6 +226,7 @@ const labels = {
     questionsDesc: "أسئلة عملية لإرسالها إلى المورد أو مالك المشروع قبل التقديم.",
     exampleTitle: "ملفات مثال",
     exampleDescription: "استخدم ملفات المثال لاستكشاف نتائج معدة بدون رفع ملفاتك.",
+    exampleStatus: "تعرض ملفات المثال نتائج معدة حتى تتمكن من استكشاف مساحة العمل بسرعة.",
     useExamples: "استخدام هذه الملفات",
     skip: "تخطي",
     nextSlide: "التالي",
@@ -248,14 +263,25 @@ const labels = {
     analysisLoadingTitle: "يقوم TenderLens بمراجعة الأدلة...",
     analysisLoadingBody: "يرجى إبقاء مساحة العمل مفتوحة بينما تقرأ الوكلاء الملفات وتجهز التقرير.",
     discussing: "يقوم TenderLens بإعداد إجابة مستندة إلى التحليل...",
-    discussUnavailable: "المحادثة الحية مع TenderLens غير متاحة. تحقق من إعداد النموذج ثم حاول مرة أخرى.",
+    discussUnavailable: "تعذر على TenderLens الوصول إلى النموذج الآن. يرجى المحاولة بعد بعض الوقت.",
+    modelRetryTitle: "اتصال النموذج يحتاج بعض الوقت",
+    modelRetryBody: "يرجى المحاولة بعد بعض الوقت. سيبقى التحليل الحالي متاحا في مساحة العمل.",
     voiceReady: "جاهز",
     voiceListening: "يستمع",
     voiceProcessing: "يعالج",
     voiceSpeaking: "يتحدث",
     voiceUnsupported: "غير مدعوم",
     voiceError: "خطأ",
-    backendUnavailable: "تعذر الوصول إلى تحليل الخادم. تم إنشاء مراجعة نصية محلية محدودة لهذه الجلسة.",
+    voiceMuted: "تم الكتم",
+    voiceInterrupted: "تم الإيقاف",
+    voiceReadyBody: "اسأل عن المخاطر أو الأدلة أو المستندات الناقصة أو الخطوات التالية.",
+    voiceListeningBody: "يتم الاستماع إلى سؤالك.",
+    voiceUnsupportedBody: "هذا المتصفح لا يدعم التعرف على الكلام. يمكنك استخدام المحادثة النصية.",
+    voiceErrorBody: "تعذر استخدام الميكروفون أو التعرف على الكلام. المحادثة النصية ما زالت متاحة.",
+    voiceMute: "كتم",
+    voiceListenAgain: "استمع مرة أخرى",
+    voiceEnd: "إنهاء",
+    backendUnavailable: "تعذر على TenderLens الوصول إلى نموذج التحليل الآن. يرجى المحاولة بعد بعض الوقت.",
     unsupportedLocal: "يتطلب تحليل PDF و DOCX والصور اتصالا بالخادم السحابي. استخدم TXT/MD هنا أو صل بيئة التشغيل السحابية.",
     quickQuestions: ["ما أكبر المخاطر؟", "لماذا هذا البند جزئي؟", "ما الذي يجب أن أسأله للمورد؟", "لخص النتائج بالعربية"],
     riskLabel: { Low: "منخفض", Medium: "متوسط", High: "عال" },
@@ -280,6 +306,163 @@ const labels = {
     onboardingSteps: ["استخدم ملفات المثال أو ارفع ملفات المناقصة", "راجع مساحة العمل", "ناقش بالكتابة أو الصوت", "نزل التحليل بعد اكتماله"],
   },
 };
+
+function guideCopy() {
+  if (state.language === "ar") {
+    return {
+      back: "العودة إلى مساحة العمل",
+      badge: "طريقة استخدام TenderLens Agentic AI",
+      title: "راجع ملفات المناقصة بدون فقدان مسار قرار التقديم.",
+      body:
+        "يساعد TenderLens Agentic AI فريق العطاءات على رفع ملفات المناقصة، تشغيل تحليل مستند إلى الأدلة، مراجعة المخاطر، مناقشة النتيجة بالكتابة أو الصوت، وتصدير ملفات مراجعة صالحة.",
+      open: "افتح مساحة العمل",
+      examples: "عرض ملفات المثال",
+      cards: [
+        {
+          icon: "shield-check",
+          tone: "mint",
+          title: "ما المشكلة التي يحلها؟",
+          body: "تحويل حزم المناقصات الطويلة إلى قائمة متطلبات مرتبطة بالأدلة والمخاطر والمستندات الناقصة والخطوات التالية.",
+        },
+        {
+          icon: "presentation",
+          tone: "cobalt",
+          title: "ماذا تحصل عليه؟",
+          body: "نتيجة قرار، قائمة متطلبات، أدلة، خريطة مناقصة، ملخص عرض، أسئلة، محادثة حية، وتصديرات.",
+        },
+      ],
+      stepsLabel: "كيف يعمل TenderLens",
+      steps: [
+        ["ارفع الملفات أو استخدم المثال", "أضف ملفات المناقصة أو شغل ملفات المثال لاستكشاف نتائج معدة."],
+        ["شغل التحليل", "يستخرج TenderLens المتطلبات والأدلة والمخاطر والمستندات الناقصة والخطوات التالية."],
+        ["ناقش مع TenderLens", "ناقش التحليل الحالي بالكتابة أو الصوت بناء على سياق التقرير."],
+        ["صدر وراجع", "نزل ملفات PDF و DOCX و PPTX و TXT و SVG صالحة لمراجعة الفريق."],
+      ],
+      previewBadge: "نتيجة تحليل مثال",
+      previewTitle: "شكل المخرجات بعد التحليل",
+      previewBody: "تعرض مساحة العمل نتيجة، صفوف متطلبات، أدلة مقتبسة، بطاقات مخاطر، وأسئلة عملية.",
+      score: "نتيجة /100",
+      examplesTitle: "ملفات المثال",
+      examplesBody: "استخدم ملفات المثال الخيالية لاختبار التطبيق بسرعة بدون رفع مستنداتك.",
+      expectedTitle: "النتائج المتوقعة",
+      expectedBody: "نتيجة عامة مع صفوف قائمة مدعومة بالأدلة، أسئلة للطرح، خريطة مناقصة، ملخص عرض، وتصديرات.",
+      chips: ["ما أكبر المخاطر؟", "ما المستندات الناقصة؟", "ما الدليل الذي يدعم ذلك؟", "لخص بالعربية."],
+    };
+  }
+  return {
+    back: "Back to workspace",
+    badge: "How to use TenderLens Agentic AI",
+    title: "Review tender documents without losing the bid decision thread.",
+    body:
+      "TenderLens Agentic AI helps a bidding team upload tender files, run a grounded analysis, inspect evidence, discuss the result by text or voice, and export valid briefing files for review.",
+    open: "Open the workspace",
+    examples: "View example files",
+    cards: [
+      {
+        icon: "shield-check",
+        tone: "mint",
+        title: "What problem does it solve?",
+        body: "Long tender packs become a checklist with evidence, risks, missing documents, and next actions.",
+      },
+      {
+        icon: "presentation",
+        tone: "cobalt",
+        title: "What do you get?",
+        body: "A score, checklist, evidence panel, Tender Map, Briefing Deck, questions, live discussion, and exports.",
+      },
+    ],
+    stepsLabel: "How TenderLens works",
+    steps: [
+      ["Upload files or use examples", "Add tender/RFP files or run example files to explore prepared results."],
+      ["Run the analysis", "TenderLens extracts requirements, evidence, risks, missing documents, and next actions."],
+      ["Discuss with TenderLens", "Discuss the active analysis by text or voice, grounded in the report context."],
+      ["Export and review", "Download valid PDF, DOCX, PPTX, TXT, and SVG outputs for team review."],
+    ],
+    previewBadge: "Example analysis result",
+    previewTitle: "What the output looks like after analysis",
+    previewBody: "The workspace shows a score, requirement rows, cited evidence, risk attention cards, and practical questions.",
+    score: "score /100",
+    examplesTitle: "Example files",
+    examplesBody: "Use the fictional example files to test the app quickly without uploading your own documents.",
+    expectedTitle: "Expected results",
+    expectedBody: "Overall result with a score, cited checklist rows, questions to ask, Tender Map, Briefing Deck, and exports.",
+    chips: ["What are the biggest risks?", "Which documents are missing?", "What evidence supports this?", "Summarize in Arabic."],
+  };
+}
+
+function renderGuide() {
+  const copy = guideCopy();
+  $("#guidePage").innerHTML = `
+    <div class="guide-shell">
+      <a class="guide-back" href="#workspace">
+        <span class="icon" data-icon="book-open" aria-hidden="true"></span>
+        ${escapeText(copy.back)}
+      </a>
+      <section class="guide-hero">
+        <div class="guide-hero-main">
+          <span class="soft-badge">${escapeText(copy.badge)}</span>
+          <h1 id="guideTitle">${escapeText(copy.title)}</h1>
+          <p>${escapeText(copy.body)}</p>
+          <div class="guide-actions">
+            <a class="primary-action compact" href="#workspace">${escapeText(copy.open)}</a>
+            <a class="secondary-action compact" href="#examples">${escapeText(copy.examples)}</a>
+          </div>
+        </div>
+        <aside class="guide-side">
+          ${copy.cards
+            .map(
+              (card) => `
+                <article>
+                  <span class="title-icon ${card.tone}" data-icon="${card.icon}" aria-hidden="true"></span>
+                  <h2>${escapeText(card.title)}</h2>
+                  <p>${escapeText(card.body)}</p>
+                </article>
+              `,
+            )
+            .join("")}
+        </aside>
+      </section>
+      <section class="guide-steps" aria-label="${escapeText(copy.stepsLabel)}">
+        ${copy.steps
+          .map(
+            ([title, body], index) => `
+              <article>
+                <strong>${index + 1}</strong>
+                <h2>${escapeText(title)}</h2>
+                <p>${escapeText(body)}</p>
+              </article>
+            `,
+          )
+          .join("")}
+      </section>
+      <section class="guide-preview">
+        <div>
+          <span class="soft-badge">${escapeText(copy.previewBadge)}</span>
+          <h2>${escapeText(copy.previewTitle)}</h2>
+          <p>${escapeText(copy.previewBody)}</p>
+        </div>
+        <div class="guide-score"><strong>78</strong><span>${escapeText(copy.score)}</span></div>
+      </section>
+      <section class="guide-grid" id="examples">
+        <article>
+          <h2>${escapeText(copy.examplesTitle)}</h2>
+          <p>${escapeText(copy.examplesBody)}</p>
+          <a href="./example-files/jeddah-fleet-maintenance-rfp.pdf" download>Jeddah Fleet Maintenance RFP · PDF</a>
+          <a href="./example-files/bid-readiness-notes.docx" download>Bid readiness notes · DOCX</a>
+          <a href="./example-files/commercial-clarification-addendum.pdf" download>Commercial clarification addendum · PDF</a>
+        </article>
+        <article>
+          <h2>${escapeText(copy.expectedTitle)}</h2>
+          <p>${escapeText(copy.expectedBody)}</p>
+          <div class="guide-chips">
+            ${copy.chips.map((chip) => `<span>${escapeText(chip)}</span>`).join("")}
+          </div>
+        </article>
+      </section>
+    </div>
+  `;
+  hydrateIcons($("#guidePage"));
+}
 
 const exampleFiles = [
   {
@@ -428,6 +611,65 @@ const RISK_PENALTIES = {
 
 function text() {
   return labels[state.language];
+}
+
+const AR_ANALYSIS_TRANSLATIONS = new Map([
+  [
+    "TenderLens recommends a conditional bid. The tender fits our language support, hosted operations, data residency, support, API, and sustainability capabilities, but the bid team must close security-evidence, bid-bond validity, go-live, and training-capacity gaps before submission.",
+    "يوصي TenderLens بتقديم مشروط. تتوافق المناقصة مع قدرات اللغة والتشغيل المستضاف وإقامة البيانات والدعم وواجهات API والاستدامة، لكن يجب إغلاق فجوات أدلة الأمن وصلاحية خطاب الضمان وموعد التشغيل والطاقة التدريبية قبل التقديم.",
+  ],
+  ["Commercial", "تجاري"],
+  ["Functional", "وظيفي"],
+  ["SLA", "مستوى الخدمة"],
+  ["Security", "أمن المعلومات"],
+  ["Delivery", "التنفيذ"],
+  ["Data Residency", "إقامة البيانات"],
+  ["Support", "الدعم"],
+  ["Integration", "التكامل"],
+  ["Training", "التدريب"],
+  ["Reporting", "التقارير"],
+  ["Bid security must equal 2% of contract value and remain valid for at least 120 days.", "يجب أن يساوي ضمان العطاء 2% من قيمة العقد وأن يبقى صالحا لمدة لا تقل عن 120 يوما."],
+  ["The finance note confirms a 2% bid bond, but the current bank letter template is valid for 90 days unless extended.", "تؤكد المذكرة المالية وجود ضمان بنسبة 2%، لكن نموذج خطاب البنك الحالي صالح لمدة 90 يوما ما لم يتم تمديده."],
+  ["Portal, resident notifications, and enforcement interface must support Arabic and English.", "يجب أن تدعم البوابة وإشعارات السكان وواجهة الإنفاذ اللغتين العربية والإنجليزية."],
+  ["The implementation team has bilingual product, support, and notification coverage for the required workflows.", "يمتلك فريق التنفيذ تغطية ثنائية اللغة للمنتج والدعم والإشعارات الخاصة بسير العمل المطلوب."],
+  ["Hosted production service must meet 99.5% monthly uptime with 72-hour maintenance notice.", "يجب أن تحقق الخدمة المستضافة توافرا شهريا بنسبة 99.5% مع إشعار صيانة قبل 72 ساعة."],
+  ["The operations playbook and addendum commit to the required uptime and maintenance notice window.", "يلتزم دليل التشغيل والملحق بنسبة التوافر المطلوبة ونافذة إشعار الصيانة."],
+  ["Supplier must provide ISO 27001, SOC 2 Type II, or equivalent independent security audit evidence.", "يجب على المورد تقديم ISO 27001 أو SOC 2 Type II أو دليل تدقيق أمني مستقل مكافئ."],
+  ["The security pack includes a recent independent penetration test, but ISO 27001 certification is not yet issued.", "تتضمن حزمة الأمن اختبار اختراق مستقلا حديثا، لكن شهادة ISO 27001 لم تصدر بعد."],
+  ["Production go-live for the five pilot districts must be completed by 30 September 2026.", "يجب إكمال التشغيل الفعلي للمناطق التجريبية الخمس بحلول 30 سبتمبر 2026."],
+  ["The bid team's current delivery plan reaches full production on 15 October 2026, after the mandatory deadline.", "تصل خطة التنفيذ الحالية للفريق إلى التشغيل الكامل في 15 أكتوبر 2026، أي بعد الموعد الإلزامي."],
+  ["Resident personal data and plate metadata must be stored in Saudi Arabia.", "يجب تخزين بيانات السكان وبيانات اللوحات داخل المملكة العربية السعودية."],
+  ["The architecture note keeps primary data and backups inside Saudi Arabia.", "توضح مذكرة البنية أن البيانات الأساسية والنسخ الاحتياطية تبقى داخل المملكة العربية السعودية."],
+  ["Critical incidents need human response within 30 minutes and standard tickets within 4 business hours.", "تحتاج الحوادث الحرجة إلى استجابة بشرية خلال 30 دقيقة والتذاكر العادية خلال 4 ساعات عمل."],
+  ["The support plan meets both incident and standard ticket response targets.", "تلبي خطة الدعم أهداف الاستجابة للحوادث والتذاكر العادية."],
+  ["Platform must integrate with the municipal payment gateway and expose REST APIs.", "يجب أن تتكامل المنصة مع بوابة الدفع البلدية وأن توفر واجهات REST API."],
+  ["The product roadmap includes payment gateway integration and REST APIs for occupancy, permits, violations, and payments.", "تشمل خارطة طريق المنتج التكامل مع بوابة الدفع وواجهات REST API للإشغال والتصاريح والمخالفات والمدفوعات."],
+  ["Supplier must deliver role-based training for at least 50 municipal staff before go-live.", "يجب على المورد تقديم تدريب حسب الدور لما لا يقل عن 50 موظفا بلديا قبل التشغيل."],
+  ["The training plan currently covers 40 staff. Ten additional remote seats are possible but need written confirmation.", "تغطي خطة التدريب الحالية 40 موظفا. يمكن إضافة عشرة مقاعد عن بعد لكن ذلك يحتاج إلى تأكيد كتابي."],
+  ["Supplier must provide quarterly sustainability reporting.", "يجب على المورد تقديم تقارير استدامة ربع سنوية."],
+  ["The bid can include quarterly sustainability reports covering hosting and maintenance travel impact.", "يمكن أن يتضمن العرض تقارير استدامة ربع سنوية تغطي أثر الاستضافة والتنقل للصيانة."],
+  ["Validated example files", "تم التحقق من ملفات المثال"],
+  ["Found mandatory tender requirements", "تم تحديد متطلبات المناقصة الإلزامية"],
+  ["Matched bid-readiness evidence", "تمت مطابقة أدلة جاهزية العطاء"],
+  ["Ran independent evidence check", "تم تشغيل فحص أدلة مستقل"],
+  ["Calibrated bid risk", "تمت معايرة مخاطر التقديم"],
+  ["The current go-live plan misses the mandatory deadline.", "خطة التشغيل الحالية تتجاوز الموعد الإلزامي."],
+  ["The bid bond validity is shorter than required.", "صلاحية خطاب الضمان أقصر من المطلوب."],
+  ["Security certification evidence is not final.", "أدلة الشهادة الأمنية ليست نهائية."],
+  ["Training capacity is below the stated minimum unless the extra seats are confirmed.", "الطاقة التدريبية أقل من الحد الأدنى المعلن ما لم يتم تأكيد المقاعد الإضافية."],
+  ["120-day bid bond letter", "خطاب ضمان عطاء لمدة 120 يوما"],
+  ["ISO 27001 certificate or independent security evidence", "شهادة ISO 27001 أو دليل أمني مستقل"],
+  ["Written confirmation for 50 training seats", "تأكيد كتابي لـ 50 مقعدا تدريبيا"],
+  ["Revised go-live plan for 30 September 2026", "خطة تشغيل معدلة بتاريخ 30 سبتمبر 2026"],
+  ["Revise the delivery plan to meet 30 September 2026 before deciding to bid.", "راجع خطة التنفيذ للالتزام بتاريخ 30 سبتمبر 2026 قبل قرار التقديم."],
+  ["Obtain a 120-day bid bond letter from the bank.", "احصل على خطاب ضمان عطاء لمدة 120 يوما من البنك."],
+  ["Attach independent security evidence and explain the ISO 27001 timeline.", "أرفق دليلا أمنيا مستقلا واشرح الجدول الزمني لشهادة ISO 27001."],
+  ["Confirm 50 training seats before submission.", "أكد توفر 50 مقعدا تدريبيا قبل التقديم."],
+]);
+
+function displayAnalysisText(value) {
+  const raw = String(value || "");
+  return state.language === "ar" ? AR_ANALYSIS_TRANSLATIONS.get(raw) || raw : raw;
 }
 
 function escapeText(value) {
@@ -632,6 +874,15 @@ function updateI18n() {
   $("#chatInput").placeholder = state.language === "ar" ? "اسأل عن هذه المستندات أو التحليل..." : "Ask about these documents or the analysis...";
   $("#langEn").classList.toggle("active", state.language === "en");
   $("#langAr").classList.toggle("active", state.language === "ar");
+  if (state.analysisSource === "sample") {
+    $("#uploadStatus").textContent = copy.exampleStatus;
+  } else if (state.analysisError === "model") {
+    $("#uploadStatus").textContent = copy.backendUnavailable;
+  }
+  $("#muteVoice").textContent = copy.voiceMute;
+  $("#interruptVoice").textContent = copy.voiceListenAgain;
+  $("#endVoice").textContent = copy.voiceEnd;
+  renderGuide();
   renderOnboarding();
   if (state.currentResult) renderResult();
   else renderEmptyWorkspace();
@@ -744,7 +995,7 @@ function renderResult() {
   showResultShell(true);
   $("#preparedBadge").textContent = state.analysisSource === "sample" ? text().sampleRun : text().uploadedRun;
   $("#resultTitle").textContent = resultTitle(result);
-  $("#executiveBrief").textContent = result.executiveBrief;
+  $("#executiveBrief").textContent = displayAnalysisText(result.executiveBrief);
   $("#scoreValue").textContent = String(result.score);
   $("#scoreRing").style.setProperty("--score-deg", `${result.score * 3.6}deg`);
 
@@ -782,12 +1033,12 @@ function renderChecklist() {
       (row, index) => `
         <button class="checklist-row ${index === state.activeRow ? "active" : ""}" data-row="${index}" type="button">
           <span>
-            <strong>${escapeText(row.requirement)}</strong>
-            <small>${escapeText(row.category)}</small>
+            <strong>${escapeText(displayAnalysisText(row.requirement))}</strong>
+            <small>${escapeText(displayAnalysisText(row.category))}</small>
           </span>
           <span class="status-pill ${statusClass(row.status)}">${escapeText(copy.statusLabel[row.status])}</span>
           <span class="risk-${row.risk.toLowerCase()}">${escapeText(copy.riskLabel[row.risk])}</span>
-          <span class="row-response">${escapeText(row.response)}</span>
+          <span class="row-response">${escapeText(displayAnalysisText(row.response))}</span>
         </button>
       `,
     )
@@ -807,7 +1058,7 @@ function renderActiveEvidence() {
       (citation) => `
         <figure class="evidence-quote">
           <figcaption>${escapeText(citation.file || "Uploaded document")}${citation.page ? ` · ${escapeText(citation.page)}` : ""}</figcaption>
-          <blockquote>${escapeText(citation.quote || row.response)}</blockquote>
+          <blockquote>${escapeText(citation.quote || displayAnalysisText(row.response))}</blockquote>
         </figure>
       `,
     )
@@ -821,7 +1072,7 @@ function renderAttention() {
     return;
   }
   const risks = state.currentResult.risks.length ? state.currentResult.risks : [text().noMajorRisks];
-  $("#attentionList").innerHTML = risks.map((risk) => `<li>${escapeText(risk)}</li>`).join("");
+  $("#attentionList").innerHTML = risks.map((risk) => `<li>${escapeText(displayAnalysisText(risk))}</li>`).join("");
 }
 
 function renderTrace() {
@@ -835,7 +1086,7 @@ function renderTrace() {
     : ["Validated upload", "Found mandatory requirements", "Matched evidence", "Calibrated risks"];
   $("#traceList").innerHTML = trace
     .slice(0, 8)
-    .map((step, index) => `<li><span>${index + 1}</span>${escapeText(step)}</li>`)
+    .map((step, index) => `<li><span>${index + 1}</span>${escapeText(displayAnalysisText(step))}</li>`)
     .join("");
 }
 
@@ -850,16 +1101,37 @@ function renderChat() {
 
 function buildTenderMap(result) {
   const files = (result.files && result.files.length ? result.files : exampleFiles.map((file) => file.name)).slice(0, MAX_UPLOAD_FILES);
-  const rows = result.matrix.slice(0, 6);
+  const rows = result.matrix.slice(0, Math.max(6, files.length));
   return {
     files,
-    rows: rows.map((row, index) => ({
-      ...row,
-      id: `requirement-${index}-${slug(row.requirement)}`,
-      evidence: row.citations[0]?.quote || row.response,
-      file: row.citations[0]?.file || files[0] || "Uploaded document",
-    })),
+    rows: rows.map((row, index) => {
+      const fileIndex = files.length && index < files.length ? index : sourceFileIndexForRow(row, files, index);
+      return {
+        ...row,
+        id: `requirement-${index}-${slug(row.requirement)}`,
+        evidence: row.citations[0]?.quote || row.response,
+        file: files[fileIndex] || sourceFileForRow(row, files, index),
+        fileIndex,
+      };
+    }),
   };
+}
+
+function sourceFileIndexForRow(row, files, index) {
+  if (!files.length) return 0;
+  const citation = String(row.citations?.[0]?.file || "").toLowerCase();
+  if (!citation) return index % files.length;
+  const matchIndex = files.findIndex((file) => {
+    const lower = file.toLowerCase();
+    const short = shortFileName(file).toLowerCase().replace(/\s+/g, "-");
+    return lower.includes(citation) || citation.includes(short);
+  });
+  return matchIndex >= 0 ? matchIndex : index % files.length;
+}
+
+function sourceFileForRow(row, files, index) {
+  if (!files.length) return row.citations?.[0]?.file || "Uploaded document";
+  return files[sourceFileIndexForRow(row, files, index)] || files[0];
 }
 
 function renderMap() {
@@ -884,11 +1156,10 @@ function colorForRisk(risk) {
 
 function buildTenderMapSvg(map) {
   const rows = map.rows;
-  const rowHeight = 148;
-  const height = Math.max(690, 122 + Math.max(rows.length, map.files.length) * rowHeight);
+  const rowHeight = 136;
+  const height = Math.max(690, 132 + Math.max(rows.length, map.files.length) * rowHeight);
   const headers = text().mapHeaders;
   const fileRows = map.files.map((file, index) => ({ label: shortFileName(file), y: 140 + index * rowHeight }));
-  const lastFileY = fileRows[fileRows.length - 1]?.y || 140;
   const pathColor = "#aeb8b5";
 
   const fileCards = fileRows
@@ -898,13 +1169,19 @@ function buildTenderMapSvg(map) {
         <rect x="36" y="${file.y}" width="230" height="84" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
         ${svgTextLines(file.label, state.language === "ar" ? 246 : 54, file.y + 30, 184, 3)}
         <circle cx="226" cy="${file.y + 18}" r="5" fill="#4968d9"/>
-        ${index === fileRows.length - 1 ? rows.map((_, rowIndex) => {
-          const targetY = 140 + rowIndex * rowHeight + 36;
-          return `<path d="M266 ${file.y + 42} C 306 ${file.y + 42}, 296 ${targetY}, 338 ${targetY}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>`;
-        }).join("") : ""}
         </g>
       `,
     )
+    .join("");
+
+  const fileConnectors = rows
+    .map((row, index) => {
+      const source = fileRows[row.fileIndex] || fileRows[index % Math.max(1, fileRows.length)];
+      if (!source) return "";
+      const sourceY = source.y + 42;
+      const targetY = 140 + index * rowHeight + 42;
+      return `<path d="M266 ${sourceY} C 304 ${sourceY}, 300 ${targetY}, 338 ${targetY}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>`;
+    })
     .join("");
 
   const rowCards = rows
@@ -912,20 +1189,22 @@ function buildTenderMapSvg(map) {
       const y = 140 + index * rowHeight;
       const risk = colorForRisk(row.risk);
       const riskLabel = `${text().riskLabel[row.risk]}${state.language === "ar" ? "" : " risk"}`;
+      const requirement = displayAnalysisText(row.requirement);
+      const evidence = state.language === "ar" ? `دليل المصدر: ${row.evidence}` : row.evidence;
       return `
-        <g data-card="requirement-${index}">
+        <g data-card="requirement-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="340" y="${y}" width="250" height="92" rx="14" fill="#fff8e9" stroke="#e5c884" stroke-width="1.5"/>
-        ${svgTextLines(row.requirement, state.language === "ar" ? 570 : 358, y + 28, 198, 3)}
+        ${svgTextLines(requirement, state.language === "ar" ? 570 : 358, y + 28, 198, 3)}
         <circle cx="558" cy="${y + 18}" r="5" fill="#bd750f"/>
         <path d="M580 ${y + 36} L 655 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
         </g>
-        <g data-card="evidence-${index}">
+        <g data-card="evidence-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="660" y="${y}" width="270" height="92" rx="14" fill="#effaf6" stroke="#91d4c6" stroke-width="1.5"/>
-        ${svgTextLines(row.evidence, state.language === "ar" ? 910 : 678, y + 28, 216, 3)}
+        ${svgTextLines(evidence, state.language === "ar" ? 910 : 678, y + 28, 216, 3)}
         <circle cx="888" cy="${y + 18}" r="5" fill="#3f8e73"/>
         <path d="M910 ${y + 36} L 985 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
         </g>
-        <g data-card="risk-${index}">
+        <g data-card="risk-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="990" y="${y}" width="230" height="92" rx="14" fill="${risk.fill}" stroke="${risk.stroke}" stroke-width="1.5"/>
         ${svgTextLines(riskLabel, state.language === "ar" ? 1200 : 1008, y + 40, 172, 2)}
         <circle cx="1198" cy="${y + 18}" r="5" fill="${risk.dot}"/>
@@ -948,7 +1227,7 @@ function buildTenderMapSvg(map) {
       <text x="660" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[2])}</text>
       <text x="990" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[3])}</text>
       ${fileCards}
-      ${rows.length && fileRows.length ? `<path d="M266 ${lastFileY + 42} C 300 ${lastFileY + 42}, 298 ${lastFileY + 42}, 338 ${lastFileY + 42}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>` : ""}
+      ${fileConnectors}
       ${rowCards}
     </svg>
   `;
@@ -957,14 +1236,14 @@ function buildTenderMapSvg(map) {
 function buildBriefingDeck(result) {
   const compliant = result.matrix.filter((row) => row.status === "Compliant").slice(0, 3);
   const risky = result.matrix.filter((row) => row.risk !== "Low" || row.status !== "Compliant").slice(0, 4);
-  const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(row.requirement, 8)}: ${citation.quote}`));
+  const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(displayAnalysisText(row.requirement), 8)}: ${citation.quote}`));
   if (state.language === "ar") {
     return [
-      { eyebrow: "لمحة", title: "النتيجة العامة", bullets: [`${text().score}: ${result.score}/100`, "ملخص التحليل متاح مع الأدلة والمخاطر والخطوات التالية."] },
-      { eyebrow: "نقاط قوة", title: "أهم البنود الممتثلة", bullets: compliant.length ? compliant.map((row) => row.requirement) : ["لا توجد بنود ممتثلة بالكامل بعد."] },
-      { eyebrow: "انتباه", title: "أكبر المخاطر", bullets: risky.length ? risky.map((row) => `${text().riskLabel[row.risk]}: ${row.requirement}`) : ["لا توجد مخاطر رئيسية مدرجة."] },
+      { eyebrow: "لمحة", title: "النتيجة العامة", bullets: [`${text().score}: ${result.score}/100`, displayAnalysisText(result.executiveBrief)] },
+      { eyebrow: "نقاط قوة", title: "أهم البنود الممتثلة", bullets: compliant.length ? compliant.map((row) => displayAnalysisText(row.requirement)) : ["لا توجد بنود ممتثلة بالكامل بعد."] },
+      { eyebrow: "انتباه", title: "أكبر المخاطر", bullets: risky.length ? risky.map((row) => `${text().riskLabel[row.risk]}: ${displayAnalysisText(row.requirement)}`) : ["لا توجد مخاطر رئيسية مدرجة."] },
       { eyebrow: "أدلة", title: "أبرز الأدلة", bullets: evidence.length ? evidence.slice(0, 4) : ["لا توجد أدلة متاحة."] },
-      { eyebrow: "إجراء", title: "الخطوات التالية", bullets: result.nextActions.length ? result.nextActions.slice(0, 5) : ["راجع المتطلبات مع فريق المشروع."] },
+      { eyebrow: "إجراء", title: "الخطوات التالية", bullets: result.nextActions.length ? result.nextActions.slice(0, 5).map(displayAnalysisText) : ["راجع المتطلبات مع فريق المشروع."] },
     ];
   }
   return [
@@ -1021,23 +1300,23 @@ function buildQuestions(result) {
     .map((row) => ({
       question:
         state.language === "ar"
-          ? `يرجى توضيح كيفية تلبية هذا المتطلب: ${row.requirement}`
+          ? `يرجى توضيح كيفية تلبية هذا المتطلب: ${displayAnalysisText(row.requirement)}`
           : `Can you clarify how you will satisfy this requirement: ${row.requirement.charAt(0).toLowerCase()}${row.requirement.slice(1)}`,
       why:
         state.language === "ar"
-          ? `${text().statusLabel[row.status]} بمستوى مخاطر ${text().riskLabel[row.risk]}. ${row.response}`
+          ? `${text().statusLabel[row.status]} بمستوى مخاطر ${text().riskLabel[row.risk]}. ${displayAnalysisText(row.response)}`
           : `${row.status} item with ${row.risk.toLowerCase()} risk. ${row.response}`,
     }));
   const actionQuestions = result.nextActions.slice(0, 4).map((action, index) => ({
     question:
       state.language === "ar"
-        ? `ما المطلوب لتنفيذ هذا الإجراء: ${action}?`
+        ? `ما المطلوب لتنفيذ هذا الإجراء: ${displayAnalysisText(action)}?`
         : action.endsWith("?")
           ? action
           : `${action}?`,
     why:
       state.language === "ar"
-        ? result.risks[index] || "هذا الإجراء موصى به من TenderLens Agentic AI."
+        ? displayAnalysisText(result.risks[index]) || "هذا الإجراء موصى به من TenderLens Agentic AI."
         : result.risks[index] || "This action was recommended by TenderLens Agentic AI.",
   }));
   return [...rowQuestions, ...actionQuestions].slice(0, 8);
@@ -1102,8 +1381,18 @@ async function discussWithTenderLens(message, mode = "text") {
 }
 
 function svgTextLines(value, x, y, width, maxLines = 3, lineHeight = 18, options = {}) {
-  const words = String(value || "").split(/\s+/).filter(Boolean);
-  const approxChars = Math.max(8, Math.floor(width / 7.4));
+  const approxChars = Math.max(8, Math.floor(width / 7.6));
+  const words = String(value || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .flatMap((word) => {
+      if (word.length <= approxChars) return [word];
+      const chunks = [];
+      for (let index = 0; index < word.length; index += approxChars) {
+        chunks.push(word.slice(index, index + approxChars));
+      }
+      return chunks;
+    });
   const lines = [];
   let line = "";
   words.forEach((word) => {
@@ -1150,8 +1439,8 @@ async function handleChatQuestion(question, mode = "text") {
     }
     return response.answer;
   } catch (error) {
-    const fallback = error.message?.includes("503") ? text().discussUnavailable : answerQuestion(value);
-    thinking.className = "message agent";
+    const fallback = friendlyModelRetryMessage(error);
+    thinking.className = "message agent warning";
     thinking.textContent = fallback;
     state.chatHistory.push({ role: "agent", content: fallback });
     return fallback;
@@ -1160,51 +1449,10 @@ async function handleChatQuestion(question, mode = "text") {
   }
 }
 
-function answerQuestion(question) {
-  const lower = question.toLowerCase();
-  const result = state.currentResult;
-  if (!result) return text().chatNeedsAnalysis;
-  if (lower.includes("arabic") || /عرب/.test(question)) {
-    return "الخلاصة: توجد نقاط قوة واضحة، لكن يجب توضيح المخاطر والمتطلبات الجزئية قبل التقديم.";
-  }
-  if (lower.includes("missing") || lower.includes("document") || /مستند|وثيق|ناقص/.test(question)) {
-    const documents = result.missingDocuments?.length ? result.missingDocuments : result.nextActions;
-    return documents.length
-      ? `Documents or confirmations to close: ${documents.slice(0, 4).join(" ")}`
-      : "No missing documents are listed in the current analysis.";
-  }
-  if (lower.includes("next") || lower.includes("action") || /خطو|إجراء/.test(question)) {
-    return result.nextActions.length
-      ? `Next actions: ${result.nextActions.slice(0, 4).join(" ")}`
-      : "No next actions are listed in the current analysis.";
-  }
-  if (lower.includes("evidence") || lower.includes("citation") || lower.includes("checklist") || /دليل|أدلة/.test(question)) {
-    const row = result.matrix[state.activeRow] || result.matrix[0];
-    const evidence = row?.citations?.map((citation) => `${citation.file}: ${citation.quote}`).join(" ");
-    return row && evidence
-      ? `${row.requirement} Evidence: ${evidence}`
-      : "No evidence quote is selected yet.";
-  }
-  if (lower.includes("risk") || lower.includes("مخاطر")) {
-    return result.risks.slice(0, 3).join(" ");
-  }
-  if (lower.includes("partial") || lower.includes("جزئي")) {
-    const row = result.matrix.find((item) => item.status === "Partial") || result.matrix[0];
-    return `${row.requirement}: ${row.response}`;
-  }
-  if (lower.includes("ask") || lower.includes("issuer") || lower.includes("vendor") || lower.includes("سأ")) {
-    return buildQuestions(result)[0]?.question || "Ask the issuer to confirm every mandatory requirement with source-backed evidence.";
-  }
-  const queryTerms = lower.split(/[^a-z0-9]+/).filter((word) => word.length > 4);
-  const matchedRow = result.matrix.find((row) => {
-    const haystack = `${row.requirement} ${row.response} ${row.category} ${row.citations.map((citation) => `${citation.file} ${citation.quote}`).join(" ")}`.toLowerCase();
-    return queryTerms.some((word) => haystack.includes(word));
-  });
-  if (matchedRow) {
-    const citation = matchedRow.citations[0];
-    return `${matchedRow.requirement} ${matchedRow.response}${citation ? ` Evidence: ${citation.file}: ${citation.quote}` : ""}`;
-  }
-  return result.executiveBrief;
+function friendlyModelRetryMessage(error) {
+  const message = String(error?.message || "");
+  if (message.toLowerCase().includes("please try again after some time")) return message;
+  return text().discussUnavailable;
 }
 
 async function postJson(path, payload, timeoutMs = 7000) {
@@ -1217,7 +1465,18 @@ async function postJson(path, payload, timeoutMs = 7000) {
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      let detail = `HTTP ${response.status}`;
+      try {
+        const body = await response.json();
+        detail = typeof body.detail === "string" ? body.detail : body.detail?.message || body.message || detail;
+      } catch {
+        // Keep HTTP status as detail.
+      }
+      const error = new Error(detail);
+      error.status = response.status;
+      throw error;
+    }
     return await response.json();
   } finally {
     window.clearTimeout(timer);
@@ -1242,7 +1501,7 @@ async function postFormData(path, formData, timeoutMs = 60000, options = {}) {
       let detail = `HTTP ${response.status}`;
       try {
         const body = await response.json();
-        detail = body.detail || detail;
+        detail = typeof body.detail === "string" ? body.detail : body.detail?.message || body.message || detail;
       } catch {
         // Keep HTTP status as detail.
       }
@@ -1263,65 +1522,6 @@ function createUploadAnalysisFormData() {
   formData.append("language", state.language);
   formData.append("voice", "false");
   return formData;
-}
-
-async function buildLocalUploadedResult() {
-  const textFiles = state.uploadedFiles.filter((file) => [".txt", ".md"].includes(extension(file.name)));
-  if (!textFiles.length) throw new Error(text().unsupportedLocal);
-  const entries = await Promise.all(textFiles.map(async (file) => ({ file, content: await file.text() })));
-  const combined = entries.map((entry) => entry.content).join("\n\n").toLowerCase();
-  const has = (pattern) => pattern.test(combined);
-  const rows = [
-    {
-      requirement: "Mandatory certifications and eligibility evidence should be present.",
-      category: "Eligibility",
-      status: has(/iso|certification|license|qualified/) ? "Compliant" : "Needs Review",
-      risk: has(/iso|certification|license|qualified/) ? "Low" : "Medium",
-      response: has(/iso|certification|license|qualified/)
-        ? "Uploaded text contains certification or eligibility language."
-        : "No clear certification or eligibility evidence was found in text-readable files.",
-      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
-    },
-    {
-      requirement: "Submission deadline and required documents should be confirmed.",
-      category: "Submission",
-      status: has(/deadline|submission|submit|envelope/) ? "Partial" : "Needs Review",
-      risk: has(/deadline|submission|submit|envelope/) ? "Medium" : "High",
-      response: has(/deadline|submission|submit|envelope/)
-        ? "Deadline or submission language is present, but the exact checklist should be verified."
-        : "No reliable deadline language was found in text-readable files.",
-      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
-    },
-    {
-      requirement: "Delivery risks, service levels, and implementation constraints should be assessed.",
-      category: "Delivery",
-      status: has(/risk|sla|delivery|implementation|mobilization|penalty/) ? "Partial" : "Needs Review",
-      risk: has(/penalty|late|delay|risk/) ? "High" : "Medium",
-      response: has(/risk|sla|delivery|implementation|mobilization|penalty/)
-        ? "Delivery or service-level language was detected and should be clarified."
-        : "No delivery risk language was found in text-readable files.",
-      citations: [{ file: entries[entries.length - 1].file.name, quote: firstWords(entries[entries.length - 1].content, 24) }],
-    },
-    {
-      requirement: "Pricing, bid security, insurance, or commercial attachments should be checked.",
-      category: "Commercial",
-      status: has(/price|commercial|bond|security|insurance|guarantee/) ? "Partial" : "Gap",
-      risk: has(/bond|security|insurance|guarantee/) ? "Medium" : "High",
-      response: has(/price|commercial|bond|security|insurance|guarantee/)
-        ? "Commercial language is present, but TenderLens needs source-backed validation."
-        : "No clear commercial evidence was found in text-readable files.",
-      citations: [{ file: entries[0].file.name, quote: firstWords(entries[0].content, 24) }],
-    },
-  ];
-  return normalizeResult({
-    executiveBrief:
-      "Uploaded text-readable files were reviewed locally because the live backend was unavailable. Treat this as a bounded draft until the cloud runtime validates every source document.",
-    matrix: rows,
-    trace: ["Validated files", "Read text locally", "Derived checklist rows", "Calculated deterministic score"],
-    risks: ["Cloud backend validation is not connected for this run.", "PDF, DOCX, and image parsing require the production backend."],
-    nextActions: ["Connect the deployed backend runtime.", "Verify all mandatory requirements against source documents."],
-    files: state.uploadedFiles.map((file) => file.name),
-  });
 }
 
 async function runAnalysis() {
@@ -1345,18 +1545,16 @@ async function runAnalysis() {
     state.currentResult = reportToComplianceResult(result.report);
     state.currentReport = result.report;
     state.analysisSource = "uploaded";
+    state.analysisError = null;
     $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length);
   } catch (error) {
-    try {
-      state.currentResult = await buildLocalUploadedResult();
-      state.currentReport = resultToReport(state.currentResult);
-      state.analysisSource = "uploaded";
-      $("#uploadStatus").textContent = text().backendUnavailable;
-    } catch (localError) {
-      $("#uploadStatus").textContent = localError.message || error.message || text().unsupportedLocal;
-      $("#uploadStatus").classList.add("error");
-      return;
-    }
+    state.currentResult = null;
+    state.currentReport = null;
+    state.analysisError = "model";
+    $("#uploadStatus").textContent = friendlyAnalysisRetryMessage(error);
+    $("#uploadStatus").classList.add("error");
+    renderEmptyWorkspace();
+    return;
   } finally {
     setAnalyzing(false);
   }
@@ -1365,21 +1563,29 @@ async function runAnalysis() {
   renderResult();
 }
 
+function friendlyAnalysisRetryMessage(error) {
+  const message = String(error?.message || "");
+  if (message.toLowerCase().includes("please try again after some time")) return message;
+  return text().backendUnavailable;
+}
+
 function useExampleFiles() {
   state.currentResult = normalizeResult(structuredClone(exampleResult));
   state.currentReport = resultToReport(state.currentResult);
   state.analysisSource = "sample";
+  state.analysisError = null;
   state.uploadedFiles = [];
   state.activeRow = 0;
   state.activeSlide = 0;
   $("#fileInput").value = "";
   $("#uploadStatus").classList.remove("error");
-  $("#uploadStatus").textContent = "Example files show prepared results so you can explore the workspace quickly.";
+  $("#uploadStatus").textContent = text().exampleStatus;
   renderResult();
 }
 
 function selectFiles(files) {
   state.uploadedFiles = Array.from(files).slice(0, MAX_UPLOAD_FILES);
+  state.analysisError = null;
   const validation = validateSelectedFiles(state.uploadedFiles);
   $("#uploadStatus").textContent = validation.message;
   $("#uploadStatus").classList.toggle("error", !validation.ok);
@@ -1395,6 +1601,7 @@ function startFresh() {
   state.currentReport = null;
   state.uploadedFiles = [];
   state.analysisSource = "empty";
+  state.analysisError = null;
   state.chatHistory = [];
   state.activeRow = 0;
   state.activeSlide = 0;
@@ -1450,12 +1657,12 @@ function renderOnboarding() {
 function closeWelcome(persist = true) {
   $("#welcomeModal").classList.add("hidden");
   if (persist) {
-    window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
+    window.localStorage.setItem(WELCOME_STORAGE_KEY, "yes");
   }
 }
 
 function showWelcomeIfNeeded() {
-  if (window.localStorage.getItem("tenderlens-welcome-dismissed") !== "yes") {
+  if (window.localStorage.getItem(WELCOME_STORAGE_KEY) !== "yes") {
     $("#welcomeModal").classList.remove("hidden");
   }
 }
@@ -1504,13 +1711,16 @@ function reportText() {
     "TenderLens Agentic AI",
     `${text().score}: ${result.score}/100`,
     "",
-    result.executiveBrief,
+    displayAnalysisText(result.executiveBrief),
     "",
-    "Checklist",
-    ...result.matrix.map((row, index) => `${index + 1}. [${row.status} / ${row.risk}] ${row.requirement} - ${row.response}`),
+    text().checklist,
+    ...result.matrix.map(
+      (row, index) =>
+        `${index + 1}. [${text().statusLabel[row.status]} / ${text().riskLabel[row.risk]}] ${displayAnalysisText(row.requirement)} - ${displayAnalysisText(row.response)}`,
+    ),
     "",
-    "Next actions",
-    ...result.nextActions.map((action, index) => `${index + 1}. ${action}`),
+    state.language === "ar" ? "الخطوات التالية" : "Next actions",
+    ...result.nextActions.map((action, index) => `${index + 1}. ${displayAnalysisText(action)}`),
   ].join("\n");
 }
 
@@ -1560,23 +1770,74 @@ async function downloadPptxReport() {
   const deck = buildBriefingDeck(state.currentResult);
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE";
-  deck.forEach((item) => {
+  const rect = pptx.ShapeType?.rect || "rect";
+  const slideW = 13.333;
+  const slideH = 7.5;
+  deck.forEach((item, index) => {
     const slide = pptx.addSlide();
-    slide.background = { color: "FFFDF8" };
-    slide.addText(item.eyebrow.toUpperCase(), { x: 0.6, y: 0.45, w: 4, h: 0.3, fontFace: "Arial", fontSize: 11, bold: true, color: "0F8B83" });
-    slide.addText(item.title, { x: 0.6, y: 0.9, w: 11.8, h: 0.65, fontFace: "Arial", fontSize: 28, bold: true, color: "101214", fit: "shrink" });
-    slide.addText(item.bullets.slice(0, 5).map((bullet) => ({ text: String(bullet), options: { bullet: { type: "ul" } } })), {
-      x: 0.8,
-      y: 1.9,
-      w: 11.2,
-      h: 4.8,
+    slide.background = { color: "0B302F" };
+    slide.addShape(rect, { x: 0, y: 0, w: slideW, h: slideH, fill: { color: "0B302F" }, line: { color: "0B302F" } });
+    slide.addShape(rect, { x: 0.52, y: 0.46, w: 12.28, h: 6.55, fill: { color: "F8F2E6" }, line: { color: "E3D8C5", transparency: 20 } });
+    slide.addShape(rect, { x: state.language === "ar" ? 11.98 : 0.52, y: 0.46, w: 0.18, h: 6.55, fill: { color: "0F8B83" }, line: { color: "0F8B83" } });
+    slide.addShape(rect, { x: state.language === "ar" ? 0.8 : 11.2, y: 0.75, w: 1.2, h: 0.42, fill: { color: "0B302F" }, line: { color: "0B302F" } });
+    slide.addText(`${index + 1}/${deck.length}`, {
+      x: state.language === "ar" ? 0.8 : 11.2,
+      y: 0.84,
+      w: 1.2,
+      h: 0.2,
       fontFace: "Arial",
-      fontSize: 16,
+      fontSize: 10,
+      bold: true,
+      color: "F8F2E6",
+      align: "center",
+    });
+    slide.addText(item.eyebrow.toUpperCase(), {
+      x: 0.92,
+      y: 0.78,
+      w: 4.2,
+      h: 0.3,
+      fontFace: "Arial",
+      fontSize: 11,
+      bold: true,
+      color: "0F8B83",
+      align: state.language === "ar" ? "right" : "left",
+    });
+    slide.addText(item.title, {
+      x: 0.92,
+      y: 1.2,
+      w: 10.7,
+      h: 0.75,
+      fontFace: "Arial",
+      fontSize: 30,
+      bold: true,
+      color: "101214",
+      fit: "shrink",
+      align: state.language === "ar" ? "right" : "left",
+    });
+    slide.addShape(rect, { x: 0.92, y: 2.2, w: 10.95, h: 3.85, fill: { color: "FFFFFF", transparency: 5 }, line: { color: "E5DED1" } });
+    slide.addText(item.bullets.slice(0, 5).map((bullet) => ({ text: String(bullet), options: { bullet: { type: "ul" } } })), {
+      x: 1.15,
+      y: 2.48,
+      w: 10.35,
+      h: 3.32,
+      fontFace: "Arial",
+      fontSize: 15,
       color: "30363D",
       breakLine: false,
       fit: "shrink",
+      align: state.language === "ar" ? "right" : "left",
     });
-    slide.addText("TENDERLENS AGENTIC AI", { x: 9.6, y: 6.85, w: 2.8, h: 0.25, fontFace: "Arial", fontSize: 9, bold: true, color: "0F8B83", align: "right" });
+    slide.addText("TENDERLENS AGENTIC AI", {
+      x: state.language === "ar" ? 0.92 : 9.15,
+      y: 6.55,
+      w: 2.8,
+      h: 0.25,
+      fontFace: "Arial",
+      fontSize: 9,
+      bold: true,
+      color: "0F8B83",
+      align: state.language === "ar" ? "left" : "right",
+    });
   });
   await pptx.writeFile({ fileName: "tenderlens-analysis.pptx" });
 }
@@ -1609,8 +1870,14 @@ function downloadMap() {
 async function startVoice() {
   $("#voiceOverlay").classList.remove("hidden");
   $("#transcript").textContent = "";
+  window.speechSynthesis?.cancel?.();
+  if (state.recognition) {
+    state.recognition.onend = null;
+    state.recognition.abort?.();
+    state.recognition = null;
+  }
   if (!state.currentResult) {
-    $("#voiceStateLabel").textContent = "Analysis needed";
+    $("#voiceStateLabel").textContent = state.language === "ar" ? "التحليل مطلوب" : "Analysis needed";
     $("#voiceHelp").textContent = text().voiceNeedsAnalysis;
     $("#transcript").textContent = text().chatNeedsAnalysis;
     return;
@@ -1618,28 +1885,34 @@ async function startVoice() {
   const Recognition = window.webkitSpeechRecognition || window.SpeechRecognition;
   if (!Recognition) {
     $("#voiceStateLabel").textContent = text().voiceUnsupported;
-    $("#voiceHelp").textContent = "This browser does not support speech recognition. Please use typed chat.";
-    $("#transcript").textContent = "Speech recognition is unavailable in this browser.";
+    $("#voiceHelp").textContent = text().voiceUnsupportedBody;
+    $("#transcript").textContent = text().voiceUnsupportedBody;
     return;
   }
   $("#voiceStateLabel").textContent = text().voiceReady;
-  $("#voiceHelp").textContent = "Ask about risks, evidence, missing documents, or next actions.";
-  $("#transcript").textContent = `Ready to discuss: ${state.currentResult.executiveBrief}`;
+  $("#voiceHelp").textContent = text().voiceReadyBody;
+  $("#transcript").textContent =
+    state.language === "ar"
+      ? `جاهز للمناقشة: ${displayAnalysisText(state.currentResult.executiveBrief)}`
+      : `Ready to discuss: ${displayAnalysisText(state.currentResult.executiveBrief)}`;
   try {
     const recognition = new Recognition();
     state.recognition = recognition;
+    let handlingResult = false;
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = state.language === "ar" ? "ar-SA" : "en-US";
     recognition.onstart = () => {
       $("#voiceStateLabel").textContent = text().voiceListening;
-      $("#voiceHelp").textContent = "Listening for your question.";
+      $("#voiceHelp").textContent = text().voiceListeningBody;
     };
     recognition.onerror = () => {
       $("#voiceStateLabel").textContent = text().voiceError;
-      $("#voiceHelp").textContent = "Microphone or speech recognition failed. Typed chat remains available.";
+      $("#voiceHelp").textContent = text().voiceErrorBody;
+      state.recognition = null;
     };
     recognition.onresult = async (event) => {
+      handlingResult = true;
       const transcript = event.results?.[0]?.[0]?.transcript || "";
       if (!transcript.trim()) return;
       $("#voiceStateLabel").textContent = text().voiceProcessing;
@@ -1653,16 +1926,27 @@ async function startVoice() {
         utterance.lang = state.language === "ar" ? "ar-SA" : "en-US";
         utterance.onend = () => {
           $("#voiceStateLabel").textContent = text().voiceReady;
+          $("#voiceHelp").textContent = text().voiceReadyBody;
         };
         window.speechSynthesis.speak(utterance);
       } else {
         $("#voiceStateLabel").textContent = text().voiceReady;
       }
+      state.recognition = null;
+      handlingResult = false;
+    };
+    recognition.onend = () => {
+      if (state.recognition === recognition) state.recognition = null;
+      if (!handlingResult && $("#voiceOverlay").classList.contains("hidden") === false) {
+        $("#voiceStateLabel").textContent = text().voiceReady;
+        $("#voiceHelp").textContent = text().voiceReadyBody;
+      }
     };
     recognition.start();
   } catch {
     $("#voiceStateLabel").textContent = text().voiceError;
-    $("#voiceHelp").textContent = "Microphone unavailable. Typing mode remains available.";
+    $("#voiceHelp").textContent = text().voiceErrorBody;
+    state.recognition = null;
   }
 }
 
@@ -1789,10 +2073,12 @@ function bindEvents() {
   });
 
   $("#muteVoice").addEventListener("click", () => {
-    $("#voiceStateLabel").textContent = "Muted";
+    window.speechSynthesis?.cancel?.();
+    $("#voiceStateLabel").textContent = text().voiceMuted;
   });
   $("#interruptVoice").addEventListener("click", () => {
-    $("#voiceStateLabel").textContent = "Interrupted";
+    $("#voiceStateLabel").textContent = text().voiceInterrupted;
+    void startVoice();
   });
   $("#endVoice").addEventListener("click", stopVoice);
   window.addEventListener("hashchange", handleHashRoute);
