@@ -2205,3 +2205,29 @@ img {
     border-width: 4px;
   }
 }
+
+.model-status-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background-color: var(--danger-bg, #fef2f2);
+  border: 1px solid var(--danger-border, #fca5a5);
+  border-radius: var(--radius-md, 8px);
+  color: var(--danger-text, #991b1b);
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+.model-status-alert.hidden {
+  display: none !important;
+}
+
+.model-status-alert .warning-icon {
+  color: var(--danger-color, #dc2626);
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}

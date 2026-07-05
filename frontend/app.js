@@ -882,6 +882,11 @@ function updateI18n() {
   $("#muteVoice").textContent = copy.voiceMute;
   $("#interruptVoice").textContent = copy.voiceListenAgain;
   $("#endVoice").textContent = copy.voiceEnd;
+  const alertNode = $("#modelStatusAlert");
+  if (alertNode && !alertNode.classList.contains("hidden")) {
+    const textNode = alertNode.querySelector(".alert-text");
+    if (textNode) textNode.textContent = copy.discussUnavailable;
+  }
   renderGuide();
   renderOnboarding();
   if (state.currentResult) renderResult();
@@ -1350,6 +1355,9 @@ function switchTab(tab) {
   state.activeTab = tab;
   $$(".workspace-tabs button").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
   $$(".tab-panel").forEach((panel) => panel.classList.toggle("hidden", panel.dataset.panel !== tab));
+  if (tab === "ask") {
+    void checkModelStatus();
+  }
 }
 
 function addChatMessage(content, role = "agent") {
@@ -1443,6 +1451,7 @@ async function handleChatQuestion(question, mode = "text") {
     thinking.className = "message agent warning";
     thinking.textContent = fallback;
     state.chatHistory.push({ role: "agent", content: fallback });
+    showModelStatusAlert(true);
     return fallback;
   } finally {
     setDiscussing(false);
@@ -1481,6 +1490,45 @@ async function postJson(path, payload, timeoutMs = 7000) {
   } finally {
     window.clearTimeout(timer);
   }
+}
+
+async function getJson(path, timeoutMs = 7000) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(requestUrl(path), {
+      method: "GET",
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+async function checkModelStatus() {
+  try {
+    const status = await getJson("/api/model-status", 5000);
+    const connected = status?.discuss?.connected;
+    showModelStatusAlert(!connected);
+  } catch (error) {
+    console.warn("Failed to check model status:", error);
+    showModelStatusAlert(true);
+  }
+}
+
+function showModelStatusAlert(show) {
+  const alertNode = $("#modelStatusAlert");
+  if (!alertNode) return;
+  alertNode.classList.toggle("hidden", !show);
+  const textNode = alertNode.querySelector(".alert-text");
+  if (textNode) {
+    textNode.textContent = text().discussUnavailable;
+  }
+  hydrateIcons(alertNode);
 }
 
 function configuredBackendUrl() {
@@ -2093,6 +2141,7 @@ function init() {
   renderEmptyWorkspace();
   showWelcomeIfNeeded();
   handleHashRoute();
+  void checkModelStatus();
 }
 
 init();
