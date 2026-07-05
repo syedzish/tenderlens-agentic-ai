@@ -48,6 +48,77 @@
       </div>
     </header>
 
+    <section class="guide-page hidden" id="guidePage" aria-labelledby="guideTitle">
+      <div class="guide-shell">
+        <a class="guide-back" href="#workspace">
+          <span class="icon" data-icon="book-open" aria-hidden="true"></span>
+          Back to workspace
+        </a>
+        <section class="guide-hero">
+          <div>
+            <span class="soft-badge">How to use TenderLens Agentic AI</span>
+            <h1 id="guideTitle">Review tender documents without losing the bid decision thread.</h1>
+            <p>
+              TenderLens Agentic AI helps a bidding team upload tender files, run a grounded analysis, inspect evidence,
+              discuss the result by text or voice, and export valid briefing files for review.
+            </p>
+            <div class="guide-actions">
+              <a class="primary-action compact" href="#workspace">Open the workspace</a>
+              <a class="secondary-action compact" href="#examples">View example files</a>
+            </div>
+          </div>
+          <aside class="guide-side">
+            <article>
+              <span class="title-icon mint" data-icon="shield-check" aria-hidden="true"></span>
+              <h2>What problem does it solve?</h2>
+              <p>Long tender packs become a checklist with evidence, risks, missing documents, and next actions.</p>
+            </article>
+            <article>
+              <span class="title-icon cobalt" data-icon="presentation" aria-hidden="true"></span>
+              <h2>What do you get?</h2>
+              <p>A score, checklist, evidence panel, Tender Map, Briefing Deck, questions, live discussion, and exports.</p>
+            </article>
+          </aside>
+        </section>
+
+        <section class="guide-steps" aria-label="How TenderLens works">
+          <article><strong>1</strong><h2>Upload files or use examples</h2><p>Add tender/RFP files or run example files to explore prepared results.</p></article>
+          <article><strong>2</strong><h2>Run the analysis</h2><p>TenderLens extracts requirements, evidence, risks, missing documents, and next actions.</p></article>
+          <article><strong>3</strong><h2>Discuss with TenderLens</h2><p>Discuss the active analysis by text or voice, grounded in the report context.</p></article>
+          <article><strong>4</strong><h2>Export and review</h2><p>Download valid PDF, DOCX, PPTX, TXT, and SVG outputs for team review.</p></article>
+        </section>
+
+        <section class="guide-preview">
+          <div>
+            <span class="soft-badge">Example analysis result</span>
+            <h2>What the output looks like after analysis</h2>
+            <p>The workspace shows a score, requirement rows, cited evidence, risk attention cards, and practical questions.</p>
+          </div>
+          <div class="guide-score"><strong>78</strong><span>/100 score</span></div>
+        </section>
+
+        <section class="guide-grid" id="examples">
+          <article>
+            <h2>Example files</h2>
+            <p>Use the fictional example files to test the app quickly without uploading your own documents.</p>
+            <a href="./example-files/jeddah-fleet-maintenance-rfp.pdf" download>Jeddah Fleet Maintenance RFP · PDF</a>
+            <a href="./example-files/bid-readiness-notes.docx" download>Bid readiness notes · DOCX</a>
+            <a href="./example-files/commercial-clarification-addendum.pdf" download>Commercial clarification addendum · PDF</a>
+          </article>
+          <article>
+            <h2>Expected results</h2>
+            <p>Overall result with a score, cited checklist rows, questions to ask, Tender Map, Briefing Deck, and exports.</p>
+            <div class="guide-chips">
+              <span>What are the biggest risks?</span>
+              <span>Which documents are missing?</span>
+              <span>What evidence supports this?</span>
+              <span>Summarize in Arabic.</span>
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+
     <main class="page-shell">
       <aside class="left-rail" aria-label="File controls">
         <section class="panel upload-card">
@@ -137,6 +208,14 @@
           <div class="empty-actions">
             <button class="primary-action compact" id="emptyUploadButton" type="button" data-i18n="uploadRun">Upload files & Run Analysis</button>
             <button class="secondary-action compact" id="emptySampleButton" type="button" data-i18n="runExample">Run Analysis with example files</button>
+          </div>
+        </section>
+
+        <section class="analysis-overlay hidden" id="analysisOverlay" aria-live="assertive" aria-label="Analysis in progress">
+          <div class="analysis-loader">
+            <div class="analysis-spinner" aria-hidden="true"></div>
+            <strong data-i18n="analysisLoadingTitle">TenderLens is reviewing evidence...</strong>
+            <p data-i18n="analysisLoadingBody">Please keep this workspace open while the agents read the files and prepare the report.</p>
           </div>
         </section>
 
@@ -367,7 +446,7 @@
             <p id="welcomeBody">
               Use example files to explore prepared results, or upload your own Tender Files to run a new analysis.
             </p>
-            <a class="guide-link" href="./example-files/jeddah-fleet-maintenance-rfp.pdf" target="_blank" rel="noreferrer">
+            <a class="guide-link" href="#how-to-use">
               <span class="icon" data-icon="book-open" aria-hidden="true"></span>
               How to use TenderLens Agentic AI
             </a>
@@ -401,6 +480,9 @@
       </div>
     </section>
 
+    <script src="./vendor/jszip.min.js"></script>
+    <script src="./vendor/jspdf.umd.min.js"></script>
+    <script src="./vendor/pptxgen.bundle.js"></script>
     <script src="./runtime-config.js"></script>
     <script src="./app.js"></script>
   </body>

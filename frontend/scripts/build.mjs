@@ -22,6 +22,12 @@ await writeFile(
   `window.TENDERLENS_CONFIG = ${JSON.stringify({ backendUrl: publicBackendUrl })};\n`,
 );
 
+const vendor = join(dist, "vendor");
+await mkdir(vendor, { recursive: true });
+await copyFile(join(frontendRoot, "node_modules", "jszip", "dist", "jszip.min.js"), join(vendor, "jszip.min.js"));
+await copyFile(join(frontendRoot, "node_modules", "jspdf", "dist", "jspdf.umd.min.js"), join(vendor, "jspdf.umd.min.js"));
+await copyFile(join(frontendRoot, "node_modules", "pptxgenjs", "dist", "pptxgen.bundle.js"), join(vendor, "pptxgen.bundle.js"));
+
 for (const dir of ["brand", "example-files"]) {
   await cp(join(frontendRoot, dir), join(dist, dir), { recursive: true });
 }

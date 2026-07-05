@@ -6,6 +6,7 @@ to run locally, inside Agent Runtime passthrough, or behind Vercel server routes
 
 from __future__ import annotations
 
+import os
 from typing import Literal
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -68,6 +69,157 @@ class StrategyRequest(BaseModel):
     bid_preparation_budget_sar: int = Field(
         default=DEFAULT_ASSUMPTIONS.bid_preparation_budget_sar
     )
+
+
+class DiscussTurn(BaseModel):
+    role: Literal["user", "agent", "assistant"] = Field(default="user")
+    content: str = Field(default="")
+
+
+class DiscussRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+    language: Literal["en", "ar"] = Field(default="en")
+    mode: Literal["text", "voice"] = Field(default="text")
+    report: dict = Field(default_factory=dict)
+    history: list[DiscussTurn] = Field(default_factory=list)
+
+
+def _has_live_discuss_credentials() -> bool:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if api_key and "your-" not in api_key.lower():
+        return True
+    use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in {"1", "true", "yes"}
+    return use_vertex and bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+
+
+def _report_text(report: dict) -> str:
+    evidence = report.get("evidence") or []
+    findings = report.get("findings") or []
+    risks = report.get("risks") or []
+    return "\n".join(
+        [
+            f"Executive summary: {report.get('executive_summary', '')}",
+            f"Score: {report.get('score', '')}",
+            f"Missing documents: {', '.join(map(str, report.get('missing_documents') or []))}",
+            f"Next actions: {', '.join(map(str, report.get('next_actions') or []))}",
+            "Risks: "
+            + "; ".join(
+                str(item.get("title") or item.get("summary") or item)
+                if isinstance(item, dict)
+                else str(item)
+                for item in risks[:6]
+            ),
+            "Findings: "
+            + "; ".join(
+                str(item.get("summary") or item.get("agent") or item)
+                if isinstance(item, dict)
+                else str(item)
+                for item in findings[:8]
+            ),
+            "Evidence: "
+            + "; ".join(
+                f"{item.get('citation', '')}: {item.get('excerpt', '')}"
+                if isinstance(item, dict)
+                else str(item)
+                for item in evidence[:8]
+            ),
+        ]
+    )
+
+
+def _grounded_discuss_answer(request: DiscussRequest) -> dict:
+    report = request.report or {}
+    message = request.message.lower()
+    missing = [str(item) for item in report.get("missing_documents") or []]
+    next_actions = [str(item) for item in report.get("next_actions") or []]
+    evidence = report.get("evidence") or []
+    risks = report.get("risks") or []
+    summary = str(report.get("executive_summary") or "The active analysis is available.")
+
+    if "missing" in message or "document" in message:
+        answer = (
+            f"Documents or confirmations still needed: {', '.join(missing[:5])}."
+            if missing
+            else "The current analysis does not list missing documents."
+        )
+    elif "risk" in message:
+        risk_text = []
+        for risk in risks[:4]:
+            if isinstance(risk, dict):
+                risk_text.append(str(risk.get("title") or risk.get("mitigation") or risk))
+            else:
+                risk_text.append(str(risk))
+        answer = f"Biggest risks: {', '.join(risk_text)}." if risk_text else summary
+    elif "evidence" in message or "why" in message or "citation" in message:
+        evidence_bits = [
+            f"{item.get('citation', 'source')}: {item.get('excerpt', '')}"
+            for item in evidence[:3]
+            if isinstance(item, dict)
+        ]
+        answer = "Evidence: " + " ".join(evidence_bits) if evidence_bits else "No evidence excerpts are attached to this answer."
+    elif "next" in message or "action" in message:
+        answer = (
+            f"Next actions: {', '.join(next_actions[:5])}."
+            if next_actions
+            else "No next actions are listed in the active analysis."
+        )
+    else:
+        answer = summary
+
+    if request.language == "ar":
+        answer = f"إجابة مستندة إلى التحليل الحالي: {answer}"
+
+    citations = [
+        str(item.get("citation"))
+        for item in evidence
+        if isinstance(item, dict) and item.get("citation")
+    ][:4]
+    followups = (
+        ["ما أكبر المخاطر؟", "ما المستندات الناقصة؟", "ما الخطوات التالية؟"]
+        if request.language == "ar"
+        else ["What are the biggest risks?", "Which evidence supports this?", "What should we do next?"]
+    )
+    return {"answer": answer, "citations": citations, "followups": followups}
+
+
+def _model_discuss_answer(request: DiscussRequest) -> dict:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if api_key and api_key.startswith("test-"):
+        return _grounded_discuss_answer(request)
+    try:
+        from google import genai
+
+        if api_key:
+            client = genai.Client(api_key=api_key)
+        else:
+            client = genai.Client(
+                vertexai=True,
+                project=os.environ["GOOGLE_CLOUD_PROJECT"],
+                location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
+            )
+        language_instruction = "Answer in Arabic." if request.language == "ar" else "Answer in English."
+        prompt = (
+            "You are Discuss with TenderLens, a bidder-side tender analysis assistant. "
+            "Answer only from the provided analysis report and evidence. "
+            "If the report does not contain enough evidence, say what is missing. "
+            f"{language_instruction}\n\n"
+            f"Mode: {request.mode}\n"
+            f"Question: {request.message}\n\n"
+            f"Recent history: {[turn.model_dump() for turn in request.history[-6:]]}\n\n"
+            f"Current report:\n{_report_text(request.report)}"
+        )
+        response = client.models.generate_content(
+            model=os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.0-flash"),
+            contents=prompt,
+        )
+        answer = getattr(response, "text", "") or ""
+        if not answer.strip():
+            raise RuntimeError("Model returned an empty answer.")
+        grounded = _grounded_discuss_answer(request)
+        grounded["answer"] = answer.strip()
+        return grounded
+    except Exception as exc:  # pragma: no cover - network/client dependent.
+        raise HTTPException(status_code=502, detail=f"Live discussion model failed: {exc}") from exc
 
 
 def attach_tenderlens_api_routes(app: FastAPI) -> None:
@@ -173,6 +325,15 @@ def attach_tenderlens_api_routes(app: FastAPI) -> None:
             bid_preparation_budget_sar=request.bid_preparation_budget_sar,
         )
         return simulate_strategy_overlay(request.base_score, assumptions)
+
+    @app.post("/api/discuss")
+    def discuss(request: DiscussRequest) -> dict:
+        if not _has_live_discuss_credentials():
+            raise HTTPException(
+                status_code=503,
+                detail="Live Discuss with TenderLens model is not configured.",
+            )
+        return _model_discuss_answer(request)
 
     @app.get("/api/okf/{tender_id}/validate")
     def validate_okf(tender_id: str) -> dict:

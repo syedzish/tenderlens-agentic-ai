@@ -9,9 +9,14 @@ const state = {
   activeSlide: 0,
   onboardingSlide: 0,
   currentResult: null,
+  currentReport: null,
   uploadedFiles: [],
   analysisSource: "empty",
+  isAnalyzing: false,
+  isDiscussing: false,
+  chatHistory: [],
   voiceStream: null,
+  recognition: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -126,6 +131,16 @@ const labels = {
     noMajorRisks: "No major risks listed.",
     uploadAccepted: (count) => `${count} file${count === 1 ? "" : "s"} accepted. Run analysis to review them.`,
     running: "TenderLens is checking the evidence...",
+    analysisLoadingTitle: "TenderLens is reviewing evidence...",
+    analysisLoadingBody: "Please keep this workspace open while the agents read the files and prepare the report.",
+    discussing: "TenderLens is preparing a grounded answer...",
+    discussUnavailable: "Live Discuss with TenderLens is unavailable. Check the model configuration and try again.",
+    voiceReady: "Ready",
+    voiceListening: "Listening",
+    voiceProcessing: "Processing",
+    voiceSpeaking: "Speaking",
+    voiceUnsupported: "Unsupported",
+    voiceError: "Error",
     backendUnavailable: "Live backend analysis is unavailable. A bounded local text review was generated for this session.",
     unsupportedLocal:
       "Live backend analysis is required for PDF, DOCX, and image parsing. Use TXT/MD here or connect the cloud runtime.",
@@ -230,6 +245,16 @@ const labels = {
     noMajorRisks: "لا توجد مخاطر رئيسية مدرجة.",
     uploadAccepted: (count) => `تم قبول ${count} ملف. شغل التحليل لمراجعتها.`,
     running: "يقوم TenderLens بمراجعة الأدلة...",
+    analysisLoadingTitle: "يقوم TenderLens بمراجعة الأدلة...",
+    analysisLoadingBody: "يرجى إبقاء مساحة العمل مفتوحة بينما تقرأ الوكلاء الملفات وتجهز التقرير.",
+    discussing: "يقوم TenderLens بإعداد إجابة مستندة إلى التحليل...",
+    discussUnavailable: "المحادثة الحية مع TenderLens غير متاحة. تحقق من إعداد النموذج ثم حاول مرة أخرى.",
+    voiceReady: "جاهز",
+    voiceListening: "يستمع",
+    voiceProcessing: "يعالج",
+    voiceSpeaking: "يتحدث",
+    voiceUnsupported: "غير مدعوم",
+    voiceError: "خطأ",
     backendUnavailable: "تعذر الوصول إلى تحليل الخادم. تم إنشاء مراجعة نصية محلية محدودة لهذه الجلسة.",
     unsupportedLocal: "يتطلب تحليل PDF و DOCX والصور اتصالا بالخادم السحابي. استخدم TXT/MD هنا أو صل بيئة التشغيل السحابية.",
     quickQuestions: ["ما أكبر المخاطر؟", "لماذا هذا البند جزئي؟", "ما الذي يجب أن أسأله للمورد؟", "لخص النتائج بالعربية"],
@@ -489,6 +514,33 @@ function normalizeResult(result) {
   };
 }
 
+function resultToReport(result) {
+  if (!result) return {};
+  return result.rawReport || {
+    executive_summary: result.executiveBrief,
+    score: result.score,
+    findings: result.matrix.map((row, index) => ({
+      agent: row.category || "Checklist",
+      status: row.status === "Compliant" ? "pass" : row.status === "Gap" ? "fail" : "watch",
+      summary: row.requirement,
+      actions: [row.response],
+      evidence_ids: [`row-${index}`],
+    })),
+    evidence: result.matrix.flatMap((row, index) =>
+      row.citations.map((citation, citationIndex) => ({
+        id: `row-${index}-${citationIndex}`,
+        citation: citation.file,
+        excerpt: citation.quote,
+      })),
+    ),
+    risks: result.risks.map((risk) => (typeof risk === "string" ? { title: risk } : risk)),
+    missing_documents: result.missingDocuments,
+    next_actions: result.nextActions,
+    source_documents: result.files.map((filename) => ({ filename })),
+    workflow_trace: result.trace,
+  };
+}
+
 function reportToComplianceResult(report) {
   const evidenceById = new Map((report.evidence || []).map((item) => [item.id, item]));
   const rows = (report.findings || []).slice(0, 10).map((finding) => {
@@ -534,8 +586,11 @@ function reportToComplianceResult(report) {
     missingDocuments: report.missing_documents || [],
     nextActions: report.next_actions || [],
     files,
+    rawReport: report,
   });
-  normalized.score = calculateComplianceScore(normalized.matrix);
+  if (!Number.isFinite(report.score)) {
+    normalized.score = calculateComplianceScore(normalized.matrix);
+  }
   return normalized;
 }
 
@@ -621,9 +676,43 @@ function showResultShell(show) {
   $("#emptyResult").classList.toggle("hidden", show);
   $("#resultShell").classList.remove("hidden");
   $(".result-summary").classList.toggle("hidden", !show);
-  $$(".download-group button").forEach((button) => {
-    button.disabled = !show;
+  updateControlState();
+}
+
+function updateControlState() {
+  const busy = state.isAnalyzing || state.isDiscussing;
+  const hasResult = Boolean(state.currentResult);
+  [
+    "uploadRunButton",
+    "heroUploadButton",
+    "emptyUploadButton",
+    "useSampleButton",
+    "heroSampleButton",
+    "emptySampleButton",
+    "viewExamplesButton",
+    "startFreshButton",
+    "addMoreButton",
+    "langEn",
+    "langAr",
+  ].forEach((id) => {
+    const node = $(`#${id}`);
+    if (node) node.disabled = busy;
   });
+  ["downloadPdf", "downloadDocx", "downloadTxt", "downloadPptx", "downloadMapSvg"].forEach((id) => {
+    const node = $(`#${id}`);
+    if (node) node.disabled = busy || !hasResult;
+  });
+  const canUseVoiceButton = !state.isAnalyzing && !state.isDiscussing;
+  $("#voiceModeButton").disabled = !canUseVoiceButton;
+  $("#chatInput").disabled = state.isAnalyzing || state.isDiscussing;
+  $("#sendChat").disabled = state.isAnalyzing || state.isDiscussing || !$("#chatInput").value.trim();
+}
+
+function setAnalyzing(value) {
+  state.isAnalyzing = value;
+  $("#analysisOverlay").classList.toggle("hidden", !value);
+  document.body.classList.toggle("is-analyzing", value);
+  updateControlState();
 }
 
 function renderEmptyWorkspace() {
@@ -636,6 +725,7 @@ function renderEmptyWorkspace() {
   renderDeck();
   renderQuestions();
   switchTab(state.activeTab);
+  updateControlState();
 }
 
 function resultTitle(result) {
@@ -672,6 +762,7 @@ function renderResult() {
   renderDeck();
   renderQuestions();
   switchTab(state.activeTab);
+  updateControlState();
 }
 
 function statusClass(status) {
@@ -758,7 +849,7 @@ function renderChat() {
 }
 
 function buildTenderMap(result) {
-  const files = (result.files && result.files.length ? result.files : exampleFiles.map((file) => file.name)).slice(0, 4);
+  const files = (result.files && result.files.length ? result.files : exampleFiles.map((file) => file.name)).slice(0, MAX_UPLOAD_FILES);
   const rows = result.matrix.slice(0, 6);
   return {
     files,
@@ -776,11 +867,13 @@ function renderMap() {
     const copy = text();
     $("#tenderMapSvg").innerHTML = emptyState(copy.emptyMapTitle, copy.emptyMapBody, "network");
     $("#downloadMapSvg").disabled = true;
+    updateControlState();
     return;
   }
   const map = buildTenderMap(state.currentResult);
   $("#tenderMapSvg").innerHTML = buildTenderMapSvg(map);
   $("#downloadMapSvg").disabled = false;
+  updateControlState();
 }
 
 function colorForRisk(risk) {
@@ -791,23 +884,25 @@ function colorForRisk(risk) {
 
 function buildTenderMapSvg(map) {
   const rows = map.rows;
-  const rowHeight = 132;
-  const height = Math.max(640, 122 + rows.length * rowHeight);
+  const rowHeight = 148;
+  const height = Math.max(690, 122 + Math.max(rows.length, map.files.length) * rowHeight);
   const headers = text().mapHeaders;
-  const fileRows = map.files.map((file, index) => ({ label: shortFileName(file), y: 140 + index * 132 }));
+  const fileRows = map.files.map((file, index) => ({ label: shortFileName(file), y: 140 + index * rowHeight }));
   const lastFileY = fileRows[fileRows.length - 1]?.y || 140;
   const pathColor = "#aeb8b5";
 
   const fileCards = fileRows
     .map(
       (file, index) => `
-        <rect x="36" y="${file.y}" width="210" height="72" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
-        <text x="52" y="${file.y + 34}" font-size="14" fill="#101214">${escapeText(firstWords(file.label, 4))}</text>
+        <g data-card="file-${index}">
+        <rect x="36" y="${file.y}" width="230" height="84" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
+        ${svgTextLines(file.label, state.language === "ar" ? 246 : 54, file.y + 30, 184, 3)}
         <circle cx="226" cy="${file.y + 18}" r="5" fill="#4968d9"/>
         ${index === fileRows.length - 1 ? rows.map((_, rowIndex) => {
           const targetY = 140 + rowIndex * rowHeight + 36;
-          return `<path d="M246 ${file.y + 36} C 306 ${file.y + 36}, 286 ${targetY}, 338 ${targetY}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>`;
+          return `<path d="M266 ${file.y + 42} C 306 ${file.y + 42}, 296 ${targetY}, 338 ${targetY}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>`;
         }).join("") : ""}
+        </g>
       `,
     )
     .join("");
@@ -816,20 +911,25 @@ function buildTenderMapSvg(map) {
     .map((row, index) => {
       const y = 140 + index * rowHeight;
       const risk = colorForRisk(row.risk);
+      const riskLabel = `${text().riskLabel[row.risk]}${state.language === "ar" ? "" : " risk"}`;
       return `
-        <rect x="340" y="${y}" width="240" height="72" rx="14" fill="#fff8e9" stroke="#e5c884" stroke-width="1.5"/>
-        <text x="358" y="${y + 28}" font-size="14" fill="#101214">${escapeText(firstWords(row.requirement, 7))}</text>
-        <text x="358" y="${y + 48}" font-size="14" fill="#101214">${escapeText(firstWords(row.requirement.split(" ").slice(7).join(" "), 7))}</text>
+        <g data-card="requirement-${index}">
+        <rect x="340" y="${y}" width="250" height="92" rx="14" fill="#fff8e9" stroke="#e5c884" stroke-width="1.5"/>
+        ${svgTextLines(row.requirement, state.language === "ar" ? 570 : 358, y + 28, 198, 3)}
         <circle cx="558" cy="${y + 18}" r="5" fill="#bd750f"/>
         <path d="M580 ${y + 36} L 655 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
-        <rect x="660" y="${y}" width="250" height="72" rx="14" fill="#effaf6" stroke="#91d4c6" stroke-width="1.5"/>
-        <text x="678" y="${y + 28}" font-size="14" fill="#101214">${escapeText(firstWords(row.evidence, 7))}</text>
-        <text x="678" y="${y + 48}" font-size="14" fill="#101214">${escapeText(firstWords(row.evidence.split(" ").slice(7).join(" "), 7))}</text>
+        </g>
+        <g data-card="evidence-${index}">
+        <rect x="660" y="${y}" width="270" height="92" rx="14" fill="#effaf6" stroke="#91d4c6" stroke-width="1.5"/>
+        ${svgTextLines(row.evidence, state.language === "ar" ? 910 : 678, y + 28, 216, 3)}
         <circle cx="888" cy="${y + 18}" r="5" fill="#3f8e73"/>
         <path d="M910 ${y + 36} L 985 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
-        <rect x="990" y="${y}" width="230" height="72" rx="14" fill="${risk.fill}" stroke="${risk.stroke}" stroke-width="1.5"/>
-        <text x="1008" y="${y + 36}" font-size="14" fill="#101214">${escapeText(text().riskLabel[row.risk])} risk</text>
+        </g>
+        <g data-card="risk-${index}">
+        <rect x="990" y="${y}" width="230" height="92" rx="14" fill="${risk.fill}" stroke="${risk.stroke}" stroke-width="1.5"/>
+        ${svgTextLines(riskLabel, state.language === "ar" ? 1200 : 1008, y + 40, 172, 2)}
         <circle cx="1198" cy="${y + 18}" r="5" fill="${risk.dot}"/>
+        </g>
       `;
     })
     .join("");
@@ -848,7 +948,7 @@ function buildTenderMapSvg(map) {
       <text x="660" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[2])}</text>
       <text x="990" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[3])}</text>
       ${fileCards}
-      ${rows.length && fileRows.length ? `<path d="M246 ${lastFileY + 36} C 300 ${lastFileY + 36}, 298 ${lastFileY + 36}, 338 ${lastFileY + 36}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>` : ""}
+      ${rows.length && fileRows.length ? `<path d="M266 ${lastFileY + 42} C 300 ${lastFileY + 42}, 298 ${lastFileY + 42}, 338 ${lastFileY + 42}" fill="none" stroke="${pathColor}" stroke-width="1.5"/>` : ""}
       ${rowCards}
     </svg>
   `;
@@ -858,6 +958,15 @@ function buildBriefingDeck(result) {
   const compliant = result.matrix.filter((row) => row.status === "Compliant").slice(0, 3);
   const risky = result.matrix.filter((row) => row.risk !== "Low" || row.status !== "Compliant").slice(0, 4);
   const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(row.requirement, 8)}: ${citation.quote}`));
+  if (state.language === "ar") {
+    return [
+      { eyebrow: "لمحة", title: "النتيجة العامة", bullets: [`${text().score}: ${result.score}/100`, "ملخص التحليل متاح مع الأدلة والمخاطر والخطوات التالية."] },
+      { eyebrow: "نقاط قوة", title: "أهم البنود الممتثلة", bullets: compliant.length ? compliant.map((row) => row.requirement) : ["لا توجد بنود ممتثلة بالكامل بعد."] },
+      { eyebrow: "انتباه", title: "أكبر المخاطر", bullets: risky.length ? risky.map((row) => `${text().riskLabel[row.risk]}: ${row.requirement}`) : ["لا توجد مخاطر رئيسية مدرجة."] },
+      { eyebrow: "أدلة", title: "أبرز الأدلة", bullets: evidence.length ? evidence.slice(0, 4) : ["لا توجد أدلة متاحة."] },
+      { eyebrow: "إجراء", title: "الخطوات التالية", bullets: result.nextActions.length ? result.nextActions.slice(0, 5) : ["راجع المتطلبات مع فريق المشروع."] },
+    ];
+  }
   return [
     { eyebrow: "Snapshot", title: "Overall result", bullets: [`${text().score}: ${result.score}/100`, result.executiveBrief] },
     { eyebrow: "Strengths", title: "Top compliance wins", bullets: compliant.length ? compliant.map((row) => row.requirement) : ["No fully compliant rows found yet."] },
@@ -880,6 +989,7 @@ function renderDeck() {
     $("#prevSlide").disabled = true;
     $("#nextSlide").disabled = true;
     $("#downloadPptx").disabled = true;
+    updateControlState();
     return;
   }
   const deck = buildBriefingDeck(state.currentResult);
@@ -901,6 +1011,7 @@ function renderDeck() {
   $("#deckDots").innerHTML = deck
     .map((item, index) => `<button class="${index === state.activeSlide ? "active" : ""}" data-slide="${index}" type="button" aria-label="${escapeText(text().deckSlide(index + 1, deck.length))}"></button>`)
     .join("");
+  updateControlState();
 }
 
 function buildQuestions(result) {
@@ -918,8 +1029,16 @@ function buildQuestions(result) {
           : `${row.status} item with ${row.risk.toLowerCase()} risk. ${row.response}`,
     }));
   const actionQuestions = result.nextActions.slice(0, 4).map((action, index) => ({
-    question: action.endsWith("?") ? action : `${action}?`,
-    why: result.risks[index] || "This action was recommended by TenderLens Agentic AI.",
+    question:
+      state.language === "ar"
+        ? `ما المطلوب لتنفيذ هذا الإجراء: ${action}?`
+        : action.endsWith("?")
+          ? action
+          : `${action}?`,
+    why:
+      state.language === "ar"
+        ? result.risks[index] || "هذا الإجراء موصى به من TenderLens Agentic AI."
+        : result.risks[index] || "This action was recommended by TenderLens Agentic AI.",
   }));
   return [...rowQuestions, ...actionQuestions].slice(0, 8);
 }
@@ -960,6 +1079,85 @@ function addChatMessage(content, role = "agent") {
   node.textContent = content;
   $("#chatLog").appendChild(node);
   $("#chatLog").scrollTop = $("#chatLog").scrollHeight;
+  return node;
+}
+
+async function discussWithTenderLens(message, mode = "text") {
+  if (!state.currentResult) {
+    return { answer: text().chatNeedsAnalysis, citations: [], followups: [] };
+  }
+  const payload = {
+    message,
+    language: state.language,
+    mode,
+    report: state.currentReport || resultToReport(state.currentResult),
+    history: state.chatHistory.slice(-8),
+  };
+  const response = await postJson("/api/discuss", payload, 30000);
+  return {
+    answer: response.answer || text().discussUnavailable,
+    citations: response.citations || [],
+    followups: response.followups || [],
+  };
+}
+
+function svgTextLines(value, x, y, width, maxLines = 3, lineHeight = 18, options = {}) {
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  const approxChars = Math.max(8, Math.floor(width / 7.4));
+  const lines = [];
+  let line = "";
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > approxChars && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) lines.push(line);
+  const clipped = lines.slice(0, maxLines);
+  if (lines.length > maxLines) clipped[maxLines - 1] = `${clipped[maxLines - 1].replace(/\.*$/, "")}...`;
+  const anchor = options.anchor || (state.language === "ar" ? "end" : "start");
+  const direction = options.direction || (state.language === "ar" ? "rtl" : "ltr");
+  return `<text x="${x}" y="${y}" font-size="${options.size || 13}" fill="${options.fill || "#101214"}" text-anchor="${anchor}" direction="${direction}">${clipped
+    .map((item, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeText(item)}</tspan>`)
+    .join("")}</text>`;
+}
+
+function setDiscussing(value) {
+  state.isDiscussing = value;
+  updateControlState();
+}
+
+async function handleChatQuestion(question, mode = "text") {
+  const value = question.trim();
+  if (!value) return "";
+  addChatMessage(value, "user");
+  state.chatHistory.push({ role: "user", content: value });
+  const thinking = addChatMessage(text().discussing, "agent thinking");
+  setDiscussing(true);
+  try {
+    const response = await discussWithTenderLens(value, mode);
+    thinking.className = "message agent";
+    thinking.textContent = response.answer;
+    state.chatHistory.push({ role: "agent", content: response.answer });
+    if (response.followups?.length) {
+      $("#quickQuestions").innerHTML = response.followups
+        .slice(0, 4)
+        .map((questionText) => `<button type="button" data-question="${escapeText(questionText)}">${escapeText(questionText)}</button>`)
+        .join("");
+    }
+    return response.answer;
+  } catch (error) {
+    const fallback = error.message?.includes("503") ? text().discussUnavailable : answerQuestion(value);
+    thinking.className = "message agent";
+    thinking.textContent = fallback;
+    state.chatHistory.push({ role: "agent", content: fallback });
+    return fallback;
+  } finally {
+    setDiscussing(false);
+  }
 }
 
 function answerQuestion(question) {
@@ -1141,14 +1339,17 @@ async function runAnalysis() {
     return;
   }
 
+  setAnalyzing(true);
   try {
     const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 60000, { preferBackend: true });
     state.currentResult = reportToComplianceResult(result.report);
+    state.currentReport = result.report;
     state.analysisSource = "uploaded";
     $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length);
   } catch (error) {
     try {
       state.currentResult = await buildLocalUploadedResult();
+      state.currentReport = resultToReport(state.currentResult);
       state.analysisSource = "uploaded";
       $("#uploadStatus").textContent = text().backendUnavailable;
     } catch (localError) {
@@ -1156,6 +1357,8 @@ async function runAnalysis() {
       $("#uploadStatus").classList.add("error");
       return;
     }
+  } finally {
+    setAnalyzing(false);
   }
   state.activeRow = 0;
   state.activeSlide = 0;
@@ -1164,6 +1367,7 @@ async function runAnalysis() {
 
 function useExampleFiles() {
   state.currentResult = normalizeResult(structuredClone(exampleResult));
+  state.currentReport = resultToReport(state.currentResult);
   state.analysisSource = "sample";
   state.uploadedFiles = [];
   state.activeRow = 0;
@@ -1188,8 +1392,10 @@ function selectFiles(files) {
 
 function startFresh() {
   state.currentResult = null;
+  state.currentReport = null;
   state.uploadedFiles = [];
   state.analysisSource = "empty";
+  state.chatHistory = [];
   state.activeRow = 0;
   state.activeSlide = 0;
   $("#fileInput").value = "";
@@ -1254,8 +1460,25 @@ function showWelcomeIfNeeded() {
   }
 }
 
+function showGuide(show) {
+  $("#guidePage").classList.toggle("hidden", !show);
+  $(".page-shell").classList.toggle("hidden", show);
+  if (show) {
+    closeWelcome(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+}
+
+function handleHashRoute() {
+  showGuide(window.location.hash === "#how-to-use");
+}
+
 function downloadTextFile(filename, content, type = "text/plain") {
   const blob = new Blob([content], { type });
+  downloadBlob(filename, blob);
+}
+
+function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -1264,6 +1487,14 @@ function downloadTextFile(filename, content, type = "text/plain") {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function xmlEscape(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function reportText() {
@@ -1283,11 +1514,91 @@ function reportText() {
   ].join("\n");
 }
 
-function downloadReport(format) {
+async function downloadPdfReport(content) {
+  const jsPDF = window.jspdf?.jsPDF;
+  if (!jsPDF) throw new Error("PDF generator is unavailable.");
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const lines = doc.splitTextToSize(content, 500);
+  let y = 48;
+  lines.forEach((line) => {
+    if (y > 780) {
+      doc.addPage();
+      y = 48;
+    }
+    doc.text(line, 48, y);
+    y += 16;
+  });
+  doc.save("tenderlens-analysis.pdf");
+}
+
+async function downloadDocxReport(content) {
+  if (!window.JSZip) throw new Error("DOCX generator is unavailable.");
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  zip.folder("_rels").file(".rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  const paragraphs = content
+    .split(/\n+/)
+    .map((line) => `<w:p><w:r><w:t xml:space="preserve">${xmlEscape(line)}</w:t></w:r></w:p>`)
+    .join("");
+  zip.folder("word").file("document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paragraphs}<w:sectPr/></w:body></w:document>`);
+  const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  downloadBlob("tenderlens-analysis.docx", blob);
+}
+
+async function downloadPptxReport() {
+  const PptxGenJS = window.PptxGenJS || window.pptxgen || window.pptxgenjs;
+  if (!PptxGenJS) throw new Error("PPTX generator is unavailable.");
+  const deck = buildBriefingDeck(state.currentResult);
+  const pptx = new PptxGenJS();
+  pptx.layout = "LAYOUT_WIDE";
+  deck.forEach((item) => {
+    const slide = pptx.addSlide();
+    slide.background = { color: "FFFDF8" };
+    slide.addText(item.eyebrow.toUpperCase(), { x: 0.6, y: 0.45, w: 4, h: 0.3, fontFace: "Arial", fontSize: 11, bold: true, color: "0F8B83" });
+    slide.addText(item.title, { x: 0.6, y: 0.9, w: 11.8, h: 0.65, fontFace: "Arial", fontSize: 28, bold: true, color: "101214", fit: "shrink" });
+    slide.addText(item.bullets.slice(0, 5).map((bullet) => ({ text: String(bullet), options: { bullet: { type: "ul" } } })), {
+      x: 0.8,
+      y: 1.9,
+      w: 11.2,
+      h: 4.8,
+      fontFace: "Arial",
+      fontSize: 16,
+      color: "30363D",
+      breakLine: false,
+      fit: "shrink",
+    });
+    slide.addText("TENDERLENS AGENTIC AI", { x: 9.6, y: 6.85, w: 2.8, h: 0.25, fontFace: "Arial", fontSize: 9, bold: true, color: "0F8B83", align: "right" });
+  });
+  await pptx.writeFile({ fileName: "tenderlens-analysis.pptx" });
+}
+
+async function downloadReport(format) {
   if (!state.currentResult) return;
   const content = reportText();
-  const ext = format === "docx" ? "doc" : format;
-  downloadTextFile(`tenderlens-analysis.${ext}`, content, format === "pdf" ? "application/pdf" : "text/plain");
+  if (format === "txt") {
+    downloadTextFile("tenderlens-analysis.txt", content);
+    return;
+  }
+  if (format === "pdf") {
+    await downloadPdfReport(content);
+    return;
+  }
+  if (format === "docx") {
+    await downloadDocxReport(content);
+    return;
+  }
+  if (format === "pptx") {
+    await downloadPptxReport();
+  }
 }
 
 function downloadMap() {
@@ -1304,22 +1615,63 @@ async function startVoice() {
     $("#transcript").textContent = text().chatNeedsAnalysis;
     return;
   }
-  $("#voiceStateLabel").textContent = "Connecting";
-  $("#voiceHelp").textContent = "Preparing voice mode for the active analysis.";
+  const Recognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+  if (!Recognition) {
+    $("#voiceStateLabel").textContent = text().voiceUnsupported;
+    $("#voiceHelp").textContent = "This browser does not support speech recognition. Please use typed chat.";
+    $("#transcript").textContent = "Speech recognition is unavailable in this browser.";
+    return;
+  }
+  $("#voiceStateLabel").textContent = text().voiceReady;
+  $("#voiceHelp").textContent = "Ask about risks, evidence, missing documents, or next actions.";
   $("#transcript").textContent = `Ready to discuss: ${state.currentResult.executiveBrief}`;
   try {
-    state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    $("#voiceStateLabel").textContent = "Listening";
-    $("#voiceHelp").textContent = "Ask about risks, evidence, or next actions.";
+    const recognition = new Recognition();
+    state.recognition = recognition;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = state.language === "ar" ? "ar-SA" : "en-US";
+    recognition.onstart = () => {
+      $("#voiceStateLabel").textContent = text().voiceListening;
+      $("#voiceHelp").textContent = "Listening for your question.";
+    };
+    recognition.onerror = () => {
+      $("#voiceStateLabel").textContent = text().voiceError;
+      $("#voiceHelp").textContent = "Microphone or speech recognition failed. Typed chat remains available.";
+    };
+    recognition.onresult = async (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || "";
+      if (!transcript.trim()) return;
+      $("#voiceStateLabel").textContent = text().voiceProcessing;
+      $("#transcript").textContent = transcript;
+      const answer = await handleChatQuestion(transcript, "voice");
+      $("#transcript").textContent = `${transcript}\n\n${answer}`;
+      if (window.speechSynthesis && window.SpeechSynthesisUtterance) {
+        $("#voiceStateLabel").textContent = text().voiceSpeaking;
+        if (Array.isArray(window.__spokenText)) window.__spokenText.push(answer);
+        const utterance = new SpeechSynthesisUtterance(answer);
+        utterance.lang = state.language === "ar" ? "ar-SA" : "en-US";
+        utterance.onend = () => {
+          $("#voiceStateLabel").textContent = text().voiceReady;
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
+        $("#voiceStateLabel").textContent = text().voiceReady;
+      }
+    };
+    recognition.start();
   } catch {
-    $("#voiceStateLabel").textContent = "Error";
+    $("#voiceStateLabel").textContent = text().voiceError;
     $("#voiceHelp").textContent = "Microphone unavailable. Typing mode remains available.";
   }
 }
 
 function stopVoice() {
   if (state.voiceStream) state.voiceStream.getTracks().forEach((track) => track.stop());
+  if (state.recognition) state.recognition.abort?.();
+  window.speechSynthesis?.cancel?.();
   state.voiceStream = null;
+  state.recognition = null;
   $("#voiceOverlay").classList.add("hidden");
 }
 
@@ -1375,17 +1727,17 @@ function bindEvents() {
     event.preventDefault();
     const value = $("#chatInput").value.trim();
     if (!value) return;
-    addChatMessage(value, "user");
     $("#chatInput").value = "";
-    window.setTimeout(() => addChatMessage(answerQuestion(value), "agent"), 180);
+    updateControlState();
+    void handleChatQuestion(value);
   });
+  $("#chatInput").addEventListener("input", updateControlState);
 
   $("#quickQuestions").addEventListener("click", (event) => {
     const button = event.target.closest("[data-question]");
     if (!button) return;
     const question = button.dataset.question;
-    addChatMessage(question, "user");
-    window.setTimeout(() => addChatMessage(answerQuestion(question), "agent"), 180);
+    void handleChatQuestion(question);
   });
 
   $("#voiceModeButton").addEventListener("click", startVoice);
@@ -1409,10 +1761,10 @@ function bindEvents() {
     renderDeck();
   });
 
-  $("#downloadTxt").addEventListener("click", () => downloadReport("txt"));
-  $("#downloadPdf").addEventListener("click", () => downloadReport("pdf"));
-  $("#downloadDocx").addEventListener("click", () => downloadReport("docx"));
-  $("#downloadPptx").addEventListener("click", () => downloadReport("pptx"));
+  $("#downloadTxt").addEventListener("click", () => void downloadReport("txt"));
+  $("#downloadPdf").addEventListener("click", () => void downloadReport("pdf"));
+  $("#downloadDocx").addEventListener("click", () => void downloadReport("docx"));
+  $("#downloadPptx").addEventListener("click", () => void downloadReport("pptx"));
   $("#downloadMapSvg").addEventListener("click", downloadMap);
 
   $("#viewExamplesButton").addEventListener("click", () => $("#examplesModal").classList.remove("hidden"));
@@ -1422,9 +1774,8 @@ function bindEvents() {
   });
 
   $("#howToButton").addEventListener("click", () => {
-    state.onboardingSlide = 0;
-    renderOnboarding();
-    $("#welcomeModal").classList.remove("hidden");
+    window.location.hash = "how-to-use";
+    handleHashRoute();
   });
   $("#welcomeClose").addEventListener("click", () => closeWelcome());
   $("#skipOnboarding").addEventListener("click", () => closeWelcome());
@@ -1444,6 +1795,7 @@ function bindEvents() {
     $("#voiceStateLabel").textContent = "Interrupted";
   });
   $("#endVoice").addEventListener("click", stopVoice);
+  window.addEventListener("hashchange", handleHashRoute);
 }
 
 function init() {
@@ -1454,6 +1806,7 @@ function init() {
   updateI18n();
   renderEmptyWorkspace();
   showWelcomeIfNeeded();
+  handleHashRoute();
 }
 
 init();

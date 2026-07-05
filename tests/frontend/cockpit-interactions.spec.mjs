@@ -2,6 +2,26 @@ import { expect, test } from "@playwright/test";
 
 const port = Number(process.env.PORT || 3000);
 
+async function readDownloadHead(download, length = 4) {
+  const stream = await download.createReadStream();
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks).subarray(0, length).toString("binary")));
+    stream.on("error", reject);
+  });
+}
+
+async function ask(page, question) {
+  const before = await page.locator("#chatLog .message.agent").count();
+  await page.locator("#chatInput").fill(question);
+  await expect(page.locator("#sendChat")).toBeEnabled();
+  await page.locator("#sendChat").click();
+  await expect(page.locator("#chatLog .message.user").last()).toHaveText(question);
+  await page.waitForFunction((count) => document.querySelectorAll("#chatLog .message.agent").length > count, before);
+  return page.locator("#chatLog .message.agent").last();
+}
+
 async function suppressWelcome(page) {
   await page.addInitScript(() => {
     window.localStorage.setItem("tenderlens-welcome-dismissed", "yes");
@@ -21,6 +41,36 @@ test("onboarding popup walks through both reference slides", async ({ page }) =>
 
   await page.getByRole("button", { name: "Get started" }).click();
   await expect(page.locator("#welcomeModal")).toHaveClass(/hidden/);
+});
+
+test("how-to actions open the guide page instead of the onboarding modal or pdf", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "How to use" }).click();
+
+  await expect(page).toHaveURL(/#how-to-use$/);
+  await expect(page.locator("#guidePage")).toBeVisible();
+  await expect(page.locator("#welcomeModal")).toHaveClass(/hidden/);
+  await expect(page.locator("#guidePage")).toContainText("How to use TenderLens Agentic AI");
+  await expect(page.locator("#guidePage")).toContainText("Discuss with TenderLens");
+  await expect(page.getByRole("link", { name: "Back to workspace" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Back to workspace" }).click();
+  await expect(page).toHaveURL(/#workspace$/);
+  await expect(page.locator("#workspace")).toBeVisible();
+});
+
+test("onboarding guide link opens the guide page and does not navigate to a pdf", async ({ page }) => {
+  await page.goto("/");
+
+  const guideLink = page.getByRole("link", { name: "How to use TenderLens Agentic AI" });
+  await expect(guideLink).toHaveAttribute("href", "#how-to-use");
+  await guideLink.click();
+
+  await expect(page).toHaveURL(/#how-to-use$/);
+  await expect(page.locator("#guidePage")).toBeVisible();
+  await expect(page).not.toHaveURL(/\.pdf/i);
 });
 
 test("pre-analysis workspace keeps tabs and empty states visible", async ({ page }) => {
@@ -121,6 +171,52 @@ test("rejects oversized uploads before analysis", async ({ page }) => {
   await expect(page.locator("#uploadStatus")).toContainText("4 MB limit");
 });
 
+test("analysis shows a blocking premium progress state while upload review is running", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.route("**/runtime-config.js", async (route) => {
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: 'window.TENDERLENS_CONFIG = { backendUrl: "https://backend.example" };',
+    });
+  });
+  await page.route("https://backend.example/api/upload/analyze", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.fulfill({
+      status: 200,
+      headers: { "access-control-allow-origin": "*", "content-type": "application/json" },
+      body: JSON.stringify({
+        report: {
+          executive_summary: "Delayed backend analysis finished.",
+          score: 80,
+          findings: [],
+          evidence: [],
+          risks: [],
+          missing_documents: [],
+          next_actions: ["Review final submission."],
+          source_documents: [{ filename: "slow-live-test.md" }],
+          workflow_trace: ["backend.upload_analyze"],
+        },
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.locator("#fileInput").setInputFiles({
+    name: "slow-live-test.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("Submission deadline and cyber insurance are mandatory."),
+  });
+
+  await expect(page.locator("#analysisOverlay")).toBeVisible();
+  await expect(page.locator("#analysisOverlay")).toContainText("TenderLens is reviewing evidence");
+  await expect(page.locator("#useSampleButton")).toBeDisabled();
+  await expect(page.locator("#langAr")).toBeDisabled();
+  await expect(page.locator("#uploadRunButton")).toBeDisabled();
+  await expect(page.locator("#analysisOverlay")).toBeHidden({ timeout: 5000 });
+  await expect(page.locator("#useSampleButton")).toBeEnabled();
+  await expect(page.locator("#scoreValue")).toHaveText("80");
+});
+
 test("uploaded text files get a bounded deterministic analysis when backend is unavailable", async ({ page }) => {
   await suppressWelcome(page);
 
@@ -210,7 +306,7 @@ test("configured backend URL receives production uploaded-file analysis directly
   });
 
   await expect(page.locator("#uploadStatus")).toContainText("1 file accepted");
-  await expect(page.locator("#scoreValue")).toHaveText("100");
+  await expect(page.locator("#scoreValue")).toHaveText("15");
   await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
   await page.locator("#chatInput").fill("What does ZebraDock require?");
   await page.locator("#sendChat").click();
@@ -220,6 +316,179 @@ test("configured backend URL receives production uploaded-file analysis directly
   await expect(page.locator("#chatLog")).toContainText("ZebraDock permit renewal letter");
   expect(backendCalls).toBe(1);
   expect(localProxyCalls).toBe(0);
+});
+
+test("discuss sends active analysis context to backend and renders grounded model response", async ({ page }) => {
+  await suppressWelcome(page);
+
+  let discussPayload;
+  await page.route("**/api/discuss", async (route) => {
+    discussPayload = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        answer: "The biggest risk is the ZebraDock permit renewal letter, grounded in the active checklist evidence.",
+        citations: ["uploaded:zebradock-live-test.md"],
+        followups: ["Which evidence supports this?", "What should I do next?"],
+      }),
+    });
+  });
+  await page.route("**/runtime-config.js", async (route) => {
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: 'window.TENDERLENS_CONFIG = { backendUrl: "https://backend.example" };',
+    });
+  });
+  await page.route("https://backend.example/api/upload/analyze", async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: { "access-control-allow-origin": "*", "content-type": "application/json" },
+      body: JSON.stringify({
+        report: {
+          executive_summary: "ZebraDock live upload result.",
+          score: 55,
+          findings: [{ agent: "Risk Agent", status: "watch", summary: "Permit letter is missing.", actions: ["Collect permit letter."], evidence_ids: ["e1"] }],
+          evidence: [{ id: "e1", citation: "uploaded:zebradock-live-test.md", excerpt: "The permit renewal letter is mandatory." }],
+          risks: [{ title: "Permit gap", severity: "high", mitigation: "Collect permit renewal letter.", evidence_id: "e1" }],
+          missing_documents: ["ZebraDock permit renewal letter"],
+          next_actions: ["Collect permit renewal letter."],
+          source_documents: [{ filename: "zebradock-live-test.md" }],
+          workflow_trace: ["backend.upload_analyze"],
+        },
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.locator("#fileInput").setInputFiles({
+    name: "zebradock-live-test.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("The ZebraDock permit renewal letter is mandatory."),
+  });
+  await expect(page.locator("#scoreValue")).toHaveText("55");
+
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+  const response = await ask(page, "What are the biggest risks?");
+
+  await expect(response).toContainText("ZebraDock permit renewal letter");
+  expect(discussPayload.message).toBe("What are the biggest risks?");
+  expect(discussPayload.mode).toBe("text");
+  expect(discussPayload.report.executive_summary).toContain("ZebraDock");
+  expect(discussPayload.report.missing_documents).toContain("ZebraDock permit renewal letter");
+});
+
+test("voice mode captures speech, sends transcript to discuss, and speaks the model answer", async ({ page }) => {
+  await suppressWelcome(page);
+
+  await page.addInitScript(() => {
+    window.__spokenText = [];
+    window.speechSynthesis = {
+      speak(utterance) {
+        window.__spokenText.push(utterance.text);
+        setTimeout(() => utterance.onend && utterance.onend(), 0);
+      },
+      cancel() {},
+    };
+    window.SpeechSynthesisUtterance = class {
+      constructor(text) {
+        this.text = text;
+        this.lang = "";
+      }
+    };
+    window.webkitSpeechRecognition = class {
+      constructor() {
+        this.continuous = false;
+        this.interimResults = false;
+        this.lang = "en-US";
+      }
+      start() {
+        setTimeout(() => {
+          this.onresult &&
+            this.onresult({
+              results: [[{ transcript: "Which document is missing?" }]],
+            });
+        }, 0);
+      }
+      stop() {}
+      abort() {}
+    };
+  });
+  await page.route("**/api/discuss", async (route) => {
+    const payload = route.request().postDataJSON();
+    expect(payload.mode).toBe("voice");
+    expect(payload.message).toBe("Which document is missing?");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        answer: "The missing document is the 120-day bid bond letter.",
+        citations: ["bid-readiness-notes.docx"],
+        followups: [],
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+  await page.getByRole("button", { name: "Discuss with TenderLens" }).click();
+  await page.getByRole("button", { name: "Start voice mode" }).click();
+
+  await expect(page.locator("#voiceStateLabel")).toHaveText(/Listening|Processing|Speaking|Ready/, { timeout: 5000 });
+  await expect(page.locator("#transcript")).toContainText("Which document is missing?", { timeout: 5000 });
+  await expect(page.locator("#transcript")).toContainText("120-day bid bond letter", { timeout: 5000 });
+  await expect.poll(() => page.evaluate(() => window.__spokenText.join(" "))).toContain("120-day bid bond letter");
+});
+
+test("exports create valid pptx docx pdf txt files after analysis", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+
+  await page.getByRole("button", { name: "Briefing Deck" }).click();
+  {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "PPTX" }).click();
+    const download = await downloadPromise;
+    expect(await readDownloadHead(download)).toBe("PK\u0003\u0004");
+  }
+
+  for (const [name, magic] of [
+    ["PDF", "%PDF"],
+    ["DOCX", "PK\u0003\u0004"],
+    ["TXT", "Tend"],
+  ]) {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name }).click();
+    const download = await downloadPromise;
+    expect(await readDownloadHead(download)).toBe(magic);
+  }
+});
+
+test("map wraps labels and downloaded svg keeps text inside cards", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+  await page.getByRole("button", { name: "Tender Map" }).click();
+
+  await expect(page.locator("#tenderMapSvg svg text").first()).toBeVisible();
+  await expect(page.locator("#tenderMapSvg svg tspan")).not.toHaveCount(0);
+  const overflowingText = await page.locator("#tenderMapSvg svg text").evaluateAll((nodes) =>
+    nodes.filter((node) => {
+      const box = node.getBBox();
+      const parent = node.closest("g[data-card]");
+      if (!parent) return false;
+      const rect = parent.querySelector("rect");
+      const rectBox = rect.getBBox();
+      return box.x < rectBox.x - 1 || box.x + box.width > rectBox.x + rectBox.width + 1;
+    }).length,
+  );
+  expect(overflowingText).toBe(0);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "SVG" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("tenderlens-map.svg");
 });
 
 test("switches to Arabic RTL without losing result state", async ({ page }) => {
@@ -233,4 +502,22 @@ test("switches to Arabic RTL without losing result state", async ({ page }) => {
   await expect(page.locator("#scoreValue")).toHaveText("78");
   await expect(page.locator(".workspace-tabs")).toContainText("خريطة المناقصة");
   await expect(page.locator("#compliantRows")).toContainText("بنود ممتثلة");
+});
+test("Arabic mode uses valid Arabic labels across result surfaces", async ({ page }) => {
+  await suppressWelcome(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run Analysis with example files" }).first().click();
+
+  await page.locator("#langAr").click();
+
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("#scoreValue")).toHaveText("78");
+  await expect(page.locator(".workspace-tabs")).toContainText("خريطة المناقصة");
+  await expect(page.locator("#compliantRows")).toContainText("بنود ممتثلة");
+  await expect(page.locator("body")).not.toContainText("Ø");
+  await expect(page.locator("#questionsList")).not.toContainText("Can you clarify");
+  await page.getByRole("button", { name: "خريطة المناقصة" }).click();
+  await expect(page.locator("#tenderMapSvg")).toContainText("المتطلبات");
+  await page.getByRole("button", { name: "ملخص العرض" }).click();
+  await expect(page.locator("#deckTitle")).not.toHaveText("Overall result");
 });

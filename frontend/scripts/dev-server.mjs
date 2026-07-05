@@ -27,7 +27,13 @@ createServer(async (req, res) => {
       res.end("Forbidden");
       return;
     }
-    const content = await readFile(filePath);
+    let content;
+    try {
+      content = await readFile(filePath);
+    } catch (error) {
+      if (!safePath.startsWith("vendor/")) throw error;
+      content = await readFile(normalize(join(root, "dist", safePath)));
+    }
     res.writeHead(200, { "content-type": mime[extname(filePath)] || "text/plain" });
     res.end(content);
   } catch {
