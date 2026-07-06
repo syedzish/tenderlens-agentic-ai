@@ -261,6 +261,142 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
         raise HTTPException(status_code=503, detail=FRIENDLY_MODEL_RETRY) from exc
 
 
+def _translate_report_dict(report: dict, target_lang: str) -> dict:
+    import copy
+    report_copy = copy.deepcopy(report)
+    report_copy["language"] = target_lang
+
+    if not _has_live_discuss_credentials():
+        if target_lang == "ar":
+            if "Bid recommended" in report_copy.get("executive_summary", "") or "conditional bid" in report_copy.get("executive_summary", "").lower():
+                report_copy["executive_summary"] = "يوصي النظام بالمضي في العرض بشرط إغلاق المخاطر التشغيلية وتوثيق الأدلة المطلوبة قبل الموعد النهائي."
+            elif "executiveBrief" in report_copy and ("Bid recommended" in report_copy.get("executiveBrief", "") or "conditional bid" in report_copy.get("executiveBrief", "").lower()):
+                report_copy["executiveBrief"] = "يوصي النظام بالمضي في العرض بشرط إغلاق المخاطر التشغيلية وتوثيق الأدلة المطلوبة قبل الموعد النهائي."
+        else:
+            if "يوصي" in report_copy.get("executive_summary", ""):
+                report_copy["executive_summary"] = "Bid recommended: the sample bidder profile appears to meet the core eligibility requirements, the opportunity is inside budget range, and the main risks are manageable with partner confirmation."
+            elif "executiveBrief" in report_copy and "يوصي" in report_copy.get("executiveBrief", ""):
+                report_copy["executiveBrief"] = "Bid recommended: the sample bidder profile appears to meet the core eligibility requirements, the opportunity is inside budget range, and the main risks are manageable with partner confirmation."
+        return report_copy
+
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    try:
+        from google import genai
+        from google.genai import types
+
+        if api_key:
+            client = genai.Client(api_key=api_key)
+        else:
+            client = genai.Client(
+                vertexai=True,
+                project=os.environ["GOOGLE_CLOUD_PROJECT"],
+                location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-east1"),
+            )
+
+        target = "Arabic" if target_lang == "ar" else "English"
+
+        payload_to_translate = {
+            "executive_summary": report_copy.get("executive_summary") or report_copy.get("executiveBrief") or "",
+            "findings": [
+                {
+                    "summary": f.get("summary") or f.get("requirement") or "",
+                    "actions": f.get("actions") or [f.get("response")] if f.get("actions") else [f.get("response") or ""],
+                }
+                for f in (report_copy.get("findings") or report_copy.get("matrix") or [])
+            ],
+            "risks": [
+                {
+                    "title": r.get("title") or r if isinstance(r, dict) or isinstance(r, str) else "",
+                    "mitigation": r.get("mitigation") or "" if isinstance(r, dict) else "",
+                }
+                for r in (report_copy.get("risks") or [])
+            ],
+            "next_actions": report_copy.get("next_actions") or report_copy.get("nextActions") or [],
+            "clarification_questions": [
+                {
+                    "question": q.get("question") or "",
+                    "why_it_matters": q.get("why_it_matters") or q.get("why") or "",
+                }
+                for q in (report_copy.get("clarification_questions") or [])
+            ],
+            "missing_documents": report_copy.get("missing_documents") or report_copy.get("missingDocuments") or [],
+        }
+
+        prompt = f"""
+Translate the following JSON object's text values to {target}.
+You MUST return a JSON object with the exact same keys and structure.
+Keep status values, keys, numbers, booleans, and names (like 'Compliance Agent') exactly unchanged. Only translate the descriptive strings into {target}.
+
+JSON:
+{json.dumps(payload_to_translate)}
+"""
+        response = client.models.generate_content(
+            model=os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.5-flash"),
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.0,
+            )
+        )
+
+        translated_data = json.loads(response.text)
+
+        if "executive_summary" in report_copy:
+            report_copy["executive_summary"] = translated_data.get("executive_summary")
+        if "executiveBrief" in report_copy:
+            report_copy["executiveBrief"] = translated_data.get("executive_summary")
+
+        translated_findings = translated_data.get("findings") or []
+        if "findings" in report_copy and isinstance(report_copy["findings"], list):
+            for idx, f in enumerate(report_copy["findings"]):
+                if idx < len(translated_findings):
+                    tf = translated_findings[idx]
+                    f["summary"] = tf.get("summary")
+                    f["actions"] = tf.get("actions")
+        if "matrix" in report_copy and isinstance(report_copy["matrix"], list):
+            for idx, m in enumerate(report_copy["matrix"]):
+                if idx < len(translated_findings):
+                    tf = translated_findings[idx]
+                    m["requirement"] = tf.get("summary")
+                    m["response"] = (tf.get("actions") or [""])[0]
+
+        translated_risks = translated_data.get("risks") or []
+        if "risks" in report_copy and isinstance(report_copy["risks"], list):
+            for idx, r in enumerate(report_copy["risks"]):
+                if idx < len(translated_risks):
+                    tr = translated_risks[idx]
+                    if isinstance(r, str):
+                        report_copy["risks"][idx] = tr.get("title") or tr.get("mitigation") or r
+                    elif isinstance(r, dict):
+                        r["title"] = tr.get("title")
+                        r["mitigation"] = tr.get("mitigation")
+
+        if "next_actions" in report_copy:
+            report_copy["next_actions"] = translated_data.get("next_actions") or []
+        if "nextActions" in report_copy:
+            report_copy["nextActions"] = translated_data.get("next_actions") or []
+
+        translated_questions = translated_data.get("clarification_questions") or []
+        if "clarification_questions" in report_copy and isinstance(report_copy["clarification_questions"], list):
+            for idx, q in enumerate(report_copy["clarification_questions"]):
+                if idx < len(translated_questions):
+                    tq = translated_questions[idx]
+                    q["question"] = tq.get("question")
+                    q["why_it_matters"] = tq.get("why_it_matters")
+
+        if "missing_documents" in report_copy:
+            report_copy["missing_documents"] = translated_data.get("missing_documents") or []
+        if "missingDocuments" in report_copy:
+            report_copy["missingDocuments"] = translated_data.get("missing_documents") or []
+
+        return report_copy
+
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Report translation failed helper: %s: %s", type(exc).__name__, exc)
+        return report_copy
+
+
 def attach_tenderlens_api_routes(app: FastAPI) -> None:
     @app.post("/api/translate-report")
     def translate_report_endpoint(request: TranslateReportRequest) -> dict:
@@ -422,11 +558,20 @@ JSON:
             report = run_tender_analysis(
                 tender_id=request.tender_id,
                 profile_id=request.profile_id,
-                language=request.language,
+                language="en",
                 assumptions=assumptions,
                 voice=request.voice,
             )
-            return {"report": report.to_dict()}
+            report_en_dict = report.to_dict()
+            report_ar_dict = _translate_report_dict(report_en_dict, "ar")
+            report_ar_dict["language"] = "ar"
+            
+            primary_report = report_ar_dict if request.language == "ar" else report_en_dict
+            return {
+                "report": primary_report,
+                "report_en": report_en_dict,
+                "report_ar": report_ar_dict
+            }
         except FileNotFoundError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -478,10 +623,19 @@ JSON:
         report = run_uploaded_tender_files_analysis(
             extracted,
             profile_id=profile_id,
-            language=language,
+            language="en",
             voice=voice,
         )
-        return {"report": report.to_dict()}
+        report_en_dict = report.to_dict()
+        report_ar_dict = _translate_report_dict(report_en_dict, "ar")
+        report_ar_dict["language"] = "ar"
+
+        primary_report = report_ar_dict if language == "ar" else report_en_dict
+        return {
+            "report": primary_report,
+            "report_en": report_en_dict,
+            "report_ar": report_ar_dict
+        }
 
     @app.post("/api/strategy")
     def strategy(request: StrategyRequest) -> dict:

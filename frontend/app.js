@@ -1616,8 +1616,10 @@ async function runAnalysis() {
   setAnalyzing(true);
   try {
     const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 60000, { preferBackend: true });
-    state.currentResult = reportToComplianceResult(result.report);
-    state.currentReport = result.report;
+    state.reportEn = result.report;
+    state.reportAr = result.report_ar || result.report;
+    state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
+    state.currentResult = reportToComplianceResult(state.currentReport);
     state.analysisSource = "uploaded";
     state.analysisError = null;
     $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length);
@@ -2059,24 +2061,30 @@ function stopVoice() {
 async function updateLanguageForCurrentResult() {
   updateI18n();
   if (state.currentResult && state.analysisSource === "uploaded") {
-    try {
-      const copy = text();
-      $("#uploadStatus").textContent = state.language === "ar" ? "جاري ترجمة التقرير..." : "Translating report...";
-      $("#uploadStatus").classList.remove("error");
-      const payload = {
-        report: state.currentReport || resultToReport(state.currentResult),
-        target_language: state.language
-      };
-      const response = await postJson("/api/translate-report", payload, 60000, { preferBackend: true });
-      if (response && response.report) {
-        state.currentResult = reportToComplianceResult(response.report);
-        state.currentReport = response.report;
-        renderResult();
+    if (state.reportEn && state.reportAr) {
+      state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
+      state.currentResult = reportToComplianceResult(state.currentReport);
+      renderResult();
+    } else {
+      try {
+        const copy = text();
+        $("#uploadStatus").textContent = state.language === "ar" ? "جاري ترجمة التقرير..." : "Translating report...";
+        $("#uploadStatus").classList.remove("error");
+        const payload = {
+          report: state.currentReport || resultToReport(state.currentResult),
+          target_language: state.language
+        };
+        const response = await postJson("/api/translate-report", payload, 60000, { preferBackend: true });
+        if (response && response.report) {
+          state.currentResult = reportToComplianceResult(response.report);
+          state.currentReport = response.report;
+          renderResult();
+        }
+        $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
+      } catch (err) {
+        console.error("Failed to translate report", err);
+        $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
       }
-      $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
-    } catch (err) {
-      console.error("Failed to translate report", err);
-      $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
     }
   }
 }
