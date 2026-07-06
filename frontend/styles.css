@@ -645,6 +645,12 @@ img {
   min-height: 44px;
 }
 
+.file-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .file-list {
   display: grid;
   gap: 10px;

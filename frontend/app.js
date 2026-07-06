@@ -133,6 +133,11 @@ const labels = {
     noDeckCounter: "No deck yet",
     noMajorRisks: "No major risks listed.",
     uploadAccepted: (count) => `${count} file${count === 1 ? "" : "s"} accepted. Run analysis to review them.`,
+    maxFilesLimit: "Upload is limited to 5 files.",
+    maxOverallSizeLimit: "Overall upload size is limited to 20 MB.",
+    fileTooLarge: (name) => `${name}: file is larger than the 4 MB limit.`,
+    fileEmpty: (name) => `${name}: uploaded file is empty.`,
+    unsupportedType: (name) => `${name}: unsupported file type.`,
     running: "TenderLens is checking the evidence...",
     analysisLoadingTitle: "TenderLens is reviewing evidence...",
     analysisLoadingBody: "Please keep this workspace open while the agents read the files and prepare the report.",
@@ -259,6 +264,11 @@ const labels = {
     noDeckCounter: "لا يوجد عرض بعد",
     noMajorRisks: "لا توجد مخاطر رئيسية مدرجة.",
     uploadAccepted: (count) => `تم قبول ${count} ملف. شغل التحليل لمراجعتها.`,
+    maxFilesLimit: "الرفع محدود بـ 5 ملفات فقط.",
+    maxOverallSizeLimit: "إجمالي حجم الملفات المرفوعة محدود بـ 20 ميجابايت.",
+    fileTooLarge: (name) => `${name}: الملف أكبر من الحد المسموح به 4 ميجابايت.`,
+    fileEmpty: (name) => `${name}: الملف المرفوع فارغ.`,
+    unsupportedType: (name) => `${name}: نوع الملف غير مدعوم.`,
     running: "يقوم TenderLens بمراجعة الأدلة...",
     analysisLoadingTitle: "يقوم TenderLens بمراجعة الأدلة...",
     analysisLoadingBody: "يرجى إبقاء مساحة العمل مفتوحة بينما تقرأ الوكلاء الملفات وتجهز التقرير.",
@@ -843,19 +853,28 @@ function citationFile(citation) {
 }
 
 function validateSelectedFiles(files) {
-  if (!files.length) return { ok: false, message: "Select at least one file." };
-  if (files.length > MAX_UPLOAD_FILES) return { ok: false, message: "Upload is limited to 5 files." };
+  if (!files.length) return { ok: false, message: state.language === "ar" ? "اختر ملفًا واحدًا على الأقل." : "Select at least one file." };
+  if (files.length > MAX_UPLOAD_FILES) return { ok: false, message: text().maxFilesLimit };
+  
+  let totalSize = 0;
   for (const file of files) {
     if (!supportedExt.includes(extension(file.name))) {
-      return { ok: false, message: `${file.name}: unsupported file type.` };
+      return { ok: false, message: text().unsupportedType(file.name) };
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      return { ok: false, message: `${file.name}: file is larger than the 4 MB limit.` };
+      return { ok: false, message: text().fileTooLarge(file.name) };
     }
     if (file.size <= 0) {
-      return { ok: false, message: `${file.name}: uploaded file is empty.` };
+      return { ok: false, message: text().fileEmpty(file.name) };
     }
+    totalSize += file.size;
   }
+  
+  const MAX_OVERALL_BYTES = 20 * 1024 * 1024;
+  if (totalSize > MAX_OVERALL_BYTES) {
+    return { ok: false, message: text().maxOverallSizeLimit };
+  }
+  
   return { ok: true, message: text().uploadAccepted(files.length) };
 }
 
@@ -914,6 +933,7 @@ function renderFiles(status = state.currentResult ? text().analyzed : text().rea
 
   if (!files.length) {
     list.innerHTML = `<div class="empty-file-state">${escapeText(text().noFiles)}</div>`;
+    updateControlState();
     return;
   }
 
@@ -932,6 +952,8 @@ function renderFiles(status = state.currentResult ? text().analyzed : text().rea
       `,
     )
     .join("");
+    
+  updateControlState();
 }
 
 function showResultShell(show) {
@@ -945,6 +967,11 @@ function showResultShell(show) {
 function updateControlState() {
   const busy = state.isAnalyzing || state.isDiscussing;
   const hasResult = Boolean(state.currentResult);
+  
+  const totalFiles = state.uploadedFiles.length;
+  const totalSize = state.uploadedFiles.reduce((acc, f) => acc + f.size, 0);
+  const limitReached = totalFiles >= MAX_UPLOAD_FILES || totalSize >= 20 * 1024 * 1024;
+
   [
     "uploadRunButton",
     "heroUploadButton",
@@ -954,13 +981,18 @@ function updateControlState() {
     "emptySampleButton",
     "viewExamplesButton",
     "startFreshButton",
-    "addMoreButton",
     "langEn",
     "langAr",
   ].forEach((id) => {
     const node = $(`#${id}`);
     if (node) node.disabled = busy;
   });
+  
+  const addMoreNode = $("#addMoreButton");
+  if (addMoreNode) {
+    addMoreNode.disabled = busy || limitReached;
+  }
+
   ["downloadPdf", "downloadDocx", "downloadTxt", "downloadPptx", "downloadMapSvg"].forEach((id) => {
     const node = $(`#${id}`);
     if (node) node.disabled = busy || !hasResult;
@@ -1691,16 +1723,28 @@ function useExampleFiles() {
 }
 
 function selectFiles(files) {
-  state.uploadedFiles = Array.from(files).slice(0, MAX_UPLOAD_FILES);
-  state.analysisError = null;
-  const validation = validateSelectedFiles(state.uploadedFiles);
-  $("#uploadStatus").textContent = validation.message;
-  $("#uploadStatus").classList.toggle("error", !validation.ok);
-  state.analysisSource = "uploaded";
-  renderFiles(text().ready);
+  const incoming = Array.from(files);
+  const existingNames = new Set(state.uploadedFiles.map(f => `${f.name}_${f.size}`));
+  const uniqueIncoming = incoming.filter(f => !existingNames.has(`${f.name}_${f.size}`));
+  
+  const combined = [...state.uploadedFiles, ...uniqueIncoming];
+  const validation = validateSelectedFiles(combined);
+  
   if (validation.ok) {
+    state.uploadedFiles = combined;
+    state.analysisError = null;
+    state.analysisSource = "uploaded";
+    $("#uploadStatus").textContent = validation.message;
+    $("#uploadStatus").classList.remove("error");
+    renderFiles(text().ready);
     void runAnalysis();
+  } else {
+    $("#uploadStatus").textContent = validation.message;
+    $("#uploadStatus").classList.add("error");
+    renderFiles();
   }
+  $("#fileInput").value = "";
+  $("#supportingFileInput").value = "";
 }
 
 function startFresh() {
@@ -2244,7 +2288,12 @@ function bindEvents() {
       startFresh();
       return;
     }
-    renderFiles();
+    if (state.uploadedFiles.length === 0) {
+      startFresh();
+    } else {
+      renderFiles(text().ready);
+      void runAnalysis();
+    }
   });
 
   $(".workspace-tabs").addEventListener("click", (event) => {
