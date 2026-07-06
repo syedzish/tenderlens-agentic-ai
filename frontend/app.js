@@ -2231,12 +2231,32 @@ async function startVoice(isNextTurn = false) {
         $("#voiceStateLabel").textContent = text().voiceSpeaking;
         if (Array.isArray(window.__spokenText)) window.__spokenText.push(answer);
         const utterance = new SpeechSynthesisUtterance(answer);
-        const langCode = state.language === "ar" ? "ar" : "en";
         utterance.lang = state.language === "ar" ? "ar-SA" : "en-US";
         
         if (window.speechSynthesis.getVoices) {
           const voices = window.speechSynthesis.getVoices();
-          const voice = voices.find((v) => v.lang.startsWith(langCode));
+          const langCode = state.language === "ar" ? "ar" : "en";
+          const exactTarget = state.language === "ar" ? "ar-sa" : "en-us";
+          
+          // 1. Try exact locale match (e.g. ar-sa or en-us) case-insensitively
+          let voice = voices.find(v => {
+            const vLang = v.lang.toLowerCase().replace('_', '-');
+            return vLang === exactTarget;
+          });
+          
+          // 2. Try prefix match (e.g. starts with ar- or en-)
+          if (!voice) {
+            voice = voices.find(v => {
+              const vLang = v.lang.toLowerCase().replace('_', '-');
+              return vLang.startsWith(langCode + '-') || vLang === langCode;
+            });
+          }
+          
+          // 3. Try fallback substring match (e.g. contains 'ar' or 'en')
+          if (!voice) {
+            voice = voices.find(v => v.lang.toLowerCase().includes(langCode));
+          }
+          
           if (voice) {
             utterance.voice = voice;
           }
