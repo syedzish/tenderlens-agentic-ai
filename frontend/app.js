@@ -2005,8 +2005,12 @@ async function startVoice(isNextTurn = false) {
     recognition.onend = () => {
       if (state.recognition === recognition) state.recognition = null;
       if (!handlingResult && $("#voiceOverlay").classList.contains("hidden") === false) {
-        $("#voiceStateLabel").textContent = text().voiceReady;
-        $("#voiceHelp").textContent = text().voiceReadyBody;
+        // Silence timeout: automatically restart listening after a brief pause to keep microphone active
+        setTimeout(() => {
+          if (!$("#voiceOverlay").classList.contains("hidden") && !state.recognition) {
+            void startVoice(true);
+          }
+        }, 300);
       }
     };
     recognition.start();
