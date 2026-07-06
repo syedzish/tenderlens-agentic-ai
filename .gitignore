@@ -42,3 +42,7 @@ Thumbs.db
 # Vercel
 .vercel/
 .vercel
+
+# Local/course instructions
+BOOKMARK.md
+.agents-cli-spec.md
