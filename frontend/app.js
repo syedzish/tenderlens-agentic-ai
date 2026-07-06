@@ -1483,7 +1483,7 @@ async function discussWithTenderLens(message, mode = "text") {
     report: state.currentReport || resultToReport(state.currentResult),
     history: state.chatHistory.slice(-8),
   };
-  const response = await postJson("/api/discuss", payload, 30000);
+  const response = await postJson("/api/discuss", payload, 60000, { preferBackend: true });
   return {
     answer: response.answer || text().discussUnavailable,
     citations: response.citations || [],
@@ -1694,7 +1694,7 @@ async function runAnalysis() {
   setAnalyzing(true);
   try {
     const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 180000, { preferBackend: true });
-    state.reportEn = result.report;
+    state.reportEn = result.report_en || result.report;
     state.reportAr = result.report_ar || result.report;
     state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
     state.currentResult = reportToComplianceResult(state.currentReport);
@@ -2231,7 +2231,16 @@ async function startVoice(isNextTurn = false) {
         $("#voiceStateLabel").textContent = text().voiceSpeaking;
         if (Array.isArray(window.__spokenText)) window.__spokenText.push(answer);
         const utterance = new SpeechSynthesisUtterance(answer);
+        const langCode = state.language === "ar" ? "ar" : "en";
         utterance.lang = state.language === "ar" ? "ar-SA" : "en-US";
+        
+        if (window.speechSynthesis.getVoices) {
+          const voices = window.speechSynthesis.getVoices();
+          const voice = voices.find((v) => v.lang.startsWith(langCode));
+          if (voice) {
+            utterance.voice = voice;
+          }
+        }
         utterance.onend = () => {
           $("#voiceStateLabel").textContent = text().voiceReady;
           $("#voiceHelp").textContent = text().voiceReadyBody;
@@ -2283,31 +2292,36 @@ function stopVoice() {
 
 async function updateLanguageForCurrentResult() {
   updateI18n();
-  if (state.currentResult && state.analysisSource === "uploaded") {
-    if (state.reportEn && state.reportAr) {
-      state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
-      state.currentResult = reportToComplianceResult(state.currentReport);
-      renderResult();
-    } else {
-      try {
-        const copy = text();
-        $("#uploadStatus").textContent = state.language === "ar" ? "جاري ترجمة التقرير..." : "Translating report...";
-        $("#uploadStatus").classList.remove("error");
-        const payload = {
-          report: state.currentReport || resultToReport(state.currentResult),
-          target_language: state.language
-        };
-        const response = await postJson("/api/translate-report", payload, 60000, { preferBackend: true });
-        if (response && response.report) {
-          state.currentResult = reportToComplianceResult(response.report);
-          state.currentReport = response.report;
-          renderResult();
+  if (state.currentResult) {
+    if (state.analysisSource === "uploaded") {
+      if (state.reportEn && state.reportAr) {
+        state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
+        state.currentResult = reportToComplianceResult(state.currentReport);
+        renderResult();
+      } else {
+        try {
+          const copy = text();
+          $("#uploadStatus").textContent = state.language === "ar" ? "جاري ترجمة التقرير..." : "Translating report...";
+          $("#uploadStatus").classList.remove("error");
+          const payload = {
+            report: state.currentReport || resultToReport(state.currentResult),
+            target_language: state.language
+          };
+          const response = await postJson("/api/translate-report", payload, 60000, { preferBackend: true });
+          if (response && response.report) {
+            state.currentResult = reportToComplianceResult(response.report);
+            state.currentReport = response.report;
+            renderResult();
+          }
+          $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
+        } catch (err) {
+          console.error("Failed to translate report", err);
+          $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
         }
-        $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
-      } catch (err) {
-        console.error("Failed to translate report", err);
-        $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
       }
+    } else {
+      // Re-render example/sample results to apply Arabic translations
+      renderResult();
     }
   }
 }
