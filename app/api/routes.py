@@ -21,9 +21,9 @@ from app.mcp.tools import (
     validate_okf_bundle_tool,
     validate_upload_tool,
 )
-from app.services.contracts import StrategyAssumptions
+from app.services.contracts import StrategyAssumptions, SourceDocument
 from app.services.scenario.scoring import DEFAULT_ASSUMPTIONS
-from app.services.upload.extraction import UploadExtractionError, extract_uploaded_document
+from app.services.upload.extraction import UploadExtractionError, extract_uploaded_document, ExtractedTenderDocument
 from app.workflows.tender_workflow import run_tender_analysis
 from app.workflows.uploaded_tender_workflow import run_uploaded_tender_files_analysis
 
@@ -633,6 +633,44 @@ JSON:
             ]
         except UploadExtractionError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        # Content-based classification: determine the primary tender file (main) vs supporting files
+        best_main_index = 0
+        best_main_score = -1
+        
+        keywords = [
+            "request for proposal", "rfp", "tender specifications", "scope of work", 
+            "instruction to bidders", "tender document", "invitation to bid", 
+            "project requirements", "mandatory requirements", "tender requirements", "tender spec",
+            "طلب تقديم عروض", "كراسة الشروط", "وثيقة المناقصة", "شروط المناقصة", "متمتطلبات المناقصة"
+        ]
+        
+        for index, doc in enumerate(extracted):
+            text_lower = doc.text.lower()
+            score = sum(text_lower.count(kw) for kw in keywords)
+            if score == 0:
+                # fallback keyword density check
+                score = text_lower.count("shall") + text_lower.count("must") + text_lower.count("يجب")
+            
+            if score > best_main_score:
+                best_main_score = score
+                best_main_index = index
+
+        reclassified_extracted = []
+        for index, doc in enumerate(extracted):
+            role = "main" if index == best_main_index else "supporting"
+            new_source = SourceDocument(
+                id=doc.source.id,
+                role=role,  # type: ignore[arg-type]
+                filename=doc.source.filename,
+                file_type=doc.source.file_type,
+                size_bytes=doc.source.size_bytes,
+                parser_status=doc.source.parser_status,
+                text_char_count=doc.source.text_char_count,
+            )
+            reclassified_extracted.append(ExtractedTenderDocument(source=new_source, text=doc.text))
+        
+        extracted = reclassified_extracted
 
         report = run_uploaded_tender_files_analysis(
             extracted,
