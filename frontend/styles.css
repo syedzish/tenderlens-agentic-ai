@@ -1079,7 +1079,7 @@ img {
 .checklist-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(240px, 1.6fr) 140px 90px minmax(260px, 1.1fr);
+  grid-template-columns: minmax(140px, 1.6fr) 110px 75px minmax(150px, 1.1fr);
   gap: 16px;
   align-items: start;
   border: 0;
@@ -1950,6 +1950,12 @@ img {
 [dir="rtl"] .guide-chips,
 [dir="rtl"] .guide-grid article a {
   justify-content: flex-end;
+}
+
+@media (max-width: 1520px) {
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1380px) {
