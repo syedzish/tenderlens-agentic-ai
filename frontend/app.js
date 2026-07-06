@@ -343,10 +343,10 @@ function guideCopy() {
       ],
       stepsLabel: "كيف يعمل TenderLens",
       steps: [
-        ["ارفع الملفات أو استخدم المثال", "أضف ملفات المناقصة أو شغل ملفات المثال لاستكشاف نتائج معدة."],
-        ["شغل التحليل", "يستخرج TenderLens المتطلبات والأدلة والمخاطر والمستندات الناقصة والخطوات التالية."],
-        ["ناقش مع TenderLens", "ناقش التحليل الحالي بالكتابة أو الصوت بناء على سياق التقرير."],
-        ["صدر وراجع", "نزل ملفات PDF و DOCX و PPTX و TXT و SVG صالحة لمراجعة الفريق."],
+        ["ارفع الملفات أو استخدم المثال", "أضف ملفات المناقصة أو شغل ملفات المثال لاستكشاف نتائج معدة.", "upload-cloud", "cobalt"],
+        ["شغل التحليل", "يستخرج TenderLens المتمتطلبات والأدلة والمخاطر والمستندات الناقصة والخطوات التالية.", "binary", "mint"],
+        ["ناقش مع TenderLens", "ناقش التحليل الحالي بالكتابة أو الصوت بناء على سياق التقرير.", "message-square-text", "teal"],
+        ["صدر وراجع", "نزل ملفات PDF و DOCX و PPTX و TXT و SVG صالحة لمراجعة الفريق.", "download-cloud", "danger"],
       ],
       previewBadge: "نتيجة تحليل مثال",
       previewTitle: "شكل المخرجات بعد التحليل",
@@ -383,10 +383,10 @@ function guideCopy() {
     ],
     stepsLabel: "How TenderLens works",
     steps: [
-      ["Upload files or use examples", "Add tender/RFP files or run example files to explore prepared results."],
-      ["Run the analysis", "TenderLens extracts requirements, evidence, risks, missing documents, and next actions."],
-      ["Discuss with TenderLens", "Discuss the active analysis by text or voice, grounded in the report context."],
-      ["Export and review", "Download valid PDF, DOCX, PPTX, TXT, and SVG outputs for team review."],
+      ["Upload files or use examples", "Add tender/RFP files or run example files to explore prepared results.", "upload-cloud", "cobalt"],
+      ["Run the analysis", "TenderLens extracts requirements, evidence, risks, missing documents, and next actions.", "binary", "mint"],
+      ["Discuss with TenderLens", "Discuss the active analysis by text or voice, grounded in the report context.", "message-square-text", "teal"],
+      ["Export and review", "Download valid PDF, DOCX, PPTX, TXT, and SVG outputs for team review.", "download-cloud", "danger"],
     ],
     previewBadge: "Example analysis result",
     previewTitle: "What the output looks like after analysis",
@@ -441,9 +441,12 @@ function renderGuide() {
       <section class="guide-steps" aria-label="${escapeText(copy.stepsLabel)}">
         ${copy.steps
           .map(
-            ([title, body], index) => `
+            ([title, body, icon, tone], index) => `
               <article>
-                <strong>${index + 1}</strong>
+                <div class="step-header">
+                  <strong>${index + 1}</strong>
+                  <span class="step-icon ${tone}" data-icon="${icon}" aria-hidden="true"></span>
+                </div>
                 <h2>${escapeText(title)}</h2>
                 <p>${escapeText(body)}</p>
               </article>
@@ -454,24 +457,48 @@ function renderGuide() {
       <section class="guide-preview">
         <div>
           <span class="soft-badge">${escapeText(copy.previewBadge)}</span>
-          <h2>${escapeText(copy.previewTitle)}</h2>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <span class="title-icon mint" data-icon="activity" aria-hidden="true" style="margin-top:0;"></span>
+            ${escapeText(copy.previewTitle)}
+          </h2>
           <p>${escapeText(copy.previewBody)}</p>
         </div>
-        <div class="guide-score"><strong>78</strong><span>${escapeText(copy.score)}</span></div>
+        <div class="guide-score">
+          <div class="score-ring" style="--score-deg: 280.8deg;">
+            <div>
+              <strong>78</strong>
+              <span>/100</span>
+            </div>
+          </div>
+        </div>
       </section>
       <section class="guide-grid" id="examples">
         <article>
           <h2>${escapeText(copy.examplesTitle)}</h2>
           <p>${escapeText(copy.examplesBody)}</p>
-          <a href="./example-files/jeddah-fleet-maintenance-rfp.pdf" download>Jeddah Fleet Maintenance RFP · PDF</a>
-          <a href="./example-files/bid-readiness-notes.docx" download>Bid readiness notes · DOCX</a>
-          <a href="./example-files/commercial-clarification-addendum.pdf" download>Commercial clarification addendum · PDF</a>
+          <a href="./example-files/jeddah-fleet-maintenance-rfp.pdf" download>
+            <span class="icon" data-icon="download" aria-hidden="true"></span>
+            Jeddah Fleet Maintenance RFP · PDF
+          </a>
+          <a href="./example-files/bid-readiness-notes.docx" download>
+            <span class="icon" data-icon="download" aria-hidden="true"></span>
+            Bid readiness notes · DOCX
+          </a>
+          <a href="./example-files/commercial-clarification-addendum.pdf" download>
+            <span class="icon" data-icon="download" aria-hidden="true"></span>
+            Commercial clarification addendum · PDF
+          </a>
         </article>
         <article>
           <h2>${escapeText(copy.expectedTitle)}</h2>
           <p>${escapeText(copy.expectedBody)}</p>
           <div class="guide-chips">
-            ${copy.chips.map((chip) => `<span>${escapeText(chip)}</span>`).join("")}
+            ${copy.chips.map((chip, idx) => `
+              <span>
+                <span class="icon" data-icon="${["sparkles", "help-circle", "check-circle-2", "languages"][idx]}" aria-hidden="true" style="color:var(--teal); font-size:0.9rem; margin-right:4px;"></span>
+                ${escapeText(chip)}
+              </span>
+            `).join("")}
           </div>
         </article>
       </section>

@@ -471,17 +471,16 @@ img {
 }
 
 .guide-score {
-  min-width: 150px;
+  min-width: 156px;
+  height: 156px;
   border-radius: 18px;
   background: var(--paper);
-  padding: 20px;
-  text-align: center;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-table);
+  padding: 18px;
 }
 
-.guide-score strong {
-  display: block;
-  font-size: 3rem;
-}
 
 .guide-grid {
   grid-template-columns: 0.9fr 1.1fr;
@@ -2197,7 +2196,7 @@ img {
     flex-direction: column;
   }
 
-  .guide-hero > div,
+  .guide-hero-banner,
   .guide-side,
   .guide-step,
   .guide-preview,
@@ -2205,8 +2204,10 @@ img {
     border-radius: 18px;
   }
 
-  .guide-hero > div {
-    padding: 32px 26px;
+  .guide-hero-banner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 32px 28px;
   }
 
   .guide-hero h1 {
@@ -2283,7 +2284,7 @@ img {
     padding: 18px 0 40px;
   }
 
-  .guide-hero > div,
+  .guide-hero-banner,
   .guide-side,
   .guide-step,
   .guide-preview,
@@ -2291,9 +2292,52 @@ img {
     padding: 20px;
   }
 
+  .guide-hero-banner {
+    padding: 24px 20px;
+  }
+
   .guide-hero h1 {
     font-size: 1.9rem;
   }
+
+  .onboarding-mockup {
+    aspect-ratio: auto;
+    min-height: 200px;
+    max-height: 240px;
+  }
+
+  .onboarding-mockup img {
+    max-height: 100%;
+    width: auto;
+  }
+
+  .check-item,
+  .step-item {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    border-radius: 10px;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .step-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+  }
+  .step-icon.cobalt { background: rgba(45, 86, 162, 0.08); color: var(--cobalt); }
+  .step-icon.mint { background: rgba(18, 148, 108, 0.08); color: var(--mint); }
+  .step-icon.teal { background: rgba(15, 139, 131, 0.08); color: var(--teal); }
+  .step-icon.danger { background: rgba(184, 52, 78, 0.08); color: var(--danger); }
 
   .chat-form {
     grid-template-columns: 1fr;
