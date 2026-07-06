@@ -409,14 +409,20 @@ function renderGuide() {
         ${escapeText(copy.back)}
       </a>
       <section class="guide-hero">
-        <div class="guide-hero-main">
-          <span class="soft-badge">${escapeText(copy.badge)}</span>
-          <h1 id="guideTitle">${escapeText(copy.title)}</h1>
-          <p>${escapeText(copy.body)}</p>
-          <div class="guide-actions">
-            <a class="primary-action compact" href="#workspace">${escapeText(copy.open)}</a>
-            <a class="secondary-action compact" href="#examples">${escapeText(copy.examples)}</a>
+        <div class="guide-hero-banner">
+          <div class="guide-hero-main">
+            <span class="soft-badge">${escapeText(copy.badge)}</span>
+            <h1 id="guideTitle">${escapeText(copy.title)}</h1>
+            <p>${escapeText(copy.body)}</p>
+            <div class="guide-actions">
+              <a class="primary-action compact" href="#workspace">${escapeText(copy.open)}</a>
+              <a class="secondary-action compact" href="#examples">${escapeText(copy.examples)}</a>
+            </div>
           </div>
+          <figure class="guide-hero-visual">
+            <img src="./brand/guide-illustration.jpg" alt="TenderLens Strategic Board" />
+            <div class="guide-visual-glow"></div>
+          </figure>
         </div>
         <aside class="guide-side">
           ${copy.cards
@@ -1803,19 +1809,43 @@ function renderOnboarding() {
   $("#dotOne").classList.toggle("active", state.onboardingSlide === 0);
   $("#dotTwo").classList.toggle("active", state.onboardingSlide === 1);
   $("#nextOnboarding").textContent = state.onboardingSlide === 0 ? copy.nextSlide : copy.getStarted;
+
+  // Render detail lists inside onboardingExtra
   if (state.onboardingSlide === 0) {
-    $("#onboardingVisual").innerHTML = `
+    $("#onboardingExtra").innerHTML = `
       <div class="onboarding-checks">
-        ${copy.onboardingChecks.map((item, index) => `<div><span class="title-icon ${["cobalt", "mint", "danger"][index]}" aria-hidden="true">${iconMarkup(["search-check", "shield-check", "triangle-alert"][index])}</span>${escapeText(item)}</div>`).join("")}
+        ${copy.onboardingChecks.map((item, index) => `
+          <div class="check-item">
+            <span class="check-icon ${["cobalt", "mint", "danger"][index]}" aria-hidden="true">
+              ${iconMarkup(["search-check", "shield-check", "triangle-alert"][index])}
+            </span>
+            <span>${escapeText(item)}</span>
+          </div>
+        `).join("")}
       </div>
     `;
   } else {
-    $("#onboardingVisual").innerHTML = `
+    $("#onboardingExtra").innerHTML = `
       <div class="numbered-steps">
-        ${copy.onboardingSteps.map((item, index) => `<div><span>${index + 1}</span>${escapeText(item)}</div>`).join("")}
+        ${copy.onboardingSteps.map((item, index) => `
+          <div class="step-item">
+            <span class="step-num">${index + 1}</span>
+            <span>${escapeText(item)}</span>
+          </div>
+        `).join("")}
       </div>
     `;
   }
+
+  // Render premium visual illustration inside onboardingVisual
+  $("#onboardingVisual").innerHTML = `
+    <div class="onboarding-mockup">
+      <img src="./brand/onboarding-visual.jpg" alt="TenderLens Agentic AI workspace visual" />
+      <div class="mockup-shimmer"></div>
+    </div>
+  `;
+  
+  hydrateIcons($("#welcomeModal"));
 }
 
 function closeWelcome(persist = true) {
