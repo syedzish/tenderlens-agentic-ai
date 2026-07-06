@@ -238,7 +238,7 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
             f"Current report:\n{_report_text(request.report)}"
         )
         response = client.models.generate_content(
-            model=os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.0-flash"),
+            model=os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.5-flash"),
             contents=prompt,
         )
         answer = getattr(response, "text", "") or ""
@@ -248,7 +248,7 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
         grounded["answer"] = answer.strip()
         return grounded
     except Exception as exc:  # pragma: no cover - network/client dependent.
-        LOGGER.warning("Live discussion model call failed: %s", type(exc).__name__)
+        LOGGER.warning("Live discussion model call failed: %s: %s", type(exc).__name__, exc)
         raise HTTPException(status_code=503, detail=FRIENDLY_MODEL_RETRY) from exc
 
 
@@ -268,7 +268,7 @@ def attach_tenderlens_api_routes(app: FastAPI) -> None:
             "service": "TenderLens Agentic AI",
             "friendly_retry": FRIENDLY_MODEL_RETRY,
             "discuss": _model_status(
-                os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.0-flash")
+                os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.5-flash")
             ),
             "upload": _model_status(
                 os.getenv("TENDERLENS_VISION_MODEL", "gemini-flash-latest")
