@@ -1944,9 +1944,13 @@ async function downloadDocxReport(content) {
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`);
+  
+  const isAr = state.language === "ar";
+  const pPr = isAr ? '<w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr>' : "";
+  
   const paragraphs = content
     .split(/\n+/)
-    .map((line) => `<w:p><w:r><w:t xml:space="preserve">${xmlEscape(line)}</w:t></w:r></w:p>`)
+    .map((line) => `<w:p>${pPr}<w:r><w:t xml:space="preserve">${xmlEscape(line)}</w:t></w:r></w:p>`)
     .join("");
   zip.folder("word").file("document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paragraphs}<w:sectPr/></w:body></w:document>`);
@@ -2036,7 +2040,11 @@ async function downloadReport(format) {
   if (!state.currentResult) return;
   const content = reportText();
   if (format === "txt") {
-    downloadTextFile("tenderlens-analysis.txt", content);
+    const isAr = state.language === "ar";
+    const adjustedContent = isAr 
+      ? "\uFEFF" + content.split("\n").map(line => line.trim() ? "\u200F" + line : line).join("\n") 
+      : content;
+    downloadTextFile("tenderlens-analysis.txt", adjustedContent);
     return;
   }
   if (format === "pdf") {
