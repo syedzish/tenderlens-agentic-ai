@@ -1247,11 +1247,11 @@ function buildTenderMapSvg(map) {
         </marker>
       </defs>
       <rect x="0" y="0" width="1260" height="${height}" rx="24" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
-      <text x="36" y="46" font-size="28" font-weight="760" fill="#101214">${escapeText(text().mapSvgTitle)}</text>
-      <text x="36" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[0])}</text>
-      <text x="340" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[1])}</text>
-      <text x="660" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[2])}</text>
-      <text x="990" y="86" font-size="14" font-weight="700" fill="#5a646d">${escapeText(headers[3])}</text>
+      <text x="${state.language === "ar" ? 1224 : 36}" y="46" font-size="28" font-weight="760" fill="#101214" text-anchor="start" direction="${state.language === "ar" ? "rtl" : "ltr"}">${escapeText(text().mapSvgTitle)}</text>
+      <text x="${state.language === "ar" ? 266 : 36}" y="86" font-size="14" font-weight="700" fill="#5a646d" text-anchor="start" direction="${state.language === "ar" ? "rtl" : "ltr"}">${escapeText(headers[0])}</text>
+      <text x="${state.language === "ar" ? 590 : 340}" y="86" font-size="14" font-weight="700" fill="#5a646d" text-anchor="start" direction="${state.language === "ar" ? "rtl" : "ltr"}">${escapeText(headers[1])}</text>
+      <text x="${state.language === "ar" ? 930 : 660}" y="86" font-size="14" font-weight="700" fill="#5a646d" text-anchor="start" direction="${state.language === "ar" ? "rtl" : "ltr"}">${escapeText(headers[2])}</text>
+      <text x="${state.language === "ar" ? 1220 : 990}" y="86" font-size="14" font-weight="700" fill="#5a646d" text-anchor="start" direction="${state.language === "ar" ? "rtl" : "ltr"}">${escapeText(headers[3])}</text>
       ${fileCards}
       ${fileConnectors}
       ${rowCards}
