@@ -1722,12 +1722,25 @@ function useExampleFiles() {
   renderResult();
 }
 
+function sortFilesForUpload(files) {
+  return [...files].sort((a, b) => {
+    const aName = a.name.toLowerCase();
+    const bName = b.name.toLowerCase();
+    const keywords = ["rfp", "tender", "spec", "main", "requirements"];
+    const aHasKeyword = keywords.some(kw => aName.includes(kw));
+    const bHasKeyword = keywords.some(kw => bName.includes(kw));
+    if (aHasKeyword && !bHasKeyword) return -1;
+    if (!aHasKeyword && bHasKeyword) return 1;
+    return aName.localeCompare(bName);
+  });
+}
+
 function selectFiles(files) {
   const incoming = Array.from(files);
   const existingNames = new Set(state.uploadedFiles.map(f => `${f.name}_${f.size}`));
   const uniqueIncoming = incoming.filter(f => !existingNames.has(`${f.name}_${f.size}`));
   
-  const combined = [...state.uploadedFiles, ...uniqueIncoming];
+  const combined = sortFilesForUpload([...state.uploadedFiles, ...uniqueIncoming]);
   const validation = validateSelectedFiles(combined);
   
   if (validation.ok) {
