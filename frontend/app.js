@@ -1169,13 +1169,19 @@ function buildTenderMapSvg(map) {
 
   const fileCards = fileRows
     .map(
-      (file, index) => `
-        <g data-card="file-${index}">
-        <rect x="36" y="${file.y}" width="230" height="84" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
-        ${svgTextLines(file.label, state.language === "ar" ? 246 : 54, file.y + 30, 184, 3)}
-        <circle cx="226" cy="${file.y + 18}" r="5" fill="#4968d9"/>
-        </g>
-      `,
+      (file, index) => {
+        const isAr = state.language === "ar";
+        const fileHasAr = /[\u0600-\u06FF]/.test(file.label);
+        const fileX = isAr ? (fileHasAr ? 246 : 58) : 54;
+        const fileCircleCx = isAr ? 46 : 226;
+        return `
+          <g data-card="file-${index}">
+          <rect x="36" y="${file.y}" width="230" height="84" rx="14" fill="#fffdf8" stroke="#d7dfda" stroke-width="1.5"/>
+          ${svgTextLines(file.label, fileX, file.y + 30, 184, 3)}
+          <circle cx="${fileCircleCx}" cy="${file.y + 18}" r="5" fill="#4968d9"/>
+          </g>
+        `;
+      }
     )
     .join("");
 
@@ -1196,23 +1202,38 @@ function buildTenderMapSvg(map) {
       const riskLabel = `${text().riskLabel[row.risk]}${state.language === "ar" ? "" : " risk"}`;
       const requirement = displayAnalysisText(row.requirement);
       const evidence = state.language === "ar" ? `دليل المصدر: ${row.evidence}` : row.evidence;
+
+      const isAr = state.language === "ar";
+      
+      const reqHasAr = /[\u0600-\u06FF]/.test(requirement);
+      const reqX = isAr ? (reqHasAr ? 570 : 362) : 358;
+      const reqCircleCx = isAr ? 350 : 558;
+
+      const evHasAr = /[\u0600-\u06FF]/.test(evidence);
+      const evX = isAr ? (evHasAr ? 910 : 682) : 678;
+      const evCircleCx = isAr ? 670 : 888;
+
+      const riskHasAr = /[\u0600-\u06FF]/.test(riskLabel);
+      const riskX = isAr ? (riskHasAr ? 1200 : 1012) : 1008;
+      const riskCircleCx = isAr ? 1000 : 1198;
+
       return `
         <g data-card="requirement-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="340" y="${y}" width="250" height="92" rx="14" fill="#fff8e9" stroke="#e5c884" stroke-width="1.5"/>
-        ${svgTextLines(requirement, state.language === "ar" ? 570 : 358, y + 28, 198, 3)}
-        <circle cx="558" cy="${y + 18}" r="5" fill="#bd750f"/>
+        ${svgTextLines(requirement, reqX, y + 28, 198, 3)}
+        <circle cx="${reqCircleCx}" cy="${y + 18}" r="5" fill="#bd750f"/>
         <path d="M580 ${y + 36} L 655 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
         </g>
         <g data-card="evidence-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="660" y="${y}" width="270" height="92" rx="14" fill="#effaf6" stroke="#91d4c6" stroke-width="1.5"/>
-        ${svgTextLines(evidence, state.language === "ar" ? 910 : 678, y + 28, 216, 3)}
-        <circle cx="888" cy="${y + 18}" r="5" fill="#3f8e73"/>
+        ${svgTextLines(evidence, evX, y + 28, 216, 3)}
+        <circle cx="${evCircleCx}" cy="${y + 18}" r="5" fill="#3f8e73"/>
         <path d="M910 ${y + 36} L 985 ${y + 36}" stroke="${pathColor}" stroke-width="1.5" marker-end="url(#arrow)"/>
         </g>
         <g data-card="risk-${index}" data-source-file="${escapeText(row.file)}">
         <rect x="990" y="${y}" width="230" height="92" rx="14" fill="${risk.fill}" stroke="${risk.stroke}" stroke-width="1.5"/>
-        ${svgTextLines(riskLabel, state.language === "ar" ? 1200 : 1008, y + 40, 172, 2)}
-        <circle cx="1198" cy="${y + 18}" r="5" fill="${risk.dot}"/>
+        ${svgTextLines(riskLabel, riskX, y + 40, 172, 2)}
+        <circle cx="${riskCircleCx}" cy="${y + 18}" r="5" fill="${risk.dot}"/>
         </g>
       `;
     })
@@ -1415,8 +1436,11 @@ function svgTextLines(value, x, y, width, maxLines = 3, lineHeight = 18, options
   if (line) lines.push(line);
   const clipped = lines.slice(0, maxLines);
   if (lines.length > maxLines) clipped[maxLines - 1] = `${clipped[maxLines - 1].replace(/\.*$/, "")}...`;
-  const anchor = options.anchor || (state.language === "ar" ? "end" : "start");
-  const direction = options.direction || (state.language === "ar" ? "rtl" : "ltr");
+  
+  const hasArabic = /[\u0600-\u06FF]/.test(String(value || ""));
+  const isArText = state.language === "ar" && hasArabic;
+  const anchor = options.anchor || (isArText ? "end" : "start");
+  const direction = options.direction || (isArText ? "rtl" : "ltr");
   return `<text x="${x}" y="${y}" font-size="${options.size || 13}" fill="${options.fill || "#101214"}" text-anchor="${anchor}" direction="${direction}">${clipped
     .map((item, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeText(item)}</tspan>`)
     .join("")}</text>`;

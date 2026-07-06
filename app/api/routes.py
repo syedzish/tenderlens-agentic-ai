@@ -320,6 +320,13 @@ def _translate_report_dict(report: dict, target_lang: str) -> dict:
                 for q in (report_copy.get("clarification_questions") or [])
             ],
             "missing_documents": report_copy.get("missing_documents") or report_copy.get("missingDocuments") or [],
+            "evidence": [
+                {
+                    "id": ev.get("id") or "",
+                    "excerpt": ev.get("excerpt") or ev.get("quote") or "",
+                }
+                for ev in (report_copy.get("evidence") or [])
+            ],
         }
 
         prompt = f"""
@@ -388,6 +395,13 @@ JSON:
             report_copy["missing_documents"] = translated_data.get("missing_documents") or []
         if "missingDocuments" in report_copy:
             report_copy["missingDocuments"] = translated_data.get("missing_documents") or []
+
+        translated_evidence = translated_data.get("evidence") or []
+        if "evidence" in report_copy and isinstance(report_copy["evidence"], list):
+            for idx, ev in enumerate(report_copy["evidence"]):
+                if idx < len(translated_evidence):
+                    tev = translated_evidence[idx]
+                    ev["excerpt"] = tev.get("excerpt")
 
         return report_copy
 
