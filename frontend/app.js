@@ -1834,17 +1834,100 @@ function reportText() {
 async function downloadPdfReport(content) {
   const jsPDF = window.jspdf?.jsPDF;
   if (!jsPDF) throw new Error("PDF generator is unavailable.");
+  
+  const isAr = state.language === "ar";
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const lines = doc.splitTextToSize(content, 500);
-  let y = 48;
-  lines.forEach((line) => {
-    if (y > 780) {
-      doc.addPage();
-      y = 48;
+  
+  const rawLines = content.split("\n");
+  const maxChars = isAr ? 65 : 75;
+  const wrappedLines = [];
+  rawLines.forEach((rawLine) => {
+    if (!rawLine.trim()) {
+      wrappedLines.push("");
+      return;
     }
-    doc.text(line, 48, y);
-    y += 16;
+    let current = rawLine;
+    while (current.length > maxChars) {
+      let spaceIdx = current.lastIndexOf(" ", maxChars);
+      if (spaceIdx <= 0) spaceIdx = maxChars;
+      wrappedLines.push(current.slice(0, spaceIdx));
+      current = current.slice(spaceIdx).trim();
+    }
+    if (current) {
+      wrappedLines.push(current);
+    }
   });
+
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const scale = 2;
+  const canvasW = pageWidth * scale;
+  const canvasH = pageHeight * scale;
+  
+  let lineIndex = 0;
+  let isFirstPage = true;
+
+  while (lineIndex < wrappedLines.length) {
+    if (!isFirstPage) {
+      doc.addPage();
+    }
+    isFirstPage = false;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasW;
+    canvas.height = canvasH;
+    const ctx = canvas.getContext("2d");
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvasW, canvasH);
+    
+    ctx.fillStyle = "#101214";
+    ctx.font = `${13 * scale}px Arial, "Helvetica Neue", Helvetica, sans-serif`;
+    ctx.textBaseline = "top";
+    
+    if (isAr) {
+      ctx.textAlign = "right";
+      ctx.direction = "rtl";
+    } else {
+      ctx.textAlign = "left";
+      ctx.direction = "ltr";
+    }
+    
+    const startX = isAr ? canvasW - (48 * scale) : (48 * scale);
+    let startY = 48 * scale;
+    const lineHeight = 19 * scale;
+    const maxPageY = canvasH - (48 * scale);
+    
+    while (lineIndex < wrappedLines.length && startY < maxPageY) {
+      const lineText = wrappedLines[lineIndex];
+      if (lineIndex === 0 && lineText.includes("TenderLens")) {
+        ctx.font = `bold ${24 * scale}px Arial, sans-serif`;
+        ctx.fillText(lineText, startX, startY);
+        startY += 28 * scale;
+        ctx.font = `${13 * scale}px Arial, sans-serif`;
+      } else if (
+        lineText.includes("Score:") || 
+        lineText.includes("النتيجة:") || 
+        lineText.startsWith("Checklist") || 
+        lineText.startsWith("قائمة") || 
+        lineText.startsWith("Next") || 
+        lineText.startsWith("الخطوات")
+      ) {
+        ctx.font = `bold ${14 * scale}px Arial, sans-serif`;
+        ctx.fillText(lineText, startX, startY);
+        startY += 22 * scale;
+        ctx.font = `${13 * scale}px Arial, sans-serif`;
+      } else {
+        ctx.fillText(lineText, startX, startY);
+        startY += lineHeight;
+      }
+      lineIndex++;
+    }
+    
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    doc.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
+  }
+  
   doc.save("tenderlens-analysis.pdf");
 }
 
