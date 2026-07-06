@@ -1540,6 +1540,32 @@ function requestUrl(path, options = {}) {
   return options.preferBackend && backendUrl ? `${backendUrl}${path}` : path;
 }
 
+async function postJson(path, data, timeoutMs = 60000, options = {}) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(requestUrl(path, options), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      let detail = `HTTP ${response.status}`;
+      try {
+        const body = await response.json();
+        detail = typeof body.detail === "string" ? body.detail : body.detail?.message || body.message || detail;
+      } catch {
+        // Ignore
+      }
+      throw new Error(detail);
+    }
+    return await response.json();
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 async function postFormData(path, formData, timeoutMs = 60000, options = {}) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -2030,14 +2056,39 @@ function stopVoice() {
   $("#voiceOverlay").classList.add("hidden");
 }
 
+async function updateLanguageForCurrentResult() {
+  updateI18n();
+  if (state.currentResult && state.analysisSource === "uploaded") {
+    try {
+      const copy = text();
+      $("#uploadStatus").textContent = state.language === "ar" ? "جاري ترجمة التقرير..." : "Translating report...";
+      $("#uploadStatus").classList.remove("error");
+      const payload = {
+        report: state.currentReport || resultToReport(state.currentResult),
+        target_language: state.language
+      };
+      const response = await postJson("/api/translate-report", payload, 60000, { preferBackend: true });
+      if (response && response.report) {
+        state.currentResult = reportToComplianceResult(response.report);
+        state.currentReport = response.report;
+        renderResult();
+      }
+      $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
+    } catch (err) {
+      console.error("Failed to translate report", err);
+      $("#uploadStatus").textContent = text().uploadAccepted(state.uploadedFiles.length || 3);
+    }
+  }
+}
+
 function bindEvents() {
   $("#langEn").addEventListener("click", () => {
     state.language = "en";
-    updateI18n();
+    void updateLanguageForCurrentResult();
   });
   $("#langAr").addEventListener("click", () => {
     state.language = "ar";
-    updateI18n();
+    void updateLanguageForCurrentResult();
   });
 
   ["uploadRunButton", "heroUploadButton", "emptyUploadButton", "addMoreButton"].forEach((id) => {

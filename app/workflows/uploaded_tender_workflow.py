@@ -99,11 +99,19 @@ def run_uploaded_tender_files_analysis(
         full_text += doc.text
         full_text += f"\n--- END OF DOCUMENT: {doc.source.filename} ---\n\n"
 
+    language_instruction = (
+        "IMPORTANT: Since the target language is Arabic (ar), you MUST generate all textual content (including executive_summary, findings.summary, findings.actions, missing_documents, risks.title, risks.mitigation, clarification_questions.question, clarification_questions.why_it_matters, next_actions) in Arabic. Do not use English for these fields. However, key identifiers, status values ('pass', 'fail', 'watch'), recommendation values ('bid', 'no_bid', 'conditional_bid'), and agent names ('Compliance Agent', 'Eligibility / Profile Fit Agent', 'Commercial Fit Agent', 'Risk Agent', 'Timeline Agent', 'Clarification Question Agent') must remain in English as specified."
+        if language == "ar"
+        else "All textual content must be in English."
+    )
+
     prompt = f"""
 Analyze the following uploaded tender documents and provide a structured review based on the bidder profile: {profile_id}.
+{language_instruction}
+
 Make sure to extract:
 1. Overall recommendation ('bid', 'no_bid', or 'conditional_bid').
-2. An executive summary (preferably in {language}).
+2. An executive summary in the target language.
 3. 6 findings, one for each of the following agents:
    - 'Compliance Agent'
    - 'Eligibility / Profile Fit Agent'

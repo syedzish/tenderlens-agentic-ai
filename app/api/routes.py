@@ -6,6 +6,7 @@ to run locally, inside Agent Runtime passthrough, or behind Vercel server routes
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from typing import Literal
@@ -88,6 +89,11 @@ class DiscussRequest(BaseModel):
     mode: Literal["text", "voice"] = Field(default="text")
     report: dict = Field(default_factory=dict)
     history: list[DiscussTurn] = Field(default_factory=list)
+
+
+class TranslateReportRequest(BaseModel):
+    report: dict
+    target_language: str
 
 
 def _has_live_discuss_credentials() -> bool:
@@ -256,6 +262,126 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
 
 
 def attach_tenderlens_api_routes(app: FastAPI) -> None:
+    @app.post("/api/translate-report")
+    def translate_report_endpoint(request: TranslateReportRequest) -> dict:
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        try:
+            from google import genai
+            from google.genai import types
+
+            if api_key:
+                client = genai.Client(api_key=api_key)
+            else:
+                client = genai.Client(
+                    vertexai=True,
+                    project=os.environ["GOOGLE_CLOUD_PROJECT"],
+                    location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-east1"),
+                )
+
+            report = request.report
+            target = "Arabic" if request.target_language == "ar" else "English"
+
+            payload_to_translate = {
+                "executive_summary": report.get("executive_summary") or report.get("executiveBrief") or "",
+                "findings": [
+                    {
+                        "summary": f.get("summary") or f.get("requirement") or "",
+                        "actions": f.get("actions") or [f.get("response")] if f.get("actions") else [f.get("response") or ""],
+                    }
+                    for f in (report.get("findings") or report.get("matrix") or [])
+                ],
+                "risks": [
+                    {
+                        "title": r.get("title") or r if isinstance(r, dict) or isinstance(r, str) else "",
+                        "mitigation": r.get("mitigation") or "" if isinstance(r, dict) else "",
+                    }
+                    for r in (report.get("risks") or [])
+                ],
+                "next_actions": report.get("next_actions") or report.get("nextActions") or [],
+                "clarification_questions": [
+                    {
+                        "question": q.get("question") or "",
+                        "why_it_matters": q.get("why_it_matters") or q.get("why") or "",
+                    }
+                    for q in (report.get("clarification_questions") or [])
+                ],
+                "missing_documents": report.get("missing_documents") or report.get("missingDocuments") or [],
+            }
+
+            prompt = f"""
+Translate the following JSON object's text values to {target}.
+You MUST return a JSON object with the exact same keys and structure.
+Keep status values, keys, numbers, booleans, and names (like 'Compliance Agent') exactly unchanged. Only translate the descriptive strings into {target}.
+
+JSON:
+{json.dumps(payload_to_translate)}
+"""
+            response = client.models.generate_content(
+                model=os.getenv("TENDERLENS_DISCUSS_MODEL", "gemini-2.5-flash"),
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.0,
+                )
+            )
+
+            translated_data = json.loads(response.text)
+
+            # Map the translated values back into the original report
+            if "executive_summary" in report:
+                report["executive_summary"] = translated_data.get("executive_summary")
+            if "executiveBrief" in report:
+                report["executiveBrief"] = translated_data.get("executive_summary")
+
+            translated_findings = translated_data.get("findings") or []
+            if "findings" in report and isinstance(report["findings"], list):
+                for idx, f in enumerate(report["findings"]):
+                    if idx < len(translated_findings):
+                        tf = translated_findings[idx]
+                        f["summary"] = tf.get("summary")
+                        f["actions"] = tf.get("actions")
+            if "matrix" in report and isinstance(report["matrix"], list):
+                for idx, m in enumerate(report["matrix"]):
+                    if idx < len(translated_findings):
+                        tf = translated_findings[idx]
+                        m["requirement"] = tf.get("summary")
+                        m["response"] = (tf.get("actions") or [""])[0]
+
+            translated_risks = translated_data.get("risks") or []
+            if "risks" in report and isinstance(report["risks"], list):
+                for idx, r in enumerate(report["risks"]):
+                    if idx < len(translated_risks):
+                        tr = translated_risks[idx]
+                        if isinstance(r, str):
+                            report["risks"][idx] = tr.get("title") or tr.get("mitigation") or r
+                        elif isinstance(r, dict):
+                            r["title"] = tr.get("title")
+                            r["mitigation"] = tr.get("mitigation")
+
+            if "next_actions" in report:
+                report["next_actions"] = translated_data.get("next_actions") or []
+            if "nextActions" in report:
+                report["nextActions"] = translated_data.get("next_actions") or []
+
+            translated_questions = translated_data.get("clarification_questions") or []
+            if "clarification_questions" in report and isinstance(report["clarification_questions"], list):
+                for idx, q in enumerate(report["clarification_questions"]):
+                    if idx < len(translated_questions):
+                        tq = translated_questions[idx]
+                        q["question"] = tq.get("question")
+                        q["why_it_matters"] = tq.get("why_it_matters")
+
+            if "missing_documents" in report:
+                report["missing_documents"] = translated_data.get("missing_documents") or []
+            if "missingDocuments" in report:
+                report["missingDocuments"] = translated_data.get("missing_documents") or []
+
+            return {"report": report}
+
+        except Exception as exc:
+            LOGGER.warning("Report translation failed: %s: %s", type(exc).__name__, exc)
+            return {"report": request.report}
+
     @app.get("/api/health")
     def health() -> dict:
         return {
