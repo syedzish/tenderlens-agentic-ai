@@ -226,12 +226,14 @@ def _model_discuss_answer(request: DiscussRequest) -> dict:
             )
         language_instruction = "Answer in Arabic." if request.language == "ar" else "Answer in English."
         prompt = (
-            "You are Discuss with TenderLens, a bidder-side tender analysis assistant. "
+            "Answer in a friendly, helpful, conversational, and professional tone. "
             "Answer only from the provided analysis report and evidence. "
             "If the report does not contain enough evidence, say what is missing. "
             "Do not repeat earlier answers. Address the latest user question directly. "
             "Prioritize and strictly follow any styling, formatting, or length instructions specified in the user's question (for example, if they ask to summarize in 2 points, write in bullet points, keep it to one sentence, etc.). "
-            "Otherwise, when no specific formatting is requested, answer directly and then include one concise source-grounded reason and one next step when useful. "
+            "Avoid using rigid labels, headers, or bullet prefixes like 'Reason:' or 'Next Step:'. "
+            "Instead, weave your grounding explanations and recommended next actions naturally and conversationally into your response. "
+            "Otherwise, when no specific formatting is requested, answer directly and naturally include a brief explanation and next step in a friendly, conversational manner. "
             f"{language_instruction}\n\n"
             f"Mode: {request.mode}\n"
             f"Question: {request.message}\n\n"

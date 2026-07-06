@@ -1915,10 +1915,13 @@ function downloadMap() {
   if (svg) downloadTextFile("tenderlens-map.svg", svg, "image/svg+xml");
 }
 
-async function startVoice() {
+async function startVoice(isNextTurn = false) {
+  const nextTurn = isNextTurn === true;
   $("#voiceOverlay").classList.remove("hidden");
-  $("#transcript").textContent = "";
-  window.speechSynthesis?.cancel?.();
+  if (!nextTurn) {
+    $("#transcript").textContent = "";
+    window.speechSynthesis?.cancel?.();
+  }
   if (state.recognition) {
     state.recognition.onend = null;
     state.recognition.abort?.();
@@ -1939,10 +1942,12 @@ async function startVoice() {
   }
   $("#voiceStateLabel").textContent = text().voiceReady;
   $("#voiceHelp").textContent = text().voiceReadyBody;
-  $("#transcript").textContent =
-    state.language === "ar"
-      ? `جاهز للمناقشة: ${displayAnalysisText(state.currentResult.executiveBrief)}`
-      : `Ready to discuss: ${displayAnalysisText(state.currentResult.executiveBrief)}`;
+  if (!nextTurn) {
+    $("#transcript").textContent =
+      state.language === "ar"
+        ? `جاهز للمناقشة: ${displayAnalysisText(state.currentResult.executiveBrief)}`
+        : `Ready to discuss: ${displayAnalysisText(state.currentResult.executiveBrief)}`;
+  }
   try {
     const recognition = new Recognition();
     state.recognition = recognition;
@@ -1952,7 +1957,11 @@ async function startVoice() {
     recognition.lang = state.language === "ar" ? "ar-SA" : "en-US";
     recognition.onstart = () => {
       $("#voiceStateLabel").textContent = text().voiceListening;
-      $("#voiceHelp").textContent = text().voiceListeningBody;
+      if (nextTurn) {
+        $("#voiceHelp").textContent = state.language === "ar" ? "جاري الاستماع للرد..." : "Listening for your response...";
+      } else {
+        $("#voiceHelp").textContent = text().voiceListeningBody;
+      }
     };
     recognition.onerror = () => {
       $("#voiceStateLabel").textContent = text().voiceError;
@@ -1975,10 +1984,20 @@ async function startVoice() {
         utterance.onend = () => {
           $("#voiceStateLabel").textContent = text().voiceReady;
           $("#voiceHelp").textContent = text().voiceReadyBody;
+          if (!$("#voiceOverlay").classList.contains("hidden")) {
+            void startVoice(true);
+          }
         };
         window.speechSynthesis.speak(utterance);
       } else {
         $("#voiceStateLabel").textContent = text().voiceReady;
+        if (!$("#voiceOverlay").classList.contains("hidden")) {
+          setTimeout(() => {
+            if (!$("#voiceOverlay").classList.contains("hidden")) {
+              void startVoice(true);
+            }
+          }, 1000);
+        }
       }
       state.recognition = null;
       handlingResult = false;
