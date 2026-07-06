@@ -1439,7 +1439,7 @@ function svgTextLines(value, x, y, width, maxLines = 3, lineHeight = 18, options
   
   const hasArabic = /[\u0600-\u06FF]/.test(String(value || ""));
   const isArText = state.language === "ar" && hasArabic;
-  const anchor = options.anchor || (isArText ? "end" : "start");
+  const anchor = options.anchor || "start";
   const direction = options.direction || (isArText ? "rtl" : "ltr");
   return `<text x="${x}" y="${y}" font-size="${options.size || 13}" fill="${options.fill || "#101214"}" text-anchor="${anchor}" direction="${direction}">${clipped
     .map((item, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeText(item)}</tspan>`)
