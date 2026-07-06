@@ -1570,34 +1570,6 @@ function friendlyModelRetryMessage(error) {
   return text().discussUnavailable;
 }
 
-async function postJson(path, payload, timeoutMs = 7000) {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(requestUrl(path), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      let detail = `HTTP ${response.status}`;
-      try {
-        const body = await response.json();
-        detail = typeof body.detail === "string" ? body.detail : body.detail?.message || body.message || detail;
-      } catch {
-        // Keep HTTP status as detail.
-      }
-      const error = new Error(detail);
-      error.status = response.status;
-      throw error;
-    }
-    return await response.json();
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
-
 async function getJson(path, timeoutMs = 7000) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -1721,7 +1693,7 @@ async function runAnalysis() {
 
   setAnalyzing(true);
   try {
-    const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 60000, { preferBackend: true });
+    const result = await postFormData("/api/upload/analyze", createUploadAnalysisFormData(), 180000, { preferBackend: true });
     state.reportEn = result.report;
     state.reportAr = result.report_ar || result.report;
     state.currentReport = state.language === "ar" ? state.reportAr : state.reportEn;
@@ -1748,7 +1720,12 @@ async function runAnalysis() {
 function friendlyAnalysisRetryMessage(error) {
   const message = String(error?.message || "");
   if (message.toLowerCase().includes("please try again after some time")) return message;
-  return text().backendUnavailable;
+  if (message.toLowerCase().includes("aborted") || error?.name === "AbortError") {
+    return state.language === "ar"
+      ? "انتهت مهلة التحليل. يرجى المحاولة مرة أخرى أو استخدام ملفات أصغر."
+      : "Analysis timed out. Please try again or use smaller files.";
+  }
+  return message ? `${text().backendUnavailable} (Details: ${message})` : text().backendUnavailable;
 }
 
 function useExampleFiles() {
