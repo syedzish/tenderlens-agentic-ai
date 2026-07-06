@@ -1,5 +1,5 @@
-import { proxy } from "./_proxy.js";
+const proxy = require("./_proxy.js");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   return proxy(req, res, "/api/model-status");
-}
+};

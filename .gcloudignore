@@ -1,0 +1,17 @@
+.git
+.gitignore
+.gcloudignore
+.venv
+.uv-cache
+.pytest_cache
+node_modules
+artifacts
+test-results
+*.log
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.agents
+.gemini
+*.ipynb
