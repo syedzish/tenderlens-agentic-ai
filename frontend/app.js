@@ -887,6 +887,13 @@ function updateI18n() {
     const textNode = alertNode.querySelector(".alert-text");
     if (textNode) textNode.textContent = copy.discussUnavailable;
   }
+  if (state.language === "ar") {
+    $("#prevSlide").textContent = "→";
+    $("#nextSlide").textContent = "←";
+  } else {
+    $("#prevSlide").textContent = "←";
+    $("#nextSlide").textContent = "→";
+  }
   renderGuide();
   renderOnboarding();
   if (state.currentResult) renderResult();
