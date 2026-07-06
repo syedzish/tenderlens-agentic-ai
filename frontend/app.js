@@ -708,6 +708,16 @@ const AR_ANALYSIS_TRANSLATIONS = new Map([
   ["Obtain a 120-day bid bond letter from the bank.", "احصل على خطاب ضمان عطاء لمدة 120 يوما من البنك."],
   ["Attach independent security evidence and explain the ISO 27001 timeline.", "أرفق دليلا أمنيا مستقلا واشرح الجدول الزمني لشهادة ISO 27001."],
   ["Confirm 50 training seats before submission.", "أكد توفر 50 مقعدا تدريبيا قبل التقديم."],
+  ["Bid security: 2% of contract value, valid for 90 days unless the bank issues the extended letter.", "ضمان العطاء: 2% من قيمة العقد، وهو صالح لمدة 90 يوما ما لم يصدر البنك خطاب التمديد."],
+  ["Arabic and English interfaces are available for operators, residents, enforcement users, and support scripts.", "تتوفر واجهات باللغتين العربية والإنجليزية للمشغلين والمقيمين ومستخدمي فرض النظام ونصوص الدعم."],
+  ["The hosted production service will meet 99.5% monthly uptime with planned maintenance announced at least 72 hours in advance.", "ستلبي الخدمة المستضافة نسبة توافر شهري تبلغ 99.5% مع الإعلان عن الصيانة المخطط لها قبل 72 ساعة على الأقل."],
+  ["ISO 27001 final audit is scheduled for Q4; current evidence includes an independent penetration test and remediation letter.", "من المقرر إجراء التدقيق النهائي لشهادة ISO 27001 في الربع الرابع؛ وتتضمن الأدلة الحالية اختبار اختراق مستقلا وخطاب معالجة."],
+  ["Full production go-live is currently planned for 15 October 2026 after staged depot onboarding.", "من المخطط حاليا بدء التشغيل الفعلي الكامل في 15 أكتوبر 2026 بعد تهيئة المستودعات تدريجيا."],
+  ["Resident personal data, vehicle metadata, logs, and backups remain within the Kingdom of Saudi Arabia.", "تبقى بيانات السكان الشخصية والبيانات الوصفية للمركبات والسجلات والنسخ الاحتياطية داخل المملكة العربية السعودية."],
+  ["Critical production incidents receive a named support engineer within 30 minutes.", "تتلقى الحوادث الإنتاجية الحرجة مهندس دعم معين خلال 30 دقيقة."],
+  ["The platform exposes REST APIs for occupancy, permits, violation status, and payment events.", "توفر المنصة واجهات REST API للإشغال والتصاريح وحالة المخالفات وأحداث الدفع."],
+  ["Base role-based training covers 40 users; 10 remote seats may be added at no additional license cost.", "يغطي التدريب الأساسي القائم على الدور 40 مستخدما؛ ويمكن إضافة 10 مقاعد عن بعد دون تكلفة ترخيص إضافية."],
+  ["Quarterly sustainability reporting will cover hosting region energy profile and maintenance-trip reductions.", "سيعطي تقرير الاستدامة الربع سنوي ملف طاقة منطقة الاستضافة وتقليل رحلات الصيانة."],
 ]);
 
 function displayAnalysisText(value) {
@@ -1135,7 +1145,7 @@ function renderActiveEvidence() {
       (citation) => `
         <figure class="evidence-quote">
           <figcaption>${escapeText(citation.file || "Uploaded document")}${citation.page ? ` · ${escapeText(citation.page)}` : ""}</figcaption>
-          <blockquote>${escapeText(citation.quote || displayAnalysisText(row.response))}</blockquote>
+          <blockquote>${escapeText(displayAnalysisText(citation.quote) || displayAnalysisText(row.response))}</blockquote>
         </figure>
       `,
     )
@@ -1186,7 +1196,7 @@ function buildTenderMap(result) {
       return {
         ...row,
         id: `requirement-${index}-${slug(row.requirement)}`,
-        evidence: row.citations[0]?.quote || row.response,
+        evidence: displayAnalysisText(row.citations[0]?.quote || row.response),
         file: files[fileIndex] || sourceFileForRow(row, files, index),
         fileIndex,
       };
@@ -1334,7 +1344,7 @@ function buildTenderMapSvg(map) {
 function buildBriefingDeck(result) {
   const compliant = result.matrix.filter((row) => row.status === "Compliant").slice(0, 3);
   const risky = result.matrix.filter((row) => row.risk !== "Low" || row.status !== "Compliant").slice(0, 4);
-  const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(displayAnalysisText(row.requirement), 8)}: ${citation.quote}`));
+  const evidence = result.matrix.flatMap((row) => row.citations.slice(0, 1).map((citation) => `${firstWords(displayAnalysisText(row.requirement), 8)}: ${displayAnalysisText(citation.quote)}`));
   if (state.language === "ar") {
     return [
       { eyebrow: "لمحة", title: "النتيجة العامة", bullets: [`${text().score}: ${result.score}/100`, displayAnalysisText(result.executiveBrief)] },
