@@ -1926,6 +1926,10 @@ img {
   margin-right: auto;
 }
 
+[dir="rtl"] .deck-stage {
+  background: linear-gradient(135deg, #fffdf8 0%, #f5f1e8 51%, #173331 51%, #111412 100%);
+}
+
 [dir="rtl"] .message.user {
   justify-self: start;
 }
