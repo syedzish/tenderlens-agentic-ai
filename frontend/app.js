@@ -1433,25 +1433,110 @@ function buildQuestions(result) {
 function renderQuestions() {
   if (!state.currentResult) {
     const copy = text();
+    $("#questionsList").classList.remove("grid-active");
     $("#questionsList").innerHTML = emptyState(copy.emptyQuestionsTitle, copy.emptyQuestionsBody, "circle-help");
+    hydrateIcons($("#questionsList"));
     return;
   }
-  const questions = buildQuestions(state.currentResult);
-  $("#questionsList").innerHTML = questions
-    .map(
-      (item, index) => `
-        <article class="question-card">
-          <div class="question-row">
-            <span class="question-number">${index + 1}</span>
-            <div>
-              <h3>${escapeText(item.question)}</h3>
-              <p>${escapeText(item.why)}</p>
-            </div>
-          </div>
-        </article>
-      `,
-    )
-    .join("");
+
+  const rowQuestions = state.currentResult.matrix
+    .filter((row) => row.status !== "Compliant" || row.risk !== "Low")
+    .slice(0, 6)
+    .map((row) => ({
+      question:
+        state.language === "ar"
+          ? `يرجى توضيح كيفية تلبية هذا المتطلب: ${displayAnalysisText(row.requirement)}`
+          : `Can you clarify how you will satisfy this requirement: ${row.requirement.charAt(0).toLowerCase()}${row.requirement.slice(1)}`,
+      why:
+        state.language === "ar"
+          ? `${text().statusLabel[row.status]} بمستوى مخاطر ${text().riskLabel[row.risk]}. ${displayAnalysisText(row.response)}`
+          : `${row.status} item with ${row.risk.toLowerCase()} risk. ${row.response}`,
+    }));
+
+  const actionQuestions = state.currentResult.nextActions.slice(0, 4).map((action, index) => ({
+    question:
+      state.language === "ar"
+        ? `ما المطلوب لتنفيذ هذا الإجراء: ${displayAnalysisText(action)}?`
+        : action.endsWith("?")
+          ? action
+          : `${action}?`,
+    why:
+      state.language === "ar"
+        ? displayAnalysisText(state.currentResult.risks[index]) || "هذا الإجراء موصى به من TenderLens Agentic AI."
+        : state.currentResult.risks[index] || "This action was recommended by TenderLens Agentic AI.",
+  }));
+
+  const isAr = state.language === "ar";
+  const askTitle = isAr ? "اسأل مصدر المناقصة" : "Ask the Issuer";
+  const askDesc = isAr ? "أسئلة توضيحية لإرسالها إلى الجهة الطارحة للمناقصة قبل التقديم." : "Clarification questions to send to the tender issuer before submission.";
+  const prepTitle = isAr ? "الاستعداد للإجابة" : "Prepare to Answer";
+  const prepDesc = isAr ? "مخاوف المقيمين ونقاط الضعف المحتملة التي يجب على فريقك الاستعداد لها." : "Likely evaluator concerns and weak spots your bid team should prepare.";
+
+  const askHtml = rowQuestions.length
+    ? rowQuestions
+        .map(
+          (item, index) => `
+            <article class="question-card">
+              <div class="question-row">
+                <span class="question-number">${index + 1}</span>
+                <div>
+                  <h3>${escapeText(item.question)}</h3>
+                  <p>${escapeText(item.why)}</p>
+                </div>
+              </div>
+            </article>
+          `,
+        )
+        .join("")
+    : `<div class="empty-questions-placeholder">${isAr ? "لا توجد أسئلة توضيحية للمصدر." : "No clarification questions for the issuer."}</div>`;
+
+  const prepHtml = actionQuestions.length
+    ? actionQuestions
+        .map(
+          (item, index) => `
+            <article class="question-card">
+              <div class="question-row">
+                <span class="question-number prep">${index + 1}</span>
+                <div>
+                  <h3>${escapeText(item.question)}</h3>
+                  <p>${escapeText(item.why)}</p>
+                </div>
+              </div>
+            </article>
+          `,
+        )
+        .join("")
+    : `<div class="empty-questions-placeholder">${isAr ? "لا توجد نقاط ضعف تحتاج استعداداً للإجابة." : "No weak spots to prepare answers for."}</div>`;
+
+  $("#questionsList").classList.add("grid-active");
+  $("#questionsList").innerHTML = `
+    <div class="questions-sub-panel">
+      <div class="questions-sub-title">
+        <span class="title-icon cyan small" data-icon="circle-help" aria-hidden="true" style="margin-top:2px;"></span>
+        <div>
+          <h3>${askTitle}</h3>
+          <p>${askDesc}</p>
+        </div>
+      </div>
+      <div class="questions-sub-list">
+        ${askHtml}
+      </div>
+    </div>
+
+    <div class="questions-sub-panel">
+      <div class="questions-sub-title prepare">
+        <span class="title-icon amber small" data-icon="triangle-alert" aria-hidden="true" style="margin-top:2px;"></span>
+        <div>
+          <h3>${prepTitle}</h3>
+          <p>${prepDesc}</p>
+        </div>
+      </div>
+      <div class="questions-sub-list">
+        ${prepHtml}
+      </div>
+    </div>
+  `;
+  hydrateIcons($("#questionsList"));
 }
 
 function switchTab(tab) {
